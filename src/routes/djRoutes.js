@@ -82,7 +82,7 @@ router.get('/getSongs/:id', async (req, res) => {
 router.post('/setSongs', async (req, res) => {
     const { songs } = req.body;
     try {
-        const user = await User.findOneAndUpdate({email: req.user.email}, {$push: {songs: songs}}, {new: true});
+        const user = await User.findOneAndUpdate({_id: req.user._id}, {$push: {songs: songs}}, {new: true});
         res.send(user.songs);
     } catch (err) {
         return res.status(422).send(err.message); 

@@ -159,16 +159,28 @@ router.post('/createContent', async (req, res) => {
 router.delete('/deleteContent/:contentId/:boardId', async (req, res) => {
     try {
         const content = await Content.findOneAndUpdate({_id: req.params.contentId}, {$set: {'isDeleted': true}}, {new: true});
-        /*
-        const contents = await Content.find({boardId: req.params.boardId})
-        contents.sort(function(a,b){
-            if(a.time  > b.time)  return -1;
-            if(a.time  < b.time) return 1;
-            return 0;
-        })
+        const contents = await Content.find({boardId: req.params.boardId, 'isDeleted': false}).sort({'time': -1}).limit(20).populate('postUserId');
+        const nowTime = new Date();
+        for(let key in contents){
+            const commentTime = new Date(contents[key].time);
+            const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
+            if (betweenTime < 1){
+                contents[key]['time'] = '방금전';
+            }else if (betweenTime < 60) {
+                contents[key]['time'] = `${betweenTime}분전`;
+            }else{
+                const betweenTimeHour = Math.floor(betweenTime / 60);
+                if (betweenTimeHour < 24) {
+                    contents[key]['time'] = `${betweenTimeHour}시간전`;
+                }else{
+                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
+                    if (betweenTimeDay < 365) {
+                        contents[key]['time'] =  `${betweenTimeDay}일전`;
+                    }
+                }        
+            }
+        }
         res.send(contents);
-        */
-        res.send(content);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -406,7 +418,7 @@ router.get('/getCurrentContent/:id', async(req, res) => {
         for(let key in currentComment){
             for(let val in currentReComment){
                 if(currentReComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(currentReComment[val]);
+                    if(!currentReComment[val].isDeleted)    currentComment[key].comments.push(currentReComment[val]);
                 }
             }
         }
@@ -515,7 +527,7 @@ router.post('/createComment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)    currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -636,7 +648,7 @@ router.delete('/deleteComment/:contentId/:commentId', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)   currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -706,7 +718,7 @@ router.post('/createReComment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)   currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -826,7 +838,7 @@ router.delete('/deleteRecomment/:contentId/:commentId', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)   currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -892,7 +904,7 @@ router.post('/likeComment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)    currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -981,7 +993,7 @@ router.post('/unlikeComment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)   currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -1049,7 +1061,7 @@ router.post('/likeRecomment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)    currentComment[key].comments.push(reComment[val]);
                 }
             }
         }
@@ -1138,7 +1150,7 @@ router.post('/unlikeRecomment', async (req, res) => {
         for(let key in currentComment){
             for(let val in reComment){
                 if(reComment[val].parentId.toString() == currentComment[key]._id.toString()){
-                    currentComment[key].comments.push(reComment[val]);
+                    if(!reComment[val].isDeleted)    currentComment[key].comments.push(reComment[val]);
                 }
             }
         }

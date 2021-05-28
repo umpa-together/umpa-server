@@ -2,10 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const Playlist = mongoose.model('Playlist');
+const Curation = mongoose.model('Curation');
+const Curationpost = mongoose.model('CurationPost')
 const WeeklyPlaylist = mongoose.model('WeeklyPlaylist');
 const WeekDJ = mongoose.model('WeekDJ');
 const WeekCuration = mongoose.model('WeekCuration');
-
+const User = mongoose.model('User');
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
 
@@ -46,15 +48,15 @@ router.get('/WeekPlaylist', async(req, res) => {
     try{
         const weekly = await WeeklyPlaylist.find().sort({'time': -1}).limit(1);
         const result = [];
-        weekly[0].playlist.forEach(async(item, index) => {
+        for(let key in weekly[0].playlist){
             try {
-                const playlist = await Playlist.find({_id: item}, {title: 1, hashtag: 1, image: 1}).populate('postUserId', {name: 1, profileImage: 1});
+                const playlist = await Playlist.find({_id: weekly[0].playlist[key]}, {title: 1, hashtag: 1, image: 1}).populate('postUserId', {name: 1, profileImage: 1});
                 result.push(playlist[0]);
-                if(index == weekly[0].playlist.length-1)    res.send(result);
             } catch (err) {
                 return res.status(422).send(err.message);
             };
-        })
+        }
+        res.send(result);
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -79,11 +81,9 @@ router.post('/WeekCuration', async(req,res) => {
         });
         const result = curations.slice(0,10);
         const weeklycuration = new WeekCuration({curation: [], time});
-
         result.forEach(async(item, index) => {
             try {
-                await Curation.findOneAndUpdate({ _id:item._id }, {$inc: { nominate:1 }});
-                weeklycuration.curation.push(item._id);
+                await Curation.findOneAndUpdate({ songoralbumid:item.songoralbumid }, {$inc: { nominate:1 }});                weeklycuration.curation.push(item._id);
                 if(index == result.length-1){
                        await weeklycuration.save();
                        res.send(weeklycuration);

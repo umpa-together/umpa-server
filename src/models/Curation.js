@@ -13,6 +13,10 @@ const curationSchema = new mongoose.Schema({
         type: String,
         unique: true,
     },
+    nominate: {
+        type: Number,
+        default: 0
+    }
 
 });
 

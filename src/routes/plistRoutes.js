@@ -46,11 +46,6 @@ router.get('/playlists', async(req,res) => {
     });
     res.send(playlist);
 });
-// get user's playlists
-router.get('/userPlaylists/:id', async(req,res) => {
-    const playlist = await Playlist.find({postUserId: req.params.id }).sort({'time': -1})
-    res.send(playlist);
-});
 // add playlist
 router.post('/playlist', requireAuth, async (req, res) =>{
     const { title, textcontent, songs, hashtag } = req.body;
@@ -78,6 +73,7 @@ router.post('/playlist', requireAuth, async (req, res) =>{
 
         });
         playlist.save();
+        await User.findOneAndUpdate({_id:req.user._id}, {$push:{playlists:playlist._id}}, {new:true})
 
     } catch (err) {
         return res.status(422).send(err.message);
@@ -85,7 +81,7 @@ router.post('/playlist', requireAuth, async (req, res) =>{
 });
 router.delete('/playlist/:id', async(req, res) => {
     try {
-        const [playlist] = await Promise.all([Playlist.findOneAndDelete({_id : req.params.id}), Comment.deleteMany({playlistid : req.params.id}), Notice.deleteMany({playlist:req.params.id}), Hashtag.deleteMany({playlistId: {$in: req.params.id}}) ]);
+        const [playlist] = await Promise.all([Playlist.findOneAndDelete({_id : req.params.id}), Comment.deleteMany({playlistid : req.params.id}), Notice.deleteMany({playlist:req.params.id}), Hashtag.deleteMany({playlistId: {$in: req.params.id}}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{playlists:req.params.id}}, {new:true}) ]);
         res.send(playlist);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -110,7 +106,6 @@ router.get('/playlist/:id/:postUserId', requireAuth, async(req,res) => {
         //const playlist = await Playlist.findOne({_id: req.params.id });
         //const comments = await Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]});
         let [playlist , comments] = await Promise.all([Playlist.find({_id: req.params.id }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
-
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
             const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
@@ -137,6 +132,10 @@ router.get('/playlist/:id/:postUserId', requireAuth, async(req,res) => {
         //const comments = await Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]});
         let [playlist , comments] = await Promise.all([ Playlist.findOneAndUpdate({_id:req.params.id}, {$inc :{views:1 }}).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
         
+        if(playlist == null){
+            res.send([null, []]);
+            return;
+        }
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
             const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
@@ -424,7 +423,7 @@ router.delete('/like/:id' , async(req,res) =>{
         let [like] = await Promise.all( [Playlist.find({_id :req.params.id}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ playlist:req.params.id}, { noticetype:'plike' }, { noticinguser:req.user._id }]}) ])
 
         res.send(like[0]);
-        await Notice.findOneAndDelete({$and: [{ noticinguser:req.user._id }, { playlist:req.params.id}, { noticetype:'plike' }, { noticinguser:req.user._id }]});
+        await Notice.findOneAndDelete({$and: [{ noticinguser:req.user._id }, { playlist:req.params.id}, { noticetype:'plike' }]});
     }catch(err){
         return res.status(422).send(err.message);
     }

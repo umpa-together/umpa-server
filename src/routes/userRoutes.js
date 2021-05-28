@@ -10,8 +10,6 @@ const Board = mongoose.model('Board');
 const User = mongoose.model('User');
 const Content = mongoose.model('boardContent');
 const Song = mongoose.model('BoardSong');
-const Curationpost = mongoose.model('CurationPost');
-const Playlist = mongoose.model('Playlist');
 const Notice = mongoose.model('Notice');
 
 const router = express.Router();
@@ -42,33 +40,15 @@ const upload = multer({
 
 router.get('/getMyInfo', async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.user._id }).populate('following').populate('follower');
+    const user = await User.findOne({ _id: req.user._id }).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
   }
 });
 
-router.get('/getMyPlaylist', async (req, res) => {
-  try {
-    const playlist = await Playlist.find({ postUserId: req.user._id }).sort({'time': -1});
-    res.send(playlist);
-  } catch (err) {
-    return res.status(422).send(err.message); 
-  }
-});
-
-router.get('/getMyCurating', async (req, res) => {
-  try {
-    const curationpost = await Curationpost.find({ postUserId:req.user._id }).sort({'time': -1});
-    res.send(curationpost);
-  } catch (err) {
-    return res.status(422).send(err.message); 
-  }
-});
-
 router.get('/otheruser/:id', async(req, res) => {
-  const user= await User.find({_id : req.params.id}).populate('following').populate('follower');
+  const user= await User.find({_id : req.params.id}).populate('following').populate('follower').populate('playlists').populate('curationposts');
   res.send(user[0]);
 });
 
@@ -109,7 +89,7 @@ router.post('/follow/:id', async(req,res) =>{
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
   try{
-    const result = await User.findOneAndUpdate({_id: req.params.id}, {$push : { follower : req.user._id }}, {new:true});
+    const result = await User.findOneAndUpdate({_id: req.params.id}, {$push : { follower : req.user._id }}, {new:true}).populate('follower').populate('following');
     res.send(result);
     await User.findOneAndUpdate({_id: req.user._id}, {$push : {following : req.params.id}}, {new:true});
     const notice  = new Notice({ noticinguser:req.user._id, noticieduser:result._id, noticetype:'follow', time });
@@ -135,9 +115,9 @@ router.post('/follow/:id', async(req,res) =>{
 
 router.delete('/follow/:id', async(req,res) =>{
   try{
-    const result = await User.findOneAndUpdate({_id: req.params.id}, {$pull : { follower : req.user._id}}, {new:true});
+    const result = await User.findOneAndUpdate({_id: req.params.id}, {$pull : { follower : req.user._id}}, {new:true}).populate('follower').populate('following');
     res.send(result);
-    await Promise.all([User.findOneAndUpdate({_id : req.user._id}, {$pull : {following :req.params.id}}, {new:true}), Notice.findOneAndDelete({$and: [{ noticetype:'follow' }, { noticinguser:req.user._id }, { noticieduser:result._id }]})]);
+    await Promise.all([User.findOneAndUpdate({_id : req.user._id}, {$pull : {following :req.params.id}}, {new:true}), Notice.findOneAndDelete({$and: [{ noticetype:'follow' }, { noticinguser:req.user._id }, { noticieduser:req.params.id }]}) ]);
 
   }catch(err){
       return res.status(422).send(err.message);

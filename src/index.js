@@ -10,6 +10,7 @@ require('./models/Curationpost');
 require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');
+require('./models/Report');
 
 
 const express = require('express');
@@ -25,6 +26,7 @@ const userRoutes = require('./routes/userRoutes');
 const djRoutes = require('./routes/djRoutes');
 const noticeRoutes = require('./routes/noticeRoutes');
 const WeeklyRoutes = require('./routes/WeeklyRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const curationRoutes = require('./routes/curationRoutes');
 const requireAuth = require('./middlewares/requireAuth');
@@ -39,6 +41,7 @@ app.use(noticeRoutes);
 app.use(curationRoutes);
 app.use(djRoutes);
 app.use(WeeklyRoutes);
+app.use(reportRoutes);
 app.use(searchRoutes);
 app.use(plistRoutes);
 app.use(boardRoutes);

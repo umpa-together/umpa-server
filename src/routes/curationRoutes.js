@@ -31,6 +31,7 @@ router.post('/curationpost/:id', async (req, res) =>{
 
         const curationposts = await Curationpost.find({songoralbumid:req.params.id}).populate('postUserId');
         res.send([curation, curationposts ]);
+        await User.findOneAndUpdate({_id:req.user._id}, {$push:{curationposts:curationpost._id}}, {new:true});
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -40,7 +41,7 @@ router.post('/curationpost/:id', async (req, res) =>{
 router.delete('/curationpost/:id', async (req, res) =>{
     try {
         const curationpost = await Curationpost.findOneAndDelete({_id:req.params.id});
-        const [curationposts, curation] = await Promise.all([Curationpost.find({songoralbumid:curationpost.songoralbumid}).populate('postUserId'), Curation.findOneAndUpdate({songoralbumid:curationpost.songoralbumid},{$pull:{participate:curationpost.postUserId}}, {new:true})]);
+        const [curationposts, curation] = await Promise.all([Curationpost.find({songoralbumid:curationpost.songoralbumid}).populate('postUserId'), Curation.findOneAndUpdate({songoralbumid:curationpost.songoralbumid},{$pull:{participate:curationpost.postUserId}}, {new:true}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{curationposts:curationpost._id}}, {new:true})]);
         res.send([curation, curationposts]);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -107,16 +108,6 @@ router.post('/curation/:id', async (req, res) =>{
         }else{
             res.send([check,curationpost]);
         }
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-});
-
-// get user curationposts
-router.get('/usercurationposts/:id', async (req, res) =>{
-    try {
-        const curationpost = await Curationpost.find({$and :[{postUserId:req.params.id},{hidden:false}]});
-        res.send(curationpost);
     } catch (err) {
         return res.status(422).send(err.message);
     }

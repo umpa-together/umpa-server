@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'CurationPost'
     }],
+    nominate: {
+        type: Number,
+        default: 0
+    }
 });
 
 userSchema.pre('save', function(next){

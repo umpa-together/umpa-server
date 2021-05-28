@@ -30,6 +30,3 @@ const curationpostSchema = new mongoose.Schema({
 });
 
 mongoose.model('CurationPost', curationpostSchema);
-
-
-

@@ -226,6 +226,16 @@ router.post('/Story', async (req, res) => {
   }
 });
 
+router.delete('/Story', async (req, res) => {
+  try {
+    const user = await User.findOne({_id: req.user._id});
+    await User.findOneAndUpdate({_id: req.user._id}, {$pull: {todaySong: user.todaySong[user.todaySong.length-1]}}, {new: true});
+    res.send('null');
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
 router.get('/MyStory', async (req, res) => {
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD');

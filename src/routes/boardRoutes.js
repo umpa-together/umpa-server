@@ -1332,7 +1332,7 @@ router.get('/getMusicArchive/:boardId', async(req, res) => {
 
 router.get('/getMusicChart/:boardId', async(req, res) => {
     try {
-        const songs = await Song.find({boardId: req.params.boardId});
+        const songs = await Song.find({boardId: req.params.boardId}).populate('postUserId');
         songs.sort(function(a, b){
             if(a.likes.length  > b.likes.length)  return -1;
             if(a.likes.length  < b.likes.length) return 1;

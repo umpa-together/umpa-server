@@ -40,8 +40,6 @@ router.post('/curationpost/:id', async (req, res) =>{
 //editCuration
 router.put('/curationpost/:id', async (req, res) =>{
     const { textcontent, hidden } = req.body;
-    console.log(textcontent);
-    console.log(hidden);
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {

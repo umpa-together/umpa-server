@@ -226,6 +226,16 @@ router.post('/Story', async (req, res) => {
   }
 });
 
+router.delete('/Story', async (req, res) => {
+  try {
+    const user = await User.findOne({_id: req.user._id});
+    await User.findOneAndUpdate({_id: req.user._id}, {$pull: {todaySong: user.todaySong[user.todaySong.length-1]}}, {new: true});
+    res.send('null');
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
 router.get('/MyStory', async (req, res) => {
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD');
@@ -270,14 +280,15 @@ router.get('/OtherStory', async (req, res) => {
 
 router.get('/StoryView/:id', async (req, res) => {
   var newDate = new Date()
-  var time = newDate.toFormat('YYYY-MM-DD');
+  var time = newDate.toFormat('YYYY-MM-DD')
   const userId = req.params.id
   try {
-    const user = await User.findOneAndUpdate({_id: userId, 'todaySong.time': time}, {$push: {'todaySong.$.view': req.user._id}}, {new: true});
-    if(user.todaySong[user.todaySong.length-1].time == time){
-      res.send(user.todaySong[user.todaySong.length-1]);
+    const user = await User.findOne({_id: userId});
+    if(user.todaySong[user.todaySong.length-1].view.toString().includes(req.user._id)){
+      res.send('null')
     }else{
-      res.send('null');
+      await User.findOneAndUpdate({_id: userId, 'todaySong.time': time}, {$push: {'todaySong.$.view': req.user._id}}, {new: true});
+      res.send(user);
     }
   } catch (err) {
     return res.status(422).send(err.message); 

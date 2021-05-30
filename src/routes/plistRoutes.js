@@ -51,9 +51,6 @@ router.post('/playlist', requireAuth, async (req, res) =>{
     const { title, textcontent, songs, hashtag } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
-    if(!title || !textcontent ) {
-        return res.status(422).send({error: 'provide title and content'});
-    }
     try {
         const playlist = new Playlist({ postUser: req.user.name, postUserId: req.user._id, title, textcontent, time, songs, hashtag });
         res.send(playlist._id);
@@ -70,7 +67,6 @@ router.post('/playlist', requireAuth, async (req, res) =>{
            }catch (err){
             return res.status(422).send(err.message);
            }
-
         });
         playlist.save();
         await User.findOneAndUpdate({_id:req.user._id}, {$push:{playlists:playlist._id}}, {new:true})
@@ -79,6 +75,35 @@ router.post('/playlist', requireAuth, async (req, res) =>{
         return res.status(422).send(err.message);
     }
 });
+
+router.post('/editPlaylist', async (req, res) => {
+    const { title, textcontent, songs, hashtag, playlistId } = req.body;
+    var newDate = new Date()
+    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
+    try {
+        const playlist = await Playlist.findOne({_id: playlistId});
+        const prevHashtag = playlist.hashtag;
+        
+        for(let key in prevHashtag){
+            await Hashtag.findOneAndUpdate({hashtag: prevHashtag[key]}, {$pull: {playlistId: playlistId}})
+        }
+
+        for(let key in hashtag){
+            const hashtagr = await Hashtag.findOne({hashtag: hashtag[key]})
+            if(hashtagr == null){
+                const hashtagn = new Hashtag({hashtag: hashtag[key], playlistId: playlistId, time});
+                await hashtagn.save();
+            }else{
+                await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$set : {time :time}, $push : {playlistId : playlistId} } );   
+            }
+        }
+        await Playlist.findOneAndUpdate({_id: playlistId}, {$set: {title, textcontent, songs, hashtag, time}})
+        res.send(playlist)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+});
+
 router.delete('/playlist/:id', async(req, res) => {
     try {
         const [playlist] = await Promise.all([Playlist.findOneAndDelete({_id : req.params.id}), Comment.deleteMany({playlistid : req.params.id}), Notice.deleteMany({playlist:req.params.id}), Hashtag.deleteMany({playlistId: {$in: req.params.id}}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{playlists:req.params.id}}, {new:true}) ]);

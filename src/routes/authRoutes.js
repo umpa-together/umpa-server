@@ -7,9 +7,9 @@ const request = require('request');
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-    const { email, password, name } = req.body;
+    const { email, password, name,informationagree  } = req.body;
     try{
-        const user = new User({ email, password, name });
+        const user = new User({ email, password, name, informationagree:informationagree });
         await user.save();
         const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
         res.send({ token });
@@ -19,7 +19,7 @@ router.post('/signup', async (req, res) => {
 });
 
 router.post('/signin', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password} = req.body;
     if(!email || !password){
         return res.status(422).send({ error: 'Must provide email and password' });
     }

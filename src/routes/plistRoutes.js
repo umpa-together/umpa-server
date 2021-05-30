@@ -38,12 +38,7 @@ const upload = multer({
 });
 // get all playlists
 router.get('/playlists', async(req,res) => {
-    const playlist = await Playlist.find({postUserId:{$in:req.user.following}}).populate('postUserId');
-    playlist.sort(function(a, b) {
-        if(a.likes.length  > b.likes.length)  return -1;
-        if(a.likes.length  < b.likes.length) return 1;
-        return 0;
-    });
+    const playlist = await Playlist.find({postUserId:{$in:req.user.following}}).populate('postUserId').sort({'time': -1});
     res.send(playlist);
 });
 // add playlist

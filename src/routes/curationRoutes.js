@@ -13,8 +13,7 @@ router.use(requireAuth);
 
 // get curationposts (mainpage)
 router.get('/curationposts', async(req,res) => {
-    const curationposts = await Curationpost.find({ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]} ).populate('postUserId');
-    curationposts.reverse();
+    const curationposts = await Curationpost.find({ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]} ).sort({'time': -1}).populate('postUserId');
     res.send(curationposts);
 });
 

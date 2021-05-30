@@ -130,7 +130,7 @@ router.get('/playlist/:id/:postUserId', requireAuth, async(req,res) => {
     else{
         //const playlist = await Playlist.findOneAndUpdate({_id:req.params.id}, {$inc :{views:1 }});
         //const comments = await Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]});
-        let [playlist , comments] = await Promise.all([ Playlist.findOneAndUpdate({_id:req.params.id}, {$inc :{views:1 }}).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
+        let [playlist , comments] = await Promise.all([ Playlist.findOneAndUpdate({_id:req.params.id}, {$inc :{views:1 }}, {returnNewDocument: true }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
         
         if(playlist == null){
             res.send([null, []]);
@@ -170,7 +170,7 @@ router.post('/comment/:id', requireAuth, async(req,res) =>{
         await newComment.save();
         //const playlist = await Playlist.findOne({_id:req.params.id});
         //const comments = await Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]});
-        let [playlist, comments]=  await Promise.all([Playlist.find({_id:req.params.id}).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')]);
+        let [playlist, comments]=  await Promise.all([Playlist.findOneAndUpdate({_id:req.params.id}, {$push: {comments:newComment._id}}, {returnNewDocument: true }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')]);
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
             const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
@@ -190,20 +190,20 @@ router.post('/comment/:id', requireAuth, async(req,res) =>{
                 }
             }
         }
-        res.send([playlist[0], comments]);
-        if(playlist[0].postUserId._id.toString() != req.user._id.toString()){
+        res.send([playlist, comments]);
+        if(playlist.postUserId._id.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id, noticieduser : playlist[0].postUserId._id, noticetype :'pcom', time, playlist:req.params.id, playlistcomment:newComment._id });
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser : playlist.postUserId._id, noticetype :'pcom', time, playlist:req.params.id, playlistcomment:newComment._id });
                 notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
             }
         }
-        const targetuser = await User.findOne({_id:playlist[0].postUserId._id});
+        const targetuser = await User.findOne({_id:playlist.postUserId._id});
         if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
             var message = {
                 notification : {
-                    title: playlist[0].title,
+                    title: playlist.title,
                     body : req.user.name+'님이 ' + text + ' 댓글을 달았습니다.',
                 },
                 token : targetuser.noticetoken
@@ -224,7 +224,7 @@ router.delete('/comment/:id/:commentid', async(req,res) =>{
         await Comment.deleteMany({$or: [{_id : req.params.commentid}, {parentcommentId:req.params.commentid} ]});
         //const playlist = await Playlist.findOne({_id:req.params.id});
         //const comments = await Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]});
-        let [playlist , b, comments] = await Promise.all( [Playlist.find({_id:req.params.id}).populate('postUserId'), Notice.deleteMany({$and: [{ playlist:req.params.id }, { playlistcomment: req.params.commentid }]}) ,Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId') ])
+        let [playlist , b, comments] = await Promise.all( [Playlist.findOneAndUpdate({_id:req.params.id},{$pull:{comments:req.params.commentid}}, {returnNewDocument: true }).populate('postUserId'), Notice.deleteMany({$and: [{ playlist:req.params.id }, { playlistcomment: req.params.commentid }]}) ,Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId') ])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
@@ -245,7 +245,7 @@ router.delete('/comment/:id/:commentid', async(req,res) =>{
                 }
             }
         }
-        res.send([playlist[0], comments]);
+        res.send([playlist, comments]);
         await Notice.deleteMany({$and: [{noticetype: 'pcom'}, { noticinguser:req.user._id }, { playlist:req.params.id }, { playlistcomment: req.params.commentid }]});
 
     } catch (err) {
@@ -264,7 +264,8 @@ router.post('/recomment/:id/:commentid', requireAuth, async(req,res) =>{
         await comment.save();
         //const parentcomment = await Comment.find({_id : req.params.commentid}).populate('playlistId');
         //const comments = await Comment.find({parentcommentId:req.params.commentid});
-        let [parentcomment, comments] = await Promise.all( [Comment.find({_id : req.params.commentid}).populate('playlistId'), Comment.find({parentcommentId:req.params.commentid}).populate('postUserId') ])
+        const parentcomment = await Comment.findOneAndUpdate({_id : req.params.commentid},{$push:{recomments:comment._id}}).populate('playlistId');
+        const comments = await Comment.find({parentcommentId:req.params.commentid}).populate('postUserId');
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
             const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
@@ -286,20 +287,20 @@ router.post('/recomment/:id/:commentid', requireAuth, async(req,res) =>{
         }
         res.send(comments);
 
-        if(parentcomment[0].postUserId.toString() != req.user._id.toString()){
+        if(parentcomment.postUserId.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id,  noticieduser:parentcomment[0].postUserId, noticetype:'precom', time, playlist:req.params.id, playlistcomment:req.params.commentid, playlistrecomment:comment._id });
+                const notice  = new Notice({ noticinguser:req.user._id,  noticieduser:parentcomment.postUserId, noticetype:'precom', time, playlist:req.params.id, playlistcomment:req.params.commentid, playlistrecomment:comment._id });
                 await notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
             }
         }
-        const targetuser = await User.findOne({_id:parentcomment[0].postUserId});
+        const targetuser = await User.findOne({_id:parentcomment.postUserId});
 
         if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
             var message = {
                 notification : {
-                    title: parentcomment[0].playlistId.title,
+                    title: parentcomment.playlistId.title,
                     body : req.user.name+'님이 ' + text + ' 대댓글을 달았습니다.',
                 },
                 token : targetuser.noticetoken
@@ -348,7 +349,8 @@ router.delete('/recomment/:commentid', async(req,res) =>{
     try {
         const comment= await Comment.findOneAndDelete({_id : req.params.commentid});
         //const comments = await Comment.find({parentcommentId:comment.parentcommentId});
-        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ playlist:comment.playlistId }, { playlistcomment: comment.parentcommentid }, { playlistrecomment:comment._id }, { noticetype:'precom' }, { noticinguser:req.user._id }]}) ])
+        await Comment.findOneAndUpdate({_id : comment.parentcommentId},{$pull:{recomments:req.params.commentid}})
+        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ playlist:comment.playlistId }, { playlistcomment: comment.parentcommentid }, { playlistrecomment:comment._id }, { noticetype:'precom' }, { noticinguser:req.user._id }]})])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);

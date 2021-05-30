@@ -27,7 +27,12 @@ const commentSchema = new mongoose.Schema({
         type: String
     },
     likes: [String],
-    recomments: [],
+    recomments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'PlaylistComment',
+
+    }],
 });
 
 mongoose.model('PlaylistComment', commentSchema);

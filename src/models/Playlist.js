@@ -23,7 +23,13 @@ const playlistSchema = new mongoose.Schema({
         type : String,
     },
     songs : [],
+    comments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'PlaylistComment',
+    }],    
     hashtag : [String],
+    
     likes : [String],
     views : {
         type: Number,

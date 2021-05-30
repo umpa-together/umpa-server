@@ -36,6 +36,22 @@ router.post('/curationpost/:id', async (req, res) =>{
     }
 });
 
+//editCuration
+router.put('/curationpost/:id', async (req, res) =>{
+    const { textcontent, hidden } = req.body;
+    var newDate = new Date()
+    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
+    try {
+        const temp = await Curationpost.findOneAndUpdate({ _id:req.params.id }, {$set: { textcontent:textcontent,time:time,hidden:hidden}},  {returnNewDocument: true }).populate('postUserId');
+        console.log(temp);
+        const curationposts = await Curationpost.find({songoralbumid:temp.songoralbumid}).populate('postUserId');
+        res.send( [temp, curationposts] );
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+});
+
+
 // delete Curation
 router.delete('/curationpost/:id', async (req, res) =>{
     try {

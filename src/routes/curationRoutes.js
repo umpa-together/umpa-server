@@ -58,6 +58,8 @@ router.delete('/curationpost/:id', async (req, res) =>{
         const curationpost = await Curationpost.findOneAndDelete({_id:req.params.id});
         const [curationposts, curation] = await Promise.all([Curationpost.find({songoralbumid:curationpost.songoralbumid}).populate('postUserId'), Curation.findOneAndUpdate({songoralbumid:curationpost.songoralbumid},{$pull:{participate:curationpost.postUserId}}, {new:true}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{curationposts:curationpost._id}}, {new:true})]);
         res.send([curation, curationposts]);
+        await Notice.deleteMany({ curationpost:req.params.id });
+
     } catch (err) {
         return res.status(422).send(err.message);
     }

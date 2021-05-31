@@ -269,7 +269,6 @@ router.delete('/comment/:id/:commentid', async(req,res) =>{
             }
         }
         res.send([playlist, comments]);
-        await Notice.deleteMany({$and: [{noticetype: 'pcom'}, { noticinguser:req.user._id }, { playlist:req.params.id }, { playlistcomment: req.params.commentid }]});
 
     } catch (err) {
         return res.status(422).send(err.message);
@@ -372,8 +371,9 @@ router.delete('/recomment/:commentid', async(req,res) =>{
     try {
         const comment= await Comment.findOneAndDelete({_id : req.params.commentid});
         //const comments = await Comment.find({parentcommentId:comment.parentcommentId});
+        console.log(comment);
         await Comment.findOneAndUpdate({_id : comment.parentcommentId},{$pull:{recomments:req.params.commentid}})
-        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ playlist:comment.playlistId }, { playlistcomment: comment.parentcommentid }, { playlistrecomment:comment._id }, { noticetype:'precom' }, { noticinguser:req.user._id }]})])
+        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.deleteMany({$and: [{ playlist:comment.playlistId }, { playlistcomment: mongoose.Types.ObjectId(comment.parentcommentid) }, { playlistrecomment:comment._id }]})])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
@@ -395,7 +395,6 @@ router.delete('/recomment/:commentid', async(req,res) =>{
             }
         }
         res.send(comments);
-        await Notice.deleteMany({$and: [{noticetype: 'precom'}, { noticinguser:req.user._id }, { playlist:comment.playlistId }, { playlistcomment: comment.parentcommentId }, { playlistrecomment:comment._id }]});
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -624,7 +623,6 @@ router.delete('/likerecomment/:commentid/:id' , async(req,res) =>{
             }
         }
         res.send(comments);
-        await Notice.findOneAndDelete({$and: [{ playlist:like.playlistId }, { playlistcomment: req.params.commentid }, { playlistrecomment:req.params.id }, { noticinguser:req.user._id }, { noticetype:'precomlike' }]});
     }catch(err){
         return res.status(422).send(err.message);
     }

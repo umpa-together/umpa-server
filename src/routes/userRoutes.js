@@ -218,7 +218,7 @@ router.post('/Story', async (req, res) => {
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD');
   try {
-    const storySong = {'time': time, 'song': song, 'view': []};
+    const storySong = {'time': time, 'song': song, 'view': [], 'id': req.user._id};
     res.send(storySong);
     await User.findOneAndUpdate({_id: req.user._id}, {$push: {todaySong: storySong}}, {new: true});
   } catch (err) {
@@ -241,10 +241,16 @@ router.get('/MyStory', async (req, res) => {
   var time = newDate.toFormat('YYYY-MM-DD');
   try {
     const user = await User.findOne({_id: req.user._id});
+    const storyViewUsers = [];
     if(user.todaySong[user.todaySong.length-1].time == time){
-      res.send(user.todaySong[user.todaySong.length-1]);
+      const view = user.todaySong[user.todaySong.length-1].view
+      for(let key in view) {
+        const viewUser = await User.findOne({_id: view[key]}, {name: 1, profileImage: 1})
+        storyViewUsers.push(viewUser)
+      }
+      res.send([user.todaySong[user.todaySong.length-1], storyViewUsers]);
     }else{
-      res.send('null');
+      res.send([null, storyViewUsers]);
     }
   } catch (err) {
     return res.status(422).send(err.message); 

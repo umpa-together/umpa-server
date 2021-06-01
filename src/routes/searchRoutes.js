@@ -50,7 +50,11 @@ router.get('/searchHashtag/:object', async (req, res) => {
 router.get('/hashtagHint/:term', async (req, res) => {
     try {
         const hint = await Hashtag.find({hashtag: {$regex: `${req.params.term}`}}).populate('playlistId');
-        res.send(hint);
+        let resultHint = [];
+        for(let key in hint){
+            if(hint[key].playlistId.length != 0)    resultHint.push(hint[key])
+        }
+        res.send(resultHint);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -82,11 +86,21 @@ router.get('/searchDJ/:songName', async (req, res) => {
 
 router.get('/currentHashtag', async (req, res) => {
     try {
-        const hashtag = await Hashtag.find().sort( { time: -1 } ).limit(20).populate('playlistId');
+        const hashtag = await Hashtag.find().sort( { time: -1 } ).limit(30).populate('playlistId');
         const resultHashtag = [];
         for(let key in hashtag){
-            if(hashtag[key].playlistId.length != 0) resultHashtag.push(hashtag[key])
+            if(hashtag[key].playlistId.length != 0){
+                if(resultHashtag.length != 0 && 
+                    resultHashtag[resultHashtag.length-1].playlistId[resultHashtag[resultHashtag.length-1].playlistId.length-1]._id != hashtag[key].playlistId[hashtag[key].playlistId.length-1]._id){
+                    resultHashtag.push(hashtag[key])
+                }else if(resultHashtag.length == 0){
+                    resultHashtag.push(hashtag[key])
+                }
+            } 
             if(resultHashtag.length == 10)  break;
+
+            //if(hashtag[key].playlistId.length != 0) resultHashtag.push(hashtag[key])
+            //if(resultHashtag.length == 10)  break;
         }
         res.send(resultHashtag);
     } catch (err) {

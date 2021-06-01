@@ -18,14 +18,13 @@ router.get('/initPlaylist', async (req, res) => {
     }
 });
 
-router.get('/searchSongOrArtist/:object', async (req, res) => {
+router.get('/searchSongOrArtist/:id', async (req, res) => {
     try {
         const foundPlaylist = []
         const playList = await Playlist.find().populate('postUserId', {profileImage: 1});
         for(let key in playList){
             for(let song in playList[key].songs){
-                if(playList[key].songs[song].attributes.name.includes(req.params.object) || 
-                    playList[key].songs[song].attributes.artistName.includes(req.params.object)){
+                if(playList[key].songs[song].id == req.params.id){
                     foundPlaylist.push(playList[key]);
                     break;
                 }

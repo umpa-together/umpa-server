@@ -55,7 +55,7 @@ router.get('/otheruser/:id', async(req, res) => {
 router.post('/editProfile', async(req, res) => {
   const { name, introduction } = req.body;
   try {
-    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: name, introduction: introduction}}, {new: true});
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: name, introduction: introduction}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -65,7 +65,7 @@ router.post('/editProfile', async(req, res) => {
 router.post('/editProfileImage', upload.single('img'), async (req, res) => {
   const img = req.file.location;
   try {
-    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {profileImage: img}}, {new: true});
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {profileImage: img}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -263,6 +263,12 @@ router.get('/OtherStory', async (req, res) => {
   try {
     let readUser = [];
     let unReadUser = [];
+    const me = await User.findOne({_id: req.user._id});
+    if(me.todaySong != undefined && me.todaySong[me.todaySong.length-1].time == time){
+        let storyUser = {'id': req.user._id, 'name': req.user.name, 'profileImage': req.user.profileImage, 'song': req.user.todaySong[req.user.todaySong.length-1]};
+        console.log(storyUser)
+        unReadUser.push(storyUser)
+    }
     User.find({_id: req.user._id}).populate('following').exec((err, data)=> {
       for(let key in data[0].following){
         const user = data[0].following[key];

@@ -266,7 +266,6 @@ router.get('/OtherStory', async (req, res) => {
     const me = await User.findOne({_id: req.user._id});
     if(me.todaySong != undefined && me.todaySong[me.todaySong.length-1].time == time){
         let storyUser = {'id': req.user._id, 'name': req.user.name, 'profileImage': req.user.profileImage, 'song': req.user.todaySong[req.user.todaySong.length-1]};
-        console.log(storyUser)
         unReadUser.push(storyUser)
     }
     User.find({_id: req.user._id}).populate('following').exec((err, data)=> {

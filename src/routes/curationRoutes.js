@@ -12,10 +12,15 @@ require('date-utils');
 router.use(requireAuth);
 
 // get curationposts (mainpage)
-router.get('/curationposts', async(req,res) => {
-    const curationposts = await Curationpost.find({ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]} ).sort({'time': -1}).populate('postUserId');
+router.get('/curationposts', async (req,res) => {
+    const curationposts = await Curationpost.find({ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]} ).sort({'time': -1}).populate('postUserId').limit(20);
     res.send(curationposts);
 });
+
+router.get('/curationposts/:page', async (req, res) => {
+    const curationposts = await Curationpost.find({ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]} ).sort({'time': -1}).populate('postUserId').skip(req.params.page*20).limit(20);
+    res.send(curationposts);
+})
 
 //post Curation
 router.post('/curationpost/:id', async (req, res) =>{

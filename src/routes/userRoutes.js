@@ -301,4 +301,15 @@ router.get('/StoryView/:id', async (req, res) => {
   }
 });
 
+router.get('/StoryCalendar/:id', async (req, res) => {
+  const userId = req.params.id
+  try {
+    const story = await User.findOne({_id: userId}, {todaySong: 1});
+    res.send(story.todaySong)
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
+
 module.exports = router;

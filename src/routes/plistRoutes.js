@@ -377,9 +377,8 @@ router.delete('/recomment/:commentid', async(req,res) =>{
     try {
         const comment= await Comment.findOneAndDelete({_id : req.params.commentid});
         //const comments = await Comment.find({parentcommentId:comment.parentcommentId});
-        console.log(comment);
         await Comment.findOneAndUpdate({_id : comment.parentcommentId},{$pull:{recomments:req.params.commentid}})
-        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.deleteMany({$and: [{ playlist:comment.playlistId }, { playlistcomment: mongoose.Types.ObjectId(comment.parentcommentid) }, { playlistrecomment:comment._id }]})])
+        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.deleteMany({$and: [{ playlist:comment.playlistId }, { playlistcomment: mongoose.Types.ObjectId(comment.parentcommentId) }, { playlistrecomment:comment._id }]})])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);

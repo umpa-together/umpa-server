@@ -256,11 +256,11 @@ router.post('/likeContent', async (req, res) => {
             }
         }
 
-        const targetuser = await User.findOne({_id:content.postUserId._id});
+        const targetuser = await User.findOne({_id:currentContent[0].postUserId._id});
         if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
             var message = {
                 notification : {
-                    body : req.user.name+' 님이 게시글을 좋아합니다.',
+                    body : req.user.name+' 님이 게시글' + currentContent[0].content + '을 좋아합니다.',
                 },
                 token : targetuser.noticetoken
             };

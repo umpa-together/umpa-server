@@ -38,12 +38,12 @@ const upload = multer({
 });
 // get playlists in my follower
 router.get('/playlists', async(req,res) => {
-    const playlist = await Playlist.find({postUserId:{$in:req.user.following}}).populate('postUserId').sort({'time': -1}).limit(20);
+    const playlist = await Playlist.find({$or: [{postUserId:{$in:req.user.following}}, {postUserId: req.user._id}]}).populate('postUserId').sort({'time': -1}).limit(20);
     res.send(playlist);
 });
 
 router.get('/playlists/:page', async (req, res) => {
-    const playlist = await Playlist.find({postUserId:{$in:req.user.following}}).populate('postUserId').sort({'time': -1}).skip(req.params.page*20).limit(20);
+    const playlist = await Playlist.find({$or: [{postUserId:{$in:req.user.following}}, {postUserId: req.user._id}]}).populate('postUserId').sort({'time': -1}).skip(req.params.page*20).limit(20);
     res.send(playlist)
 })
 

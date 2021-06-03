@@ -256,7 +256,7 @@ router.post('/likeContent', async (req, res) => {
             }
         }
 
-        const targetuser = await User.findOne({_id:content.postUserId});
+        const targetuser = await User.findOne({_id:content.postUserId._id});
         if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
             var message = {
                 notification : {

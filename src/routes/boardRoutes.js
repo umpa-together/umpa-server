@@ -117,7 +117,7 @@ router.get('/getCurrentBoard/:boardId', async(req, res) => {
 });
 
 router.get('/nextContents/:boardId/:page', async (req, res) => {
-    const contents = await Content.find({boardId: req.params.boardId, 'isDeleted' : false}).sort({'time': -1}).skip(req.params.page*20).limit(20);
+    const contents = await Content.find({boardId: req.params.boardId, 'isDeleted' : false}).sort({'time': -1}).skip(req.params.page*20).limit(20).populate('postUserId');
     const nowTime = new Date();
     for(let key in contents){
         const commentTime = new Date(contents[key].time);

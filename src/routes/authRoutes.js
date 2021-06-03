@@ -60,17 +60,28 @@ router.get('/kakaoInfo/:token', async (req, res) => {
             'Authorization' : 'Bearer ' + req.params.token
         },
     }
+    try{
+    
     request(kakaoOption, async (err, response, body) => {
-        body =  await JSON.parse(body);
-        const user = await User.findOne({email: body['kakao_account'].email});
-        if(user == null){
-            res.send([false, body['kakao_account'].email, body['id'].toString()]);
-        }else{
-            await user.comparePassword(body['id'].toString());
-            const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
-            res.send([token, body['kakao_account'].email, body['id'].toString()]);
+        try{
+            const bodytemp =  await JSON.parse(body);
+            console.log(bodytemp);
+            const user = await User.findOne({email: bodytemp.kakao_account.email});
+            if(user == null){
+                res.send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
+            }else{
+                await user.comparePassword(bodytemp.id.toString());
+                const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+                res.send([token, bodytemp.kakao_account.email, bodytemp.id.toString()])
+            }
+        }catch(er){
+            res.send(er)
         }
+        
     })
+    }catch(err){
+        res.send(err);
+    }
 });
 
 router.get('/naverInfo/:token', async (req, res) => {

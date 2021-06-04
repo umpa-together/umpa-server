@@ -11,6 +11,16 @@ const router = express.Router();
 require('date-utils');
 router.use(requireAuth);
 
+router.get('/allCurationPost', async (req, res) => {
+    const curation= await Curationpost.find().sort({'time': -1}).limit(20);
+    res.send(curation);
+})
+
+router.get('/allCurationPost/:page', async (req, res) => {
+    const curation= await Curationpost.find().sort({'time': -1}).skip(req.params.page*20).limit(20);
+    res.send(curation);
+})
+
 // get curationposts (mainpage)
 router.get('/curationposts', async (req,res) => {
     const curationposts = await Curationpost.find({$or: [{ $and: [{  postUserId:{$in:req.user.following}}, {hidden:false} ]}, {postUserId: req.user._id}]} ).sort({'time': -1}).populate('postUserId').limit(20);

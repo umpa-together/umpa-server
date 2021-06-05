@@ -65,7 +65,6 @@ router.get('/kakaoInfo/:token', async (req, res) => {
     request(kakaoOption, async (err, response, body) => {
         try{
             const bodytemp =  await JSON.parse(body);
-            console.log(bodytemp);
             const user = await User.findOne({email: bodytemp.kakao_account.email});
             if(user == null){
                 res.send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
@@ -93,16 +92,20 @@ router.get('/naverInfo/:token', async (req, res) => {
         },
     }
     request(naverOption, async (err, response, body) => {
-        body =  await JSON.parse(body);
-        const user = await User.findOne({email: body.response.email});
+        try{
+        const bodytemp =  await JSON.parse(body);
+        const user = await User.findOne({email: bodytemp.response.email});
         if(user == null){
-            res.send([false, body.response.email, body.response.id]);
+            res.send([false, bodytemp.response.email, bodytemp.response.id]);
         }else{
-            await user.comparePassword(body.response.id);
+            await user.comparePassword(bodytemp.response.id);
             const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
-            res.send([token, body.response.email, body.response.id]);
+            res.send([token, bodytemp.response.email, bodytemp.response.id]);
         }
         
+        }catch(er){
+            res.send(er);
+        }
     })
 });
 

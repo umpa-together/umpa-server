@@ -61,7 +61,23 @@ const userSchema = new mongoose.Schema({
     },
     informationagree:{
         type: Boolean,
-    }
+    },
+    playlistGuide: {
+        type: Boolean,
+        default: false
+    },
+    curationGuide: {
+        type: Boolean,
+        default: false
+    },
+    boardGuide: {
+        type: Boolean,
+        default: false
+    },
+    createGuide: {
+        type: Boolean,
+        default: false
+    },
 });
 
 userSchema.pre('save', function(next){

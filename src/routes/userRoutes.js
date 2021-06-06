@@ -72,6 +72,25 @@ router.post('/editProfileImage', upload.single('img'), async (req, res) => {
   }
 });
 
+router.post('/guide', async (req, res) => {
+  const { type } = req.body;
+  try {
+    let user;
+    if(type == 'playlist'){
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'playlistGuide': true}}, {new: true})
+    }else if(type == 'curation'){
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'curationGuide': true}}, {new: true})
+    }else if(type == 'board'){
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'boardGuide': true}}, {new: true})
+    }else if(type == 'create'){
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'createGuide': true}}, {new: true})
+    }
+    res.send(user);
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
 router.post('/addView', async (req, res) => {
   const { id } = req.body;
   try {

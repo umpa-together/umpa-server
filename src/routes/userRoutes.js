@@ -77,13 +77,13 @@ router.post('/guide', async (req, res) => {
   try {
     let user;
     if(type == 'playlist'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'playlistGuide': true}}, {new: true})
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'playlistGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     }else if(type == 'curation'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'curationGuide': true}}, {new: true})
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'curationGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     }else if(type == 'board'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'boardGuide': true}}, {new: true})
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'boardGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     }else if(type == 'create'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'createGuide': true}}, {new: true})
+      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'createGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     }
     res.send(user);
   } catch (err) {

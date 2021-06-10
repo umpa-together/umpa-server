@@ -41,6 +41,10 @@ const playlistSchema = new mongoose.Schema({
     nominate: {
         type: Number,
         default: 0
+    },
+    isWeekly: {
+        type: Boolean,
+        default: false
     }
 });
 

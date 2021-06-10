@@ -20,6 +20,7 @@ router.post('/WeekPlaylist', async(req, res) => {
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try{
         const Weekly = WeeklyPlaylist({playlist: [], time});
+        await Playlist.updateMany({isWeekly: false})
         const playlist = await Playlist.find({}, {likes:1 ,views: 1, nominate: 1 });
         playlist.sort(function(a, b) {
             if((a.likes.length+Math.sqrt(a.views))/Math.pow(a.nominate+1,2)  > (b.likes.length+Math.sqrt(b.views))/Math.pow(b.nominate+1,2))  return -1;
@@ -30,7 +31,7 @@ router.post('/WeekPlaylist', async(req, res) => {
         selected.forEach(async (item, index) => {
             try{
                 Weekly.playlist.push(item._id)
-                await Playlist.findOneAndUpdate({ _id:item._id }, {$inc: { nominate:1 }});
+                await Playlist.findOneAndUpdate({ _id:item._id }, {$inc: { nominate:1 }, $set: { isWeekly: true}});
                 if(index == selected.length-1){
                     await Weekly.save();
                     res.send(Weekly);

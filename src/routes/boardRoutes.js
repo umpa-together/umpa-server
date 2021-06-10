@@ -88,7 +88,7 @@ router.get('/getPopularBoard', async (req, res) => {
         if(a.pick.length  < b.pick.length) return 1;
         return 0;
     })
-    res.send(board);
+    res.send(board.slice(0,60));
 });
 
 router.get('/getCurrentBoard/:boardId', async(req, res) => {

@@ -52,6 +52,21 @@ router.get('/googleIdToken/:email/:id', async (req, res) => {
     }
 })
 
+router.get('/appleIdToken/:email/:id', async (req, res) => {
+    const user = await User.findOne({email: req.params.email});
+    if(user == null){
+        res.send([false, req.params.email, req.params.id]);
+    }else{
+        try{
+            await user.comparePassword(req.params.id.toString());
+            const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+            res.send([token, req.params.email, req.params.id]);
+        } catch (err) {
+            return res.status(422).send({ error: 'Invalid password or email' });
+        }
+
+    }
+})
 router.get('/kakaoInfo/:token', async (req, res) => {
     let kakaoOption = {
         url : "https://kapi.kakao.com/v2/user/me",

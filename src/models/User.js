@@ -72,7 +72,7 @@ const userSchema = new mongoose.Schema({
     },
     boardGuide: {
         type: Boolean,
-        default: true,
+        default: false,
     },
     createGuide: {
         type: Boolean,

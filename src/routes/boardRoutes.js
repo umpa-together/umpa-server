@@ -44,9 +44,8 @@ router.post('/createBoard', async (req, res) => {
     var newDate = new Date()
     var time = newDate.toFormat('YYYY/MM/DD HH24:MI:SS');
     try{
-        const board = Board({ name, introduction, genre, time, email: req.user.email, creatorId: req.user._id });
+        const board = await new Board({ name, introduction, genre, time, email: req.user.email, creatorId: req.user._id }).save();
         res.send(board);
-        board.save();
     }catch (err) {
         return res.status(422).send(err.message);
     }
@@ -181,6 +180,7 @@ router.delete('/deleteContent/:contentId/:boardId', async (req, res) => {
             }
         }
         res.send(contents);
+        await Notice.deleteMany({ boardcontent: req.params.contentId });
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -366,7 +366,6 @@ router.delete('/deleteScrabContent/:id', async (req, res) => {
 
 router.get('/getCurrentContent/:id', async(req, res) => {
     try{
-        //const [currentContent, currentComment, currentReComment] = await Promise.all([Content.find({_id: req.params.id}).populate('postUserId'),  Comment.find({'contentId': req.params.id}).limit(20).populate('postUserId'), ReComment.find({contentId: req.params.id}).populate('postUserId')]);
         const [currentContent, currentComment, currentReComment] = await Promise.all([Content.find({_id: req.params.id}).populate('postUserId'),  Comment.find({'contentId': req.params.id}).populate('postUserId'), ReComment.find({contentId: req.params.id}).populate('postUserId')]);
         
         if(currentContent.length == 0){
@@ -481,7 +480,6 @@ router.post('/createComment', async (req, res) => {
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
         const newComment = await new Comment({ contentId, comment, time, postUser: req.user.name, postUserId: req.user._id }).save();
-        //const currentContent = await Content.findOneAndUpdate({_id: contentId}, {$push: {comments: req.user._id}}, {new: true}).populate('postUserId');
         const [currentContent, currentComment, reComment] = await Promise.all([Content.findOneAndUpdate({_id: contentId}, {$push: {comments: req.user._id}}, {new: true}).populate('postUserId'),Comment.find({'contentId': contentId}).limit(20).populate('postUserId'), ReComment.find({contentId:contentId}).populate('postUserId')])
         const nowTime = new Date();
         const contentTime = new Date(currentContent.time);
@@ -548,7 +546,6 @@ router.post('/createComment', async (req, res) => {
         }
 
         res.send([currentContent, currentComment]);
-        //newComment.save(); 
         if(currentContent.postUserId._id.toString() != req.user._id.toString()){
             try {
                 const notice = new Notice({ noticinguser:req.user._id, noticieduser:currentContent.postUserId, noticetype:'bcom', time, board:currentContent.boardId, boardcontent:currentContent._id, boardcomment: mongoose.Types.ObjectId(newComment._id) });
@@ -583,8 +580,9 @@ router.post('/createComment', async (req, res) => {
 router.delete('/deleteComment/:contentId/:commentId', async (req, res) => {    
     try {
         const [currentContent, c, reComment] = await Promise.all([Content.find({_id: req.params.contentId}).populate('postUserId'), Comment.findOneAndUpdate({_id: req.params.commentId}, {$set: {isDeleted: true}}, {new: true}), ReComment.find({contentId: req.params.contentId}).populate('postUserId')]);
-        //await Comment.findOneAndUpdate({_id: req.params.commentId}, {$set: {isDeleted: true}}, {new: true});
-        //let currentContent = await Content.findOne({_id: req.params.contentId});
+        currentContent[0].comments.splice(currentContent[0].comments.findIndex(element => element == req.user_id), 1);
+        await currentContent[0].save();
+
         const nowTime = new Date();
         const commentTime = new Date(currentContent[0].time);
         const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
@@ -604,8 +602,7 @@ router.delete('/deleteComment/:contentId/:commentId', async (req, res) => {
                 }
             }        
         }
-        
-        currentContent[0].comments.splice(currentContent[0].comments.findIndex(element => element == req.user_id), 1);
+
         const currentComment = await Comment.find({contentId: req.params.contentId}).populate('postUserId');
         for(let key in currentComment){
             const commentTime = new Date(currentComment[key].time);
@@ -654,7 +651,6 @@ router.delete('/deleteComment/:contentId/:commentId', async (req, res) => {
         }
         res.send([currentContent[0], currentComment]);
         await Notice.findOneAndDelete({$and: [{ board:currentContent[0].boardId }, { noticetype:'bcom' }, { noticinguser:req.user._id }, { boardcontent:currentContent[0]._id }, { boardcomment:req.params.commentId }]});
-        currentContent[0].save();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -667,9 +663,6 @@ router.post('/createReComment', async (req, res) => {
     try {
         const newReComment = await new ReComment({postUserId: req.user._id, comment, time, parentId: commentId, contentId: contentId}).save();
         const [parentComment, c, reComment] = await Promise.all([Comment.findOne({ _id: commentId }), Content.findOneAndUpdate({_id: contentId}, {$push: {comments: req.user._id}}, {new: true}), ReComment.find({contentId: contentId}).populate('postUserId')]);
-        //parentComment = Comment.findOneAndUpdate({ _id: commentId }, {$push: {comments: newReComment}}, {new:true})
-        //const parentComment = await Comment.findOneAndUpdate({ _id: commentId }, {$push: {comments: newReComment}}, {new:true});
-        //const currentContent = await Content.findOneAndUpdate({_id: contentId}, {$push: {comments: req.user._id}}, {new: true});
         let [currentComment,currentContent] = await Promise.all([Comment.find({contentId: contentId}).populate('postUserId'), Content.find({_id: contentId}).populate('postUserId')]);
 
         const nowTime = new Date();
@@ -771,12 +764,12 @@ router.post('/createReComment', async (req, res) => {
 router.delete('/deleteRecomment/:contentId/:commentId', async (req, res) => {
     try {
         const [targetComment, currentContent] = await Promise.all([ReComment.findOneAndUpdate({ _id: req.params.commentId }, {isDeleted: true}, {new:true}), Content.find({_id: req.params.contentId}).populate('postUserId')]);
-        //const targetComment = await Comment.findOneAndUpdate({ 'comments._id': req.params.commentId }, {$pull: {comments: {_id: req.params.commentId}}}, {new:true});
-        //let currentContent = await Content.findOne({_id: req.params.contentId});
+        currentContent[0].comments.splice(currentContent[0].comments.findIndex(element => element == req.user_id), 1);
+        await currentContent[0].save();
+
         const nowTime = new Date();
         const commentTime = new Date(currentContent[0].time);
         const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
-        
         if (betweenTime < 1){
             currentContent[0]['time'] = '방금전';
         }else if (betweenTime < 60) {
@@ -793,8 +786,6 @@ router.delete('/deleteRecomment/:contentId/:commentId', async (req, res) => {
             }        
         }
 
-
-        currentContent[0].comments.splice(currentContent[0].comments.findIndex(element => element == req.user_id), 1);
         const [currentComment, reComment] = await Promise.all([Comment.find({contentId: req.params.contentId}).populate('postUserId'), ReComment.find({contentId: req.params.contentId}).populate('postUserId')]);
         for(let key in currentComment){
             const commentTime = new Date(currentComment[key].time);
@@ -845,7 +836,6 @@ router.delete('/deleteRecomment/:contentId/:commentId', async (req, res) => {
         
         
         res.send([currentContent[0], currentComment]);
-        currentContent[0].save();
         await Notice.findOneAndDelete({$and: [{ board:currentContent[0].boardId }, { noticetype:'brecom' }, { noticinguser:req.user._id }, { boardcontent:currentContent[0]._id }, { boardrecomment : req.params.commentId }]});
     } catch (err) {
         return res.status(422).send(err.message);
@@ -859,8 +849,6 @@ router.post('/likeComment', async (req, res) => {
     try {
         const targetComment = await Comment.findOneAndUpdate({'_id': commentId}, {$push: {'likes': req.user._id}}, {new:true});
         const [currentComment, currentContent, reComment] = await Promise.all([Comment.find({contentId: contentId}).populate('postUserId'), Content.findOne({_id:contentId}), ReComment.find({contentId: contentId}).populate('postUserId')]);
-        //const currentComment = await Comment.find({contentId: contentId});
-        //const currentContent = await Content.findOne({_id:contentId});
         const nowTime = new Date();
         for(let key in currentComment){
             const commentTime = new Date(currentComment[key].time);
@@ -948,8 +936,6 @@ router.post('/unlikeComment', async (req, res) => {
     try {
         const targetComment = await Comment.findOneAndUpdate({'_id': commentId}, {$pull: {'likes': req.user._id}}, {new:true});
         const [currentComment, currentContent, reComment] = await Promise.all([Comment.find({contentId: contentId}).populate('postUserId'), Content.findOne({_id:contentId}), ReComment.find({contentId: contentId}).populate('postUserId')]);
-        //const currentComment = await Comment.find({contentId: contentId});
-        //const currentContent = await Content.findOne({_id:contentId});
         const nowTime = new Date();
         for(let key in currentComment){
             const commentTime = new Date(currentComment[key].time);
@@ -1011,13 +997,7 @@ router.post('/likeRecomment', async (req, res) => {
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
         await ReComment.findOneAndUpdate({_id: commentId}, {$push: {likes: req.user._id}}, {new: true});
-        //const [targetComment, currentComment, reComment, currentContent] = await Promise.all([Comment.find({'comments._id': commentId}, {'comments.$': 1}), Comment.find({contentId: contentId}).populate('postUserId'), ReComment.find({contentId:contentId}).populate('postUserId'), Content.findOne({_id:contentId})]);
         const [targetComment, currentComment, reComment, currentContent] = await Promise.all([ReComment.findOne({_id: commentId}), Comment.find({contentId: contentId}).populate('postUserId'), ReComment.find({contentId:contentId}).populate('postUserId'), Content.findOne({_id:contentId})]);
-        
-        //const targetComment = await Comment.find({'comments._id': commentId}, {'comments.$': 1})
-        //const currentComment = await Comment.find({contentId: contentId});
-        //const currentContent = await Content.findOne({_id:contentId});
-        
         const nowTime = new Date();
         for(let key in currentComment){
             const commentTime = new Date(currentComment[key].time);
@@ -1103,9 +1083,6 @@ router.post('/unlikeRecomment', async (req, res) => {
     try {
         await ReComment.findOneAndUpdate({_id: commentId}, {$pull: {likes: req.user._id}}, {new: true});
         const [targetComment, currentComment, reComment, currentContent] = await Promise.all([Comment.find({'comments._id': commentId}, {'comments.$': 1}), Comment.find({contentId: contentId}).populate('postUserId'), ReComment.find({contentId:contentId}).populate('postUserId'), Content.findOne({_id:contentId})]);
-        //const targetComment = await Comment.find({'comments._id': commentId}, {'comments.$': 1})
-        //const currentComment = await Comment.find({contentId: contentId});
-        //const currentContent = await Content.findOne({_id:contentId});
         
         const nowTime = new Date();
         for(let key in currentComment){

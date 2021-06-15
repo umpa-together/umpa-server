@@ -38,8 +38,8 @@ router.get('/searchSongOrArtist/:id', async (req, res) => {
 
 router.get('/searchHashtag/:object', async (req, res) => {
     try {
-        const playList = await Hashtag.find({hashtag :req.params.object}).populate('playlistId');
-        res.send(playList.playlistId);
+        const playList = await Hashtag.findOne({hashtag :req.params.object}).populate('playlistId');
+        res.send(playList);
     } catch (err) {
         return res.status(422).send(err.message);
     }

@@ -61,8 +61,8 @@ router.get('/recommendDJ', async (req, res) => {
             if(a.score < b.score) return 1;
             return 0;
         });
-        const result = userScore.slice(0, 10);
-        res.send(result);
+        res.send(userScore.filter(item => item.playlist.length >= 2).slice(0,10))
+
     } catch (err) {
         return res.status(422).send(err.message);
     }

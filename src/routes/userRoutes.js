@@ -108,9 +108,9 @@ router.post('/follow/:id', async(req,res) =>{
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
   try{
-    const result = await User.findOneAndUpdate({_id: req.params.id}, {$push : { follower : req.user._id }}, {new:true}).populate('follower').populate('following');
+    const result = await User.findOneAndUpdate({_id: req.params.id}, {$push : { follower : req.user._id }}, {upsert:true}).populate('follower').populate('following');
     res.send(result);
-    await User.findOneAndUpdate({_id: req.user._id}, {$push : {following : req.params.id}}, {new:true});
+    await User.findOneAndUpdate({_id: req.user._id}, {$push : {following : req.params.id}}, {upsert:true});
     const notice  = new Notice({ noticinguser:req.user._id, noticieduser:result._id, noticetype:'follow', time });
     notice.save();
 
@@ -291,7 +291,7 @@ router.get('/OtherStory', async (req, res) => {
       for(let key in data[0].following){
         const user = data[0].following[key];
         if(user.todaySong != undefined){
-          if(user.todaySong[user.todaySong.length-1].time == time){
+          if(user.todaySong.length!=0 && user.todaySong[user.todaySong.length-1].time == time){
             let storyUser = {'id': user._id, 'name': user.name, 'profileImage': user.profileImage, 'song': user.todaySong[user.todaySong.length-1] };
             if(user.todaySong[user.todaySong.length-1].view.map(u => u._id.toString()).includes(req.user._id.toString())){
               readUser.push(storyUser);

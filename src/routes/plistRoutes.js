@@ -108,7 +108,7 @@ router.post('/editPlaylist', async (req, res) => {
                 await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$set : {time :time}, $push : {playlistId : playlistId} } );   
             }
         }
-        await Playlist.findOneAndUpdate({_id: playlistId}, {$set: {title, textcontent, songs, hashtag, time}})
+        await Playlist.findOneAndUpdate({_id: playlistId}, {$set: {title, textcontent, songs, hashtag}})
         res.send(playlist)
     } catch (err) {
         return res.status(422).send(err.message);

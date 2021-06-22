@@ -78,6 +78,9 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    myPlaylists: [{
+        type: Object
+    }]
 });
 
 userSchema.pre('save', function(next){

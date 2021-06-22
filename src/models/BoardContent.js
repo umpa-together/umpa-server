@@ -40,6 +40,9 @@ const contentSchema = new mongoose.Schema({
     isDeleted: {
         type: Boolean,
         default: false,
+    },
+    song: {
+        type: Object
     }
 });
 

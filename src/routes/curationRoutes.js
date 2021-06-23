@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Curation = mongoose.model('Curation');
 const Curationpost = mongoose.model('CurationPost');
+const Curationpostcomment = mongoose.model('CurationpostComment')
 const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 
@@ -34,11 +35,11 @@ router.get('/curationposts/:page', async (req, res) => {
 
 //post Curation
 router.post('/curationpost/:id', async (req, res) =>{
-    const { isSong, object, textcontent,  hidden } = req.body;
+    const { isSong, object, textcontent,  hidden, anonymous } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
-        const curationpost = new Curationpost({ isSong, object, hidden , postUser: req.user.name, postUserId: req.user._id, time, textcontent, songoralbumid:req.params.id });
+        const curationpost = new Curationpost({ isSong, object, hidden , postUser: req.user.name, postUserId: req.user._id, time, textcontent, songoralbumid:req.params.id,anonymous  });
         curationpost.save();
 
         const curation = await Curation.findOneAndUpdate({ songoralbumid:req.params.id }, {$push: { participate:req.user._id }},  {new:true});
@@ -53,11 +54,11 @@ router.post('/curationpost/:id', async (req, res) =>{
 
 //editCuration
 router.put('/curationpost/:id', async (req, res) =>{
-    const { textcontent, hidden } = req.body;
+    const { textcontent, hidden,anonymous  } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
-        const temp = await Curationpost.findOneAndUpdate({ _id:req.params.id }, {$set: { textcontent:textcontent,time:time,hidden:hidden}},  {returnNewDocument: true }).populate('postUserId');
+        const temp = await Curationpost.findOneAndUpdate({ _id:req.params.id }, {$set: { textcontent:textcontent,time:time,hidden:hidden, anonymous:anonymous }},  {returnNewDocument: true }).populate('postUserId');
         console.log(temp);
         const curationposts = await Curationpost.find({songoralbumid:temp.songoralbumid}).populate('postUserId');
         res.send( [temp, curationposts] );
@@ -71,7 +72,7 @@ router.put('/curationpost/:id', async (req, res) =>{
 router.delete('/curationpost/:id', async (req, res) =>{
     try {
         const curationpost = await Curationpost.findOneAndDelete({_id:req.params.id});
-        const [curationposts, curation] = await Promise.all([Curationpost.find({songoralbumid:curationpost.songoralbumid}).populate('postUserId'), Curation.findOneAndUpdate({songoralbumid:curationpost.songoralbumid},{$pull:{participate:curationpost.postUserId}}, {new:true}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{curationposts:curationpost._id}}, {new:true})]);
+        const [curationposts, curation,c] = await Promise.all([Curationpost.find({songoralbumid:curationpost.songoralbumid}).populate('postUserId'), Curation.findOneAndUpdate({songoralbumid:curationpost.songoralbumid},{$pull:{participate:curationpost.postUserId}}, {new:true}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{curationposts:curationpost._id}}, {new:true}),Curationpostcomment.deleteMany({curationPostId:req.params.id})]);
         res.send([curation, curationposts]);
         await Notice.deleteMany({ curationpost:req.params.id });
 
@@ -128,6 +129,110 @@ router.delete('/curationpostlike/:id/:songoralbumid', async(req,res) =>{
     }
 });
 
+// add comment
+router.post('/curationcomment/:id', requireAuth, async(req,res) =>{
+    const { text } = req.body;
+    var newDate = new Date()
+    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
+    const nowTime = new Date();
+    try {
+        const newComment = new Curationpostcomment({ curationPostId : req.params.id,  postUserId: req.user._id, text, time });
+        await newComment.save();
+        console.log(newComment);
+        let [curationpost, curationpostcomments]=  await Promise.all([Curationpost.findOneAndUpdate({_id:req.params.id}, {$push: {comments:newComment._id}}, {returnNewDocument: true }).populate('postUserId'), Curationpostcomment.find({$and : [{curationPostId :req.params.id}]}).populate('postUserId')]);
+
+        for(let key in curationpostcomments){
+            const commentTime = new Date(curationpostcomments[key].time);
+            const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
+            if (betweenTime < 1){
+                curationpostcomments[key]['time'] = '방금전';
+            }else if (betweenTime < 60) {
+                curationpostcomments[key]['time'] = `${betweenTime}분전`;
+            }else{
+                const betweenTimeHour = Math.floor(betweenTime / 60);
+                if (betweenTimeHour < 24) {
+                    curationpostcomments[key]['time'] = `${betweenTimeHour}시간전`;
+                }else{
+                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
+                    if (betweenTimeDay < 365) {
+                        curationpostcomments[key]['time'] =  `${betweenTimeDay}일전`;
+                    }
+                }
+            }
+        }
+        res.send([curationpost, curationpostcomments]);
+        if(curationpost.postUserId._id.toString() != req.user._id.toString()){
+            try {
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser : curationpost.postUserId._id, noticetype :'ccom', time,  curationpost :req.params.id, curationpostcomment:newComment._id });
+                notice.save();
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        const targetuser = await User.findOne({_id:curationpost.postUserId._id});
+        if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
+            var message = {
+                notification : {
+                    title: "큐레이션 댓글",
+                    body : req.user.name+'님이 댓글을 달았습니다.',
+                },
+                token : targetuser.noticetoken
+            };
+            try {
+                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+});
+router.delete('/curationcomment/:id/:commentid', async(req,res) =>{
+    try {
+        await Curationpostcomment.deleteMany({_id : req.params.commentid});
+        let [curationpost , b, comments] = await Promise.all( [Curationpost.findOneAndUpdate({_id:req.params.id},{$pull:{comments:req.params.commentid}}, {returnNewDocument: true }).populate('postUserId'), Notice.deleteMany({$and: [{  curationPostId :req.params.id }, { curationpostcomment: req.params.commentid }]}) ,Curationpostcomment.find({curationPostId:req.params.id}).populate('postUserId') ])
+        const nowTime = new Date();
+        for(let key in comments){
+            const commentTime = new Date(comments[key].time);
+            const betweenTime = Math.floor((nowTime.getTime() - commentTime.getTime()) / 1000 / 60);
+            if (betweenTime < 1){
+                comments[key]['time'] = '방금전';
+            }else if (betweenTime < 60) {
+                comments[key]['time'] = `${betweenTime}분전`;
+            }else{
+                const betweenTimeHour = Math.floor(betweenTime / 60);
+                if (betweenTimeHour < 24) {
+                    comments[key]['time'] = `${betweenTimeHour}시간전`;
+                }else{
+                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
+                    if (betweenTimeDay < 365) {
+                        comments[key]['time'] =  `${betweenTimeDay}일전`;
+                    }
+                }
+            }
+        }
+        
+        res.send([curationpost, comments]);
+        await Notice.deleteMany({ curationpostcomment:req.params.commentid });
+
+
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+});
+
+// getcomment
+router.get('/curationcomment/:id', async (req, res) =>{
+    try {
+        const  comments = await Curationpostcomment.find({curationPostId:req.params.id}).populate('postUserId');
+
+        res.send(comments);
+
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+});
 // getCuration
 router.post('/curation/:id', async (req, res) =>{
     const { isSong, object } = req.body;

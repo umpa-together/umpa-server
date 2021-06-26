@@ -144,11 +144,11 @@ router.get('/nextContents/:boardId/:page', async (req, res) => {
 // content
 
 router.post('/createContent', async (req, res) => {
-    const { title, content, boardId } = req.body;
+    const { title, content, boardId, song } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY/MM/DD HH24:MI:SS');
     try {
-        const newContent = await new Content({ title, content, postUser: req.user.name, postUserId: req.user._id, boardId, time }).save();
+        const newContent = await new Content({ title, content, postUser: req.user.name, postUserId: req.user._id, boardId, time, song }).save();
         res.send(newContent);
     } catch (err) {
         return res.status(422).send(err.message);

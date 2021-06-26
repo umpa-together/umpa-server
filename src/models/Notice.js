@@ -41,6 +41,11 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref : 'CurationPost',
     },
+    curationpostcomment:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'CurationpostComment',
+
+    },
     board : {
         type: mongoose.Schema.Types.ObjectId,
         ref : 'Board',
@@ -61,6 +66,7 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref : 'BoardSong',
     }
+
 });
 
 mongoose.model('Notice', noticeSchema);

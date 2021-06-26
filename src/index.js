@@ -7,6 +7,8 @@ require('./models/PlaylistComment');
 require('./models/BoardSong');
 require('./models/Curation');
 require('./models/Curationpost');
+require('./models/CurationpostComment');
+
 require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');

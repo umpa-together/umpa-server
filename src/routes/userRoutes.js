@@ -11,6 +11,7 @@ const User = mongoose.model('User');
 const Content = mongoose.model('boardContent');
 const Song = mongoose.model('BoardSong');
 const Notice = mongoose.model('Notice');
+const Playlist = mongoose.model('Playlist');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -231,6 +232,39 @@ router.get('/getMyBoardSongs', async (req, res) => {
     return res.status(422).send(err.message); 
   }
 });
+
+router.get('/getLikePlaylists', async (req, res) => {
+  try {
+    const playlists = await Playlist.find({likes: {$in : req.user._id}}, {title: 1, hashtag: 1, image: 1, postUserId: 1});
+    res.send(playlists.reverse())
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
+router.post('/addSonginPlaylists', async (req, res) => {
+  const { song } = req.body;
+  var newDate = new Date()
+  var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
+  try {
+    song.time = time;
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$push: {myPlaylists: song}}, {new: true});
+    res.send(user.myPlaylists);
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
+
+router.get('/deleteSonginPlaylists/:time', async (req, res) => {
+  try {
+    const user = await User.findOne({_id: req.user._id});
+    user.myPlaylists = user.myPlaylists.filter((item) => item.time !=req.params.time)
+    res.send(user.myPlaylists)
+    user.save();
+  } catch (err) {
+    return res.status(422).send(err.message); 
+  }
+})
 
 router.post('/Story', async (req, res) => {
   const { song } = req.body;

@@ -68,9 +68,11 @@ router.get('/djHint/:term', async (req, res) => {
     }
 });
 
-router.get('/searchDJ/:songName', async (req, res) => {
+router.get('/searchDJ/:id', async (req, res) => {
     try {
-        const users = await User.find({'songs.attributes.name' : {$regex:`${req.params.songName}`}});
+        //const users = await User.find({'songs.id' : {$regex:`${req.params.id}`}});
+        const users = await User.find({'songs.id' : req.params.id});
+
         const user = users.filter(user => user._id.toString() != req.user._id.toString());
         user.sort(function(a, b){
             if(a.songsView  > b.songsView)  return -1;

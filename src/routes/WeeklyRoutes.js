@@ -14,7 +14,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 // Weekly Playlist
-router.post('/WeeklyPlaylist', async(req, res) => {
+router.post('/WeekPlaylist', async(req, res) => {
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try{
@@ -44,7 +44,7 @@ router.post('/WeeklyPlaylist', async(req, res) => {
     } 
 })
 
-router.get('/WeeklyPlaylist', async(req, res) => {
+router.get('/WeekPlaylist', async(req, res) => {
     try{
         const weekly = await WeeklyPlaylist.find().sort({'time': -1}).limit(1);
         const result = [];
@@ -63,7 +63,7 @@ router.get('/WeeklyPlaylist', async(req, res) => {
 })
 
 // Weekly curation
-router.post('/WeeklyCuration', async(req,res) => {
+router.post('/WeekCuration', async(req,res) => {
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
@@ -97,7 +97,7 @@ router.post('/WeeklyCuration', async(req,res) => {
     }
 });
 
-router.get('/WeeklyCuration', async(req,res) => {
+router.get('/WeekCuration', async(req,res) => {
     try{
         const curations = await WeekCuration.find().populate('curation').sort({'time':-1}).limit(1);
         res.send(curations[0].curation);
@@ -107,7 +107,7 @@ router.get('/WeeklyCuration', async(req,res) => {
 });
 
 // Weekly DJ
-router.post('/WeeklyDJ', async(req,res) => {
+router.post('/WeekDJ', async(req,res) => {
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
@@ -159,7 +159,7 @@ router.post('/WeeklyDJ', async(req,res) => {
     }
 });
 
-router.get('/WeeklyDJ', async(req,res) => {
+router.get('/WeekDJ', async(req,res) => {
     try{
         const weekdj = await WeekDJ.find().populate('DJ').sort({'time':-1}).limit(1);
         res.send(weekdj[0].DJ);

@@ -87,23 +87,9 @@ router.get('/searchDJ/:id', async (req, res) => {
 
 router.get('/currentHashtag', async (req, res) => {
     try {
-        const hashtag = await Hashtag.find().sort( { time: -1 } ).limit(30).populate('playlistId');
-        const resultHashtag = [];
-        for(let key in hashtag){
-            if(hashtag[key].playlistId.length != 0){
-                if(resultHashtag.length != 0 && 
-                    resultHashtag[resultHashtag.length-1].playlistId[resultHashtag[resultHashtag.length-1].playlistId.length-1]._id != hashtag[key].playlistId[hashtag[key].playlistId.length-1]._id){
-                    resultHashtag.push(hashtag[key])
-                }else if(resultHashtag.length == 0){
-                    resultHashtag.push(hashtag[key])
-                }
-            } 
-            if(resultHashtag.length == 10)  break;
-
-            //if(hashtag[key].playlistId.length != 0) resultHashtag.push(hashtag[key])
-            //if(resultHashtag.length == 10)  break;
-        }
-        res.send(resultHashtag);
+        const hashtag = await Hashtag.aggregate([{$sample: { size: 10 }}])
+        const resultHashtag = await Hashtag.populate(hashtag, {path: "playlistId"});
+        res.send(resultHashtag)
     } catch (err) {
         return res.status(422).send(err.message);
     }

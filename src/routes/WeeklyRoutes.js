@@ -268,5 +268,21 @@ router.post('/Weekly', async (req, res) => {
     }
 })
 
+router.get('/recent', async (req, res) => {
+    var nowTime = new Date()
+    try {
+        const playlists = await Playlist.find({"accessedTime": {$exists:true}}, {postUserId: 1, title: 1, accessedTime: 1, image: 1})
+        playlists.sort(function(a, b) {
+            if(nowTime.getTime() - a.accessedTime.getTime() > nowTime.getTime() - b.accessedTime.getTime())  return 1;
+            if(nowTime.getTime() - a.accessedTime.getTime() < nowTime.getTime() - b.accessedTime.getTime())  return -1;
+            return 0;
+        });
+        const result = playlists.slice(0, 10)
+        res.send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);   
+    }
+})
+
 
 module.exports = router;

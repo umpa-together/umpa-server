@@ -31,10 +31,6 @@ const userSchema = new mongoose.Schema({
     boardBookmark: [],
     scrabContent: [],
     songs: [],
-    songsView: {
-        type: Number,
-        default :0,
-    },
     profileImage: {
         type: String,
     },

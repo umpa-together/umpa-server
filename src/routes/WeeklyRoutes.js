@@ -133,7 +133,7 @@ router.post('/WeekDJ', async(req,res) => {
                 curationpost.forEach((object)=>{
                     tempscore = tempscore +object.likes.length;
                 });
-                tempscore = tempscore+item.follower.length+item.songsView;
+                tempscore = tempscore+item.follower.length;
                 await score.push(tempscore/((item.nominate+1)*(item.nominate+1)));
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -238,7 +238,7 @@ router.post('/Weekly', async (req, res) => {
                         curationpost.forEach((object)=>{
                             tempscore = tempscore +object.likes.length;
                         });
-                        tempscore = tempscore+item.follower.length+item.songsView;
+                        tempscore = tempscore+item.follower.length;
                         await score.push(tempscore/((item.nominate+1)*(item.nominate+1)));
                     } catch (err) {
                         return res.status(422).send(err.message);

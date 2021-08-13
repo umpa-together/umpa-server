@@ -93,19 +93,6 @@ router.post('/guide', async (req, res) => {
   }
 })
 
-router.post('/addView', async (req, res) => {
-  const { id } = req.body;
-  try {
-    let user;
-    if(req.user._id != id){
-      user = await User.findOneAndUpdate({_id: id}, {$inc: {songsView: 1}}, {new: true});
-    }
-    res.send(user);
-  } catch (err) {
-    return res.status(422).send(err.message); 
-  }
-});
-
 router.post('/follow/:id', async(req,res) =>{
   var newDate = new Date()
   var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');

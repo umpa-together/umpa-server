@@ -72,13 +72,7 @@ router.get('/searchDJ/:id', async (req, res) => {
     try {
         //const users = await User.find({'songs.id' : {$regex:`${req.params.id}`}});
         const users = await User.find({'songs.id' : req.params.id});
-
         const user = users.filter(user => user._id.toString() != req.user._id.toString());
-        user.sort(function(a, b){
-            if(a.songsView  > b.songsView)  return -1;
-            if(a.songsView  < b.songsView) return 1;
-            return 0;
-        })
         res.send(user);
     } catch (err) {
         return res.status(422).send(err.message);

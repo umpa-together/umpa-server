@@ -9,6 +9,7 @@ const WeekDJ = mongoose.model('WeekDJ');
 const WeekCuration = mongoose.model('WeekCuration');
 const User = mongoose.model('User');
 const Song = mongoose.model('BoardSong');
+const Board = mongoose.model('Board');
 
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
@@ -294,7 +295,12 @@ router.get('/musicArchive', async (req, res) => {
                 songs: {$push: "$song"}
             }
         }])
-        res.send(songs)
+        const archive = await Board.populate(songs, {path: "_id" })
+        archive.sort(() => Math.random() - 0.5)
+        for(let key in archive) {
+            archive[key].songs.sort(() => Math.random() - 0.5)
+        }
+        res.send(archive)
     } catch (err) {
         return res.status(422).send(err.message);   
     }

@@ -8,6 +8,8 @@ const WeeklyPlaylist = mongoose.model('WeeklyPlaylist');
 const WeekDJ = mongoose.model('WeekDJ');
 const WeekCuration = mongoose.model('WeekCuration');
 const User = mongoose.model('User');
+const Song = mongoose.model('BoardSong');
+
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
 const router = express.Router();
@@ -279,6 +281,20 @@ router.get('/recent', async (req, res) => {
         });
         const result = playlists.slice(0, 10)
         res.send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);   
+    }
+})
+
+router.get('/musicArchive', async (req, res) => {
+    try {
+        const songs = await Song.aggregate([{
+            $group: {
+                _id: "$boardId",
+                songs: {$push: "$song"}
+            }
+        }])
+        res.send(songs)
     } catch (err) {
         return res.status(422).send(err.message);   
     }

@@ -31,10 +31,6 @@ const userSchema = new mongoose.Schema({
     boardBookmark: [],
     scrabContent: [],
     songs: [],
-    songsView: {
-        type: Number,
-        default :0,
-    },
     profileImage: {
         type: String,
     },
@@ -43,9 +39,6 @@ const userSchema = new mongoose.Schema({
     },
     todaySong: {
         type: Object
-    },
-    comment: {
-        type: String,
     },
     playlists:[{
         type: mongoose.Schema.Types.ObjectId,
@@ -62,25 +55,12 @@ const userSchema = new mongoose.Schema({
     informationagree:{
         type: Boolean,
     },
-    playlistGuide: {
-        type: Boolean,
-        default: false
-    },
-    curationGuide: {
-        type: Boolean,
-        default: false
-    },
-    boardGuide: {
-        type: Boolean,
-        default: false,
-    },
-    createGuide: {
-        type: Boolean,
-        default: false
-    },
     myPlaylists: [{
         type: Object
-    }]
+    }],
+    accessedTime: {
+        type: Date,
+    }
 });
 
 userSchema.pre('save', function(next){

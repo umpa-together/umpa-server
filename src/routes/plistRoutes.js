@@ -145,9 +145,9 @@ router.get('/playlist/:id/:postUserId', requireAuth, async(req,res) => {
     const nowTime = new Date();
     let playlist, comments;
     if(req.params.postUserId == req.user._id){
-        [playlist , comments] = await Promise.all([Playlist.findOne({_id: req.params.id }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
+        [playlist , comments] = await Promise.all([Playlist.findOneAndUpdate({_id: req.params.id }, {$set: {accessedTime :nowTime}}).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
     }else{
-        [playlist , comments] = await Promise.all([ Playlist.findOneAndUpdate({_id:req.params.id}, {$inc :{views:1 }}, {returnNewDocument: true }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
+        [playlist , comments] = await Promise.all([ Playlist.findOneAndUpdate({_id:req.params.id}, {$inc: {views:1},  $set: {accessedTime :nowTime}}, {returnNewDocument: true }).populate('postUserId'), Comment.find({$and : [{playlistId:req.params.id},{parentcommentId:""}]}).populate('postUserId')])
     }
     for(let key in comments){
         const commentTime = new Date(comments[key].time);

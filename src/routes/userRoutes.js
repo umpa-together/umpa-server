@@ -40,8 +40,9 @@ const upload = multer({
 // Account
 
 router.get('/getMyInfo', async (req, res) => {
+  const nowTime = new Date();
   try {
-    const user = await User.findOne({ _id: req.user._id }).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({ _id: req.user._id }, {$set: {accessedTime :nowTime}}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -67,38 +68,6 @@ router.post('/editProfileImage', upload.single('img'), async (req, res) => {
   const img = req.file.location;
   try {
     const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {profileImage: img}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
-    res.send(user);
-  } catch (err) {
-    return res.status(422).send(err.message); 
-  }
-});
-
-router.post('/guide', async (req, res) => {
-  const { type } = req.body;
-  try {
-    let user;
-    if(type == 'playlist'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'playlistGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
-    }else if(type == 'curation'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'curationGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
-    }else if(type == 'board'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'boardGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
-    }else if(type == 'create'){
-      user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {'createGuide': true}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
-    }
-    res.send(user);
-  } catch (err) {
-    return res.status(422).send(err.message); 
-  }
-})
-
-router.post('/addView', async (req, res) => {
-  const { id } = req.body;
-  try {
-    let user;
-    if(req.user._id != id){
-      user = await User.findOneAndUpdate({_id: id}, {$inc: {songsView: 1}}, {new: true});
-    }
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -139,26 +108,6 @@ router.delete('/follow/:id', async(req,res) =>{
     res.send(result);
     await Promise.all([User.findOneAndUpdate({_id : req.user._id}, {$pull : {following :req.params.id}}, {new:true}), Notice.findOneAndDelete({$and: [{ noticetype:'follow' }, { noticinguser:req.user._id }, { noticieduser:req.params.id }]}) ]);
 
-  }catch(err){
-      return res.status(422).send(err.message);
-  }
-});
-
-router.post('/follower', async(req,res) =>{
-  const { follower } = req.body;
-  try{
-    const result = await User.find({_id: {$in : follower}}).populate('follower');
-    res.send(result);
-  }catch(err){
-      return res.status(422).send(err.message);
-  }
-});
-
-router.post('/following', async(req,res) =>{
-  const { following } = req.body;
-  try{
-    const result = await User.find({_id: {$in : following}}).populate('following');
-    res.send(result);
   }catch(err){
       return res.status(422).send(err.message);
   }

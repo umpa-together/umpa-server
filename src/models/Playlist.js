@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-
 const playlistSchema = new mongoose.Schema({
     postUser : {
         type: String,
@@ -45,6 +44,9 @@ const playlistSchema = new mongoose.Schema({
     isWeekly: {
         type: Boolean,
         default: false
+    },
+    accessedTime: {
+        type: Date,
     }
 });
 

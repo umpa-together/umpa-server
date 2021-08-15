@@ -8,6 +8,9 @@ const WeeklyPlaylist = mongoose.model('WeeklyPlaylist');
 const WeekDJ = mongoose.model('WeekDJ');
 const WeekCuration = mongoose.model('WeekCuration');
 const User = mongoose.model('User');
+const Song = mongoose.model('BoardSong');
+const Board = mongoose.model('Board');
+
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
 const router = express.Router();
@@ -133,7 +136,7 @@ router.post('/WeekDJ', async(req,res) => {
                 curationpost.forEach((object)=>{
                     tempscore = tempscore +object.likes.length;
                 });
-                tempscore = tempscore+item.follower.length+item.songsView;
+                tempscore = tempscore+item.follower.length;
                 await score.push(tempscore/((item.nominate+1)*(item.nominate+1)));
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -238,7 +241,7 @@ router.post('/Weekly', async (req, res) => {
                         curationpost.forEach((object)=>{
                             tempscore = tempscore +object.likes.length;
                         });
-                        tempscore = tempscore+item.follower.length+item.songsView;
+                        tempscore = tempscore+item.follower.length;
                         await score.push(tempscore/((item.nominate+1)*(item.nominate+1)));
                     } catch (err) {
                         return res.status(422).send(err.message);
@@ -265,6 +268,41 @@ router.post('/Weekly', async (req, res) => {
         } catch (err) {
             return res.status(422).send(err.message);
         }
+    }
+})
+
+router.get('/recent', async (req, res) => {
+    var nowTime = new Date()
+    try {
+        const playlists = await Playlist.find({"accessedTime": {$exists:true}}, {postUserId: 1, title: 1, accessedTime: 1, image: 1})
+        playlists.sort(function(a, b) {
+            if(nowTime.getTime() - a.accessedTime.getTime() > nowTime.getTime() - b.accessedTime.getTime())  return 1;
+            if(nowTime.getTime() - a.accessedTime.getTime() < nowTime.getTime() - b.accessedTime.getTime())  return -1;
+            return 0;
+        });
+        const result = playlists.slice(0, 10)
+        res.send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);   
+    }
+})
+
+router.get('/musicArchive', async (req, res) => {
+    try {
+        const songs = await Song.aggregate([{
+            $group: {
+                _id: "$boardId",
+                songs: {$push: "$song"}
+            }
+        }])
+        const archive = await Board.populate(songs, {path: "_id" })
+        archive.sort(() => Math.random() - 0.5)
+        for(let key in archive) {
+            archive[key].songs.sort(() => Math.random() - 0.5)
+        }
+        res.send(archive)
+    } catch (err) {
+        return res.status(422).send(err.message);   
     }
 })
 

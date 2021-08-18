@@ -298,6 +298,8 @@ router.get('/musicArchive', async (req, res) => {
         const archive = await Board.populate(songs, {path: "_id" })
         archive.sort(() => Math.random() - 0.5)
         for(let key in archive) {
+            // except explicit songs
+            archive[key].songs = archive[key].songs.filter((song) => song.attributes.contentRating !== 'explicit')
             archive[key].songs.sort(() => Math.random() - 0.5)
         }
         res.send(archive)

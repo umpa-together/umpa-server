@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Playlist = mongoose.model('Playlist');
 const User = mongoose.model('User');
 const Hashtag = mongoose.model('Hashtag');
+const Daily = mongoose.model('Daily')
 
 const requireAuth = require('../middlewares/requireAuth');
 
@@ -65,12 +66,27 @@ router.get('/searchAll/:id', async (req, res) => {
     }
 })
 
+router.get('/searchHashtagAll/:term', async (req, res) => {
+    try {
+        const hashtag = await Hashtag.findOne({hashtag :req.params.term}).populate('playlistId', {image: 1}).populate('dailyId', {image: 1});
+        const playlists = hashtag.playlistId
+        const daily = hashtag.dailyId
+        const result = {
+            playlists: playlists,
+            daily: daily
+        }
+        res.send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+})
+
 router.get('/hashtagHint/:term', async (req, res) => {
     try {
-        const hint = await Hashtag.find({hashtag: {$regex: `${req.params.term}`}}).populate('playlistId');
+        const hint = await Hashtag.find({hashtag: {$regex: `${req.params.term}`}}).populate('playlistId').populate('dailyId');
         let resultHint = [];
         for(let key in hint){
-            if(hint[key].playlistId.length != 0)    resultHint.push(hint[key])
+            if(hint[key].playlistId.length !== 0 || hint[key].dailyId.length !== 0)    resultHint.push(hint[key])
         }
         res.send(resultHint);
     } catch (err) {

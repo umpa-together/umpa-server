@@ -45,6 +45,25 @@ router.get('/searchHashtag/:object', async (req, res) => {
     }
 });
 
+router.get('/searchAll/:id', async (req, res) => {
+    try {
+        const playlists = await Playlist.find({
+            songs: { $elemMatch: { id: req.params.id }}
+        }, {image: 1})
+        
+        const dj = await User.find({
+            songs: { $elemMatch: { id: req.params.id}}
+        }, {profileImage: 1})
+        
+        const result = {
+            playlists: playlists,
+            dj: dj
+        }
+        res.send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+})
 
 router.get('/hashtagHint/:term', async (req, res) => {
     try {

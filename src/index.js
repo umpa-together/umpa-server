@@ -13,6 +13,8 @@ require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');
 require('./models/Report');
+require('./models/Daily');
+require('./models/DailyComment');
 
 
 const express = require('express');

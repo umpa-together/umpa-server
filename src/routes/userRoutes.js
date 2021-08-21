@@ -40,8 +40,9 @@ const upload = multer({
 // Account
 
 router.get('/getMyInfo', async (req, res) => {
+  const nowTime = new Date();
   try {
-    const user = await User.findOne({ _id: req.user._id }).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({ _id: req.user._id }, {$set: {accessedTime :nowTime}}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 

@@ -80,7 +80,10 @@ const userSchema = new mongoose.Schema({
     },
     myPlaylists: [{
         type: Object
-    }]
+    }],
+    accessedTime: {
+        type: Date,
+    }
 });
 
 userSchema.pre('save', function(next){

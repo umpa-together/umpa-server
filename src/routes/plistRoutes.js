@@ -60,11 +60,11 @@ router.get('/playlists/:page', async (req, res) => {
 
 // add playlist
 router.post('/playlist', requireAuth, async (req, res) =>{
-    const { title, textcontent, songs, hashtag } = req.body;
+    const { title, songs, hashtag } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
-        const playlist = new Playlist({ postUser: req.user.name, postUserId: req.user._id, title, textcontent, time, songs, hashtag });
+        const playlist = new Playlist({ postUser: req.user.name, postUserId: req.user._id, title, time, songs, hashtag });
         res.send(playlist._id);
         hashtag.forEach(async(text) => {
             try{

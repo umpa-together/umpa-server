@@ -50,11 +50,11 @@ router.get('/searchAll/:id', async (req, res) => {
     try {
         const playlists = await Playlist.find({
             songs: { $elemMatch: { id: req.params.id }}
-        }, {image: 1})
+        }, {image: 1, title: 1, hashtag: 1}).populate('postUserId', {name: 1, profileImage: 1})
         
         const dj = await User.find({
             songs: { $elemMatch: { id: req.params.id}}
-        }, {profileImage: 1})
+        }, {profileImage: 1, name: 1, songs: 1})
         
         const result = {
             playlists: playlists,
@@ -68,7 +68,7 @@ router.get('/searchAll/:id', async (req, res) => {
 
 router.get('/searchHashtagAll/:term', async (req, res) => {
     try {
-        const hashtag = await Hashtag.findOne({hashtag :req.params.term}).populate('playlistId', {image: 1}).populate('dailyId', {image: 1});
+        const hashtag = await Hashtag.findOne({hashtag :req.params.term}).populate('playlistId', {image: 1, title: 1, hashtag: 1, postUserId: 1}).populate('dailyId', {image: 1});
         const playlists = hashtag.playlistId
         const daily = hashtag.dailyId
         const result = {
@@ -83,7 +83,7 @@ router.get('/searchHashtagAll/:term', async (req, res) => {
 
 router.get('/hashtagHint/:term', async (req, res) => {
     try {
-        const hint = await Hashtag.find({hashtag: {$regex: `${req.params.term}`}}).populate('playlistId').populate('dailyId');
+        const hint = await Hashtag.find({hashtag: {$regex: `${req.params.term}`}}).populate('playlistId', {_id: 1}).populate('dailyId');
         let resultHint = [];
         for(let key in hint){
             if(hint[key].playlistId.length !== 0 || hint[key].dailyId.length !== 0)    resultHint.push(hint[key])

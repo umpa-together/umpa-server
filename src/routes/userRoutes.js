@@ -55,9 +55,9 @@ router.get('/otheruser/:id', async(req, res) => {
 });
 
 router.post('/editProfile', async(req, res) => {
-  const { name, introduction } = req.body;
+  const { nickName, name, introduction } = req.body;
   try {
-    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: name, introduction: introduction}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: nickName, realName: name, introduction: introduction}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 

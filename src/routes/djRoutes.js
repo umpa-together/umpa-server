@@ -89,69 +89,62 @@ router.post('/editSongs', async (req, res) =>{
     }
 });
 
-router.get('/tmp', async (req, res) => {
-    const users = await User.find({}, {playlists: 1, songs: 1, myPlaylists: 1, profileImage: 1, name: 1}).populate('playlists')
+router.get('/mainRecommend', async (req, res) => {
+    const users = await User.find({ $and: [{_id: {$ne: req.user._id}}, {_id: {$nin: req.user.following}}] }, 
+        { playlists: 1, songs: 1, myPlaylists: 1, profileImage: 1, name: 1, introduction: 1 }).populate('playlists', { image: 1, songs: 1, postUserId: 1 })
     const userScoreLists = []
-    const { playlists, songs, myPlaylists, following } = req.user
+    const { playlists, songs, myPlaylists } = req.user
+    
     const songsId  = songs.map(({ id }) => id ) // score 5
     const myPlaylistsId = myPlaylists.map(({ id }) =>  id ) // score 4
-    let playlistsId = [] // score 3
-
-    for(let key in playlists){
-        const { songs } = await Playlist.findOne({ _id: playlists[key] })
-        playlistsId = playlistsId.concat(songs.map(({ id }) => id))
-    }    
-
+    const playlistsId = [] // score 3
+    playlists.map(({ songs }) => songs.map(({ id }) => playlistsId.push(id)))
+    
     users.forEach((user) => {
-        if(user._id.toString() !== req.user._id.toString()){
-            const { songs, myPlaylists, playlists } = user
-            let userScore = 0
-            const userSongsId = songs.map(({ id }) => id) // score 5 
-            const userMyPlaylistsId = myPlaylists.map(({ id }) => id) // score 4
-            let userPlaylistsId = [] // score 3
-            let userPlaylistsLikeId = []
-            playlists.map(({ songs }) => songs.map(({ id }) => (userPlaylistsId = userPlaylistsId.concat(id))))
-            playlists.map(({ likes }) => (userPlaylistsLikeId = userPlaylistsLikeId.concat(likes)))
-            songsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (25)
-                if(userMyPlaylistsId.includes(id)) userScore += (20)
-                if(userPlaylistsId.includes(id))    userScore += (15)
-            })
-            myPlaylistsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (20)
-                if(userMyPlaylistsId.includes(id)) userScore += (16)
-                if(userPlaylistsId.includes(id))    userScore += (9) 
-            })
-            playlistsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (15) 
-                if(userMyPlaylistsId.includes(id)) userScore += (12)
-                if(userPlaylistsId.includes(id))    userScore += (9) 
-            })
-            userPlaylistsLikeId.filter((id) => {
-                if(id.toString() === req.user._id.toString()) userScore += 15
-            })
-            userScoreLists.push({ name: user.name, score: userScore, id: user._id, playlists: userPlaylistsId.length })
-        }
+        const { songs, myPlaylists, playlists, name, introduction, _id: id, profileImage } = user
+        const userSongsId = songs.map(({ id }) => id) // score 5 
+        const userMyPlaylistsId = myPlaylists.map(({ id }) => id) // score 4
+        let userPlaylistsId = [] // score 3
+        // let userPlaylistsLikeId = []
+        let userScore = 0
+        
+        playlists.map(({ songs }) => songs.map(({ id }) => userPlaylistsId.push(id)))
+        // playlists.map(({ likes }) => userPlaylistsLikeId.push(likes))
+        
+        songsId.filter((id) => {
+            if(userSongsId.includes(id))    userScore += (25)
+            if(userMyPlaylistsId.includes(id)) userScore += (20)
+            if(userPlaylistsId.includes(id))    userScore += (15)
+        })
+        myPlaylistsId.filter((id) => {
+            if(userSongsId.includes(id))    userScore += (20)
+            if(userMyPlaylistsId.includes(id)) userScore += (16)
+            if(userPlaylistsId.includes(id))    userScore += (9) 
+        })
+        playlistsId.filter((id) => {
+            if(userSongsId.includes(id))    userScore += (15) 
+            if(userMyPlaylistsId.includes(id)) userScore += (12)
+            if(userPlaylistsId.includes(id))    userScore += (9) 
+        })
+        // userPlaylistsLikeId.filter((id) => {
+        //     if(id.toString() === req.user._id.toString()) userScore += 15
+        // })
+
+        userScoreLists.push({ score: userScore, playlists: playlists, songs: songs,
+            id: id, name: name, introduction: introduction, profileImage: profileImage })
     })
+
     userScoreLists.sort(function(a, b) {
         if(a.score > b.score) return -1;
         if(a.score < b.score) return 1;
         return 0;
     });
-    let tmp = []
-    let result = []
-    userScoreLists.map((lists) => {
-        if(!following.includes(lists.id))   tmp = tmp.concat(lists)
+    userScoreLists.sort(function(a, b) {
+        if((a.score === 0 && b.score === 0) && (a.playlists.length > b.playlists.length)) return -1;
+        if((a.score === 0 && b.score === 0) && (a.playlists.length < b.playlists.length)) return 1;
+        return 0;
     })
-    while(true){
-        if(result.length === 10)    break
-        const idx = Math.floor(Math.random() * users.length)
-        if( tmp[idx] !== undefined && !result.includes(tmp[idx]) && tmp[idx].playlists > 0 )    result.push(tmp[idx])
-    }
-    console.log('-------------------------------')
-    result.map(({ name }) => console.log(name))
-    console.log('-------------------------------')
-    //console.log(userScoreLists.slice(0,10))
-    res.send(playlistsId)
+
+    res.send(userScoreLists)
 })
 module.exports = router;

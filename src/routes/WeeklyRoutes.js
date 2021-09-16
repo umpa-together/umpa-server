@@ -274,7 +274,7 @@ router.post('/Weekly', async (req, res) => {
 router.get('/recent', async (req, res) => {
     var nowTime = new Date()
     try {
-        const playlists = await Playlist.find({"accessedTime": {$exists:true}}, {postUserId: 1, title: 1, accessedTime: 1, image: 1})
+        const playlists = await Playlist.find({"accessedTime": {$exists:true}}, {postUserId: 1, title: 1, accessedTime: 1, image: 1, hashtag: 1}).populate('postUserId', {name: 1, profileImage: 1})
         playlists.sort(function(a, b) {
             if(nowTime.getTime() - a.accessedTime.getTime() > nowTime.getTime() - b.accessedTime.getTime())  return 1;
             if(nowTime.getTime() - a.accessedTime.getTime() < nowTime.getTime() - b.accessedTime.getTime())  return -1;

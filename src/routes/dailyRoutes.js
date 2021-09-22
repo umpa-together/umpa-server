@@ -66,7 +66,7 @@ router.post('/Daily', requireAuth, async (req, res) =>{
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
-        const daily = new Daily({ postUserId: req.user._id,  textcontent, time, songs, hashtag });
+        const daily = new Daily({ postUserId: req.user._id,  textcontent, time, song:songs, hashtag });
         res.send(daily._id);
         hashtag.forEach(async(text) => {
             try{
@@ -110,7 +110,7 @@ router.post('/editDaily', async (req, res) => {
                 await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$set : {time :time}, $push : {dailyId : DailyId} } );   
             }
         }
-        await Daily.findOneAndUpdate({_id: DailyId}, {$set: { textcontent, songs, hashtag}})
+        await Daily.findOneAndUpdate({_id: DailyId}, {$set: { textcontent, song:songs, hashtag}})
         res.send(daily)
     } catch (err) {
         return res.status(422).send(err.message);

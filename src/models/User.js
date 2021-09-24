@@ -11,13 +11,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    realName: {
-        type: String,
-        unique: true,
-    },
     name: {
         type: String,
         required:true,
+        unique: true,
+    },
+    realName: {
+        type: String,
         unique: true,
     },
     introduction: {
@@ -48,9 +48,9 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Playlist'
     }],
-    curationposts:[{
+    dailys: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'CurationPost'
+        ref: 'Daily'
     }],
     nominate: {
         type: Number,

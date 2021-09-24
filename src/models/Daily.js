@@ -25,7 +25,15 @@ const dailySchema = new mongoose.Schema({
         type: Number,
         default :0,
     },
-    image: [String]
+    image: [String],
+    isWeekly: {
+        type: Boolean,
+        default: false
+    },
+    nominate: {
+        type: Number,
+        default: 0
+    },
 });
 
 mongoose.model('Daily', dailySchema);

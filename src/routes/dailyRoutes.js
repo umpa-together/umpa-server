@@ -82,8 +82,7 @@ router.post('/Daily', requireAuth, async (req, res) =>{
            }
         });
         daily.save();
-        await User.findOneAndUpdate({_id:req.user._id}, {$push:{Dailys:daily._id}}, {new:true})
-
+        await User.findOneAndUpdate({_id:req.user._id}, {$push:{dailys:daily._id}}, {new:true})
     } catch (err) {
         return res.status(422).send(err.message);
     }

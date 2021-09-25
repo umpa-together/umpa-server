@@ -16,7 +16,7 @@ require('./models/Report');
 require('./models/Daily');
 require('./models/DailyComment');
 require('./models/Chat')
-
+require('./models/Feed')
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -34,7 +34,7 @@ const WeeklyRoutes = require('./routes/WeeklyRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const dailyRoutes = require('./routes/dailyRoutes');
 const chatRoutes = require('./routes/chatRoutes');
-
+const feedRoutes = require('./routes/feedRoutes');
 
 const curationRoutes = require('./routes/curationRoutes');
 const requireAuth = require('./middlewares/requireAuth');
@@ -65,6 +65,7 @@ app.use(plistRoutes);
 app.use(boardRoutes);
 app.use(dailyRoutes);
 app.use(chatRoutes);
+app.use(feedRoutes);
 
 mongoose.connect(process.env.mongoUri, {
     useNewUrlParser: true,

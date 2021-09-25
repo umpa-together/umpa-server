@@ -66,7 +66,7 @@ router.post('/Daily', requireAuth, async (req, res) =>{
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
-        const daily = new Daily({ postUserId: req.user._id,  textcontent, time, song:songs, hashtag });
+        const daily = new Daily({ postUserId: req.user._id,  textcontent, time, song:songs[0], hashtag });
         res.send(daily._id);
         hashtag.forEach(async(text) => {
             try{
@@ -82,7 +82,7 @@ router.post('/Daily', requireAuth, async (req, res) =>{
            }
         });
         daily.save();
-        await User.findOneAndUpdate({_id:req.user._id}, {$push:{Dailys:daily._id}}, {new:true})
+        await User.findOneAndUpdate({_id:req.user._id}, {$push:{dailys:daily._id}}, {new:true})
 
     } catch (err) {
         return res.status(422).send(err.message);
@@ -110,7 +110,7 @@ router.post('/editDaily', async (req, res) => {
                 await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$set : {time :time}, $push : {dailyId : DailyId} } );   
             }
         }
-        await Daily.findOneAndUpdate({_id: DailyId}, {$set: { textcontent, song:songs, hashtag}})
+        await Daily.findOneAndUpdate({_id: DailyId}, {$set: { textcontent, song:songs[0], hashtag}})
         res.send(daily)
     } catch (err) {
         return res.status(422).send(err.message);
@@ -131,11 +131,12 @@ router.delete('/Daily/:id', async(req, res) => {
 });
 
 // image Upload
-router.post('/DailyimgUpload', upload.fields([{name: 'img'}, {name: 'DailyId'}]), async (req, res) => {
+router.post('/DailyimgUpload/:id',  upload.fields([{name: 'img'}]), async (req, res) => {
     const img = req.files['img'];
     let imgArr = [];
     if(img != undefined)    img.forEach((item) => imgArr.push(item.location))
-    const { DailyId } = req.body;
+    const DailyId  = req.params.id;
+    console.log(DailyId);
     try {
         const daily  = await Daily.findOneAndUpdate({_id: DailyId}, {$set: {image: imgArr}});
         res.send(daily);
@@ -610,3 +611,4 @@ router.delete('/Dailylikerecomment/:commentid/:id' , async(req,res) =>{
 });
 
 module.exports = router;
+

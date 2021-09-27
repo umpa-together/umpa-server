@@ -11,6 +11,7 @@ const Comment = mongoose.model('DailyComment');
 const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
+const Feed = mongoose.model('Feed');
 
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
@@ -67,6 +68,12 @@ router.post('/Daily', requireAuth, async (req, res) =>{
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
         const daily = new Daily({ postUserId: req.user._id,  textcontent, time, song:songs[0], hashtag });
+        Feed.create({
+            daily: daily._id,
+            time,
+            type: 'daily',
+            postUser: req.user._id
+        })
         res.send(daily._id);
         hashtag.forEach(async(text) => {
             try{
@@ -118,7 +125,13 @@ router.post('/editDaily', async (req, res) => {
 
 router.delete('/Daily/:id', async(req, res) => {
     try {
-        const [daily] = await Promise.all([Daily.findOneAndDelete({_id : req.params.id}), Comment.deleteMany({dailyid : req.params.id}), Notice.deleteMany({daily:req.params.id}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{dailys:req.params.id}}, {new:true}) ]);
+        const [daily] = await Promise.all([
+            Daily.findOneAndDelete({_id : req.params.id}), 
+            Comment.deleteMany({dailyid : req.params.id}), 
+            Notice.deleteMany({daily:req.params.id}),
+            User.findOneAndUpdate({_id:req.user._id}, {$pull:{dailys:req.params.id}}, {new:true}),
+            Feed.deleteOne({ daily: req.params.id })
+        ]);
         const hashtag = daily.hashtag
         for(let key in hashtag){
             await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$pull: {DailyId: req.params.id}})
@@ -135,7 +148,6 @@ router.post('/DailyimgUpload/:id',  upload.fields([{name: 'img'}]), async (req, 
     let imgArr = [];
     if(img != undefined)    img.forEach((item) => imgArr.push(item.location))
     const DailyId  = req.params.id;
-    console.log(DailyId);
     try {
         const daily  = await Daily.findOneAndUpdate({_id: DailyId}, {$set: {image: imgArr}});
         res.send(daily);

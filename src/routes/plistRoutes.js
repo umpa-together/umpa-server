@@ -10,6 +10,7 @@ const Comment = mongoose.model('PlaylistComment');
 const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
+const Feed = mongoose.model('Feed');
 
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
@@ -65,6 +66,12 @@ router.post('/playlist', requireAuth, async (req, res) =>{
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {
         const playlist = new Playlist({ postUser: req.user.name, postUserId: req.user._id, title, time, songs, hashtag });
+        Feed.create({
+            playlist: playlist._id,
+            time,
+            type: 'playlist',
+            postUser: req.user._id
+        })
         res.send(playlist._id);
         hashtag.forEach(async(text) => {
             try{
@@ -117,7 +124,13 @@ router.post('/editPlaylist', async (req, res) => {
 
 router.delete('/playlist/:id', async(req, res) => {
     try {
-        const [playlist] = await Promise.all([Playlist.findOneAndDelete({_id : req.params.id}), Comment.deleteMany({playlistid : req.params.id}), Notice.deleteMany({playlist:req.params.id}),User.findOneAndUpdate({_id:req.user._id}, {$pull:{playlists:req.params.id}}, {new:true}) ]);
+        const [playlist] = await Promise.all([
+            Playlist.findOneAndDelete({_id : req.params.id}), 
+            Comment.deleteMany({playlistid : req.params.id}), 
+            Notice.deleteMany({playlist:req.params.id}),
+            User.findOneAndUpdate({_id:req.user._id}, {$pull:{playlists:req.params.id}}, {new:true}),
+            Feed.deleteOne({ playlist: req.params.id})
+        ]);
         const hashtag = playlist.hashtag
         for(let key in hashtag){
             await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$pull: {playlistId: req.params.id}})

@@ -30,6 +30,14 @@ const WeeklyDJSchema = new mongoose.Schema({
     },
 });
 
+const WeeklyDailySchema = new mongoose.Schema({
+    daily:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Daily'
+    }]
+})
+
 mongoose.model('WeeklyPlaylist', weeklyPlaylistSchema);
 mongoose.model('WeekCuration', WeeklyCurationSchema);
 mongoose.model('WeekDJ', WeeklyDJSchema);
+mongoose.model('WeeklyDaily', WeeklyDailySchema)

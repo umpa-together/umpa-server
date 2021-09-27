@@ -42,7 +42,7 @@ const upload = multer({
 router.get('/getMyInfo', async (req, res) => {
   const nowTime = new Date();
   try {
-    const user = await User.findOneAndUpdate({ _id: req.user._id }, {$set: {accessedTime :nowTime}}).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({ _id: req.user._id }, {$set: {accessedTime :nowTime}}).populate('following').populate('follower').populate('playlists').populate('dailys');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -50,14 +50,14 @@ router.get('/getMyInfo', async (req, res) => {
 });
 
 router.get('/otheruser/:id', async(req, res) => {
-  const user= await User.find({_id : req.params.id}).populate('following').populate('follower').populate('playlists').populate('curationposts');
+  const user= await User.find({_id : req.params.id}).populate('following').populate('follower').populate('playlists').populate('dailys');
   res.send(user[0]);
 });
 
 router.post('/editProfile', async(req, res) => {
   const { nickName, name, introduction } = req.body;
   try {
-    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: nickName, realName: name, introduction: introduction}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {name: nickName, realName: name, introduction: introduction}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('dailys');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 
@@ -67,7 +67,7 @@ router.post('/editProfile', async(req, res) => {
 router.post('/editProfileImage', upload.single('img'), async (req, res) => {
   const img = req.file.location;
   try {
-    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {profileImage: img}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('curationposts');
+    const user = await User.findOneAndUpdate({_id: req.user._id}, {$set: {profileImage: img}}, {new: true}).populate('following').populate('follower').populate('playlists').populate('dailys');
     res.send(user);
   } catch (err) {
     return res.status(422).send(err.message); 

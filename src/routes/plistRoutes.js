@@ -49,16 +49,6 @@ router.get('/allPlaylists/:page', async (req, res) => {
     res.send(playlist)
 })
 
-router.get('/playlists', async(req,res) => {
-    const playlist = await Playlist.find({$or: [{postUserId:{$in:req.user.following}}, {postUserId:req.user._id}]}).populate('postUserId').sort({'time': -1}).limit(20);    
-    res.send(playlist);
-});
-
-router.get('/playlists/:page', async (req, res) => {
-    const playlist = await Playlist.find({$or: [{postUserId:{$in:req.user.following}}, {postUserId:req.user._id}]}).populate('postUserId').sort({'time': -1}).skip(req.params.page*20).limit(20);
-    res.send(playlist)
-})
-
 // add playlist
 router.post('/playlist', requireAuth, async (req, res) =>{
     const { title, songs, hashtag } = req.body;

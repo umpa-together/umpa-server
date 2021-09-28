@@ -104,7 +104,7 @@ router.post('/editDaily', async (req, res) => {
         const prevHashtag = Daily.hashtag;
         
         for(let key in prevHashtag){
-            await Hashtag.findOneAndUpdate({hashtag: prevHashtag[key]}, {$pull: {DailyId: DailyId}})
+            await Hashtag.findOneAndUpdate({hashtag: prevHashtag[key]}, {$pull: {dailyId: DailyId}})
         }
 
         for(let key in hashtag){
@@ -134,7 +134,7 @@ router.delete('/Daily/:id', async(req, res) => {
         ]);
         const hashtag = daily.hashtag
         for(let key in hashtag){
-            await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$pull: {DailyId: req.params.id}})
+            await Hashtag.findOneAndUpdate({hashtag: hashtag[key]}, {$pull: {dailyId: req.params.id}})
         }
         res.send(daily) ;
     } catch (err) {
@@ -222,7 +222,7 @@ router.post('/Dailycomment/:id', requireAuth, async(req,res) =>{
         res.send([daily , comments]);
         if(daily.postUserId._id.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id, noticieduser : daily.postUserId._id, noticetype :'pcom', time, Daily:req.params.id, Dailycomment:newComment._id });
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser : daily.postUserId._id, noticetype :'dcom', time, daily:req.params.id, dailycomment:newComment._id });
                 notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -251,7 +251,7 @@ router.post('/Dailycomment/:id', requireAuth, async(req,res) =>{
 router.delete('/Dailycomment/:id/:commentid', async(req,res) =>{
     try {
         await Comment.deleteMany({$or: [{_id : req.params.commentid}, {parentcommentId:req.params.commentid} ]});
-        let [daily , b, comments] = await Promise.all( [Daily.findOneAndUpdate({_id:req.params.id},{$pull:{comments:req.params.commentid}}, {returnNewDocument: true }).populate('postUserId'), Notice.deleteMany({$and: [{ Daily:req.params.id }, { Dailycomment: req.params.commentid }]}) ,Comment.find({$and : [{dailyId:req.params.id},{parentcommentId:""}]}).populate('postUserId') ])
+        let [daily , b, comments] = await Promise.all( [Daily.findOneAndUpdate({_id:req.params.id},{$pull:{comments:req.params.commentid}}, {returnNewDocument: true }).populate('postUserId'), Notice.deleteMany({$and: [{ daily:req.params.id }, { dailycomment: req.params.commentid }]}) ,Comment.find({$and : [{dailyId:req.params.id},{parentcommentId:""}]}).populate('postUserId') ])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
@@ -313,7 +313,7 @@ router.post('/Dailyrecomment/:id/:commentid', requireAuth, async(req,res) =>{
 
         if(parentcomment.postUserId.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id,  noticieduser:parentcomment.postUserId, noticetype:'precom', time, Daily:req.params.id, Dailycomment:req.params.commentid, Dailyrecomment:comment._id });
+                const notice  = new Notice({ noticinguser:req.user._id,  noticieduser:parentcomment.postUserId, noticetype:'drecom', time, daily:req.params.id, dailycomment:req.params.commentid, dailyrecomment:comment._id });
                 await notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -373,7 +373,7 @@ router.delete('/Dailyrecomment/:commentid', async(req,res) =>{
     try {
         const comment= await Comment.findOneAndDelete({_id : req.params.commentid});
         await Comment.findOneAndUpdate({_id : comment.parentcommentId},{$pull:{recomments:req.params.commentid}})
-        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.deleteMany({$and: [{ Daily:comment.dailyId }, { Dailycomment: mongoose.Types.ObjectId(comment.parentcommentId) }, { Dailyrecomment:comment._id }]})])
+        let [comments] = await Promise.all( [Comment.find({parentcommentId:comment.parentcommentId}).populate('postUserId'), Notice.deleteMany({$and: [{ daily:comment.dailyId }, { dailycomment: mongoose.Types.ObjectId(comment.parentcommentId) }, { dailyrecomment:comment._id }]})])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
@@ -412,7 +412,7 @@ router.post('/Dailylike/:id' , async(req,res) =>{
 
         if(like[0].postUserId._id.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like[0].postUserId, noticetype:'plike', time: noticeTime, Daily:like[0]._id });
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like[0].postUserId, noticetype:'dlike', time: noticeTime, daily:like[0]._id });
                 await notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -440,9 +440,9 @@ router.post('/Dailylike/:id' , async(req,res) =>{
 router.delete('/Dailylike/:id' , async(req,res) =>{
     try{
         await Daily.findOneAndUpdate({_id :req.params.id}, {$pull :{ likes:req.user._id}}, {new :true});
-        let [like] = await Promise.all( [Daily.find({_id :req.params.id}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ daily:req.params.id}, { noticetype:'plike' }, { noticinguser:req.user._id }]}) ])
+        let [like] = await Promise.all( [Daily.find({_id :req.params.id}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ daily:req.params.id}, { noticetype:'dlike' }, { noticinguser:req.user._id }]}) ])
         res.send(like[0]);
-        await Notice.findOneAndDelete({$and: [{ noticinguser:req.user._id }, { daily:req.params.id}, { noticetype:'plike' }]});
+        await Notice.findOneAndDelete({$and: [{ noticinguser:req.user._id }, { daily:req.params.id}, { noticetype:'dlike' }]});
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -477,7 +477,7 @@ router.post('/Dailylikecomment/:Dailyid/:id' , async(req,res) =>{
         res.send(comments);
         if(like.postUserId.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like.postUserId, noticetype:'pcomlike', time, Daily:req.params.Dailyid, Dailycomment:req.params.id });
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like.postUserId, noticetype:'dcomlike', time, daily:req.params.Dailyid, dailycomment:req.params.id });
                 await notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -507,7 +507,7 @@ router.post('/Dailylikecomment/:Dailyid/:id' , async(req,res) =>{
 router.delete('/Dailylikecomment/:Dailyid/:id' , async(req,res) =>{
     try{
         const like = await Comment.findOneAndUpdate({_id :req.params.id}, {$pull :{ likes:req.user._id}} , {new :true});
-        let [comments] = await Promise.all( [Comment.find({$and : [{dailyId:req.params.Dailyid},{parentcommentId:""}]}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ Daily:req.params.Dailyid }, { Dailycomment: req.params.id }, { noticinguser:req.user._id }, { noticetype:'pcomlike' }, { noticieduser:like.postUserId }]}) ])
+        let [comments] = await Promise.all( [Comment.find({$and : [{dailyId:req.params.Dailyid},{parentcommentId:""}]}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ daily:req.params.Dailyid }, { dailycomment: req.params.id }, { noticinguser:req.user._id }, { noticetype:'dcomlike' }, { noticieduser:like.postUserId }]}) ])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);
@@ -529,7 +529,7 @@ router.delete('/Dailylikecomment/:Dailyid/:id' , async(req,res) =>{
             }
         }
         res.send(comments);
-        await Notice.findOneAndDelete({$and: [{ Daily:req.params.dailyid }, { Dailycomment: req.params.id }, { noticinguser:req.user._id }, { noticetype:'pcomlike' }, { noticieduser:like.postUserId }]});
+        await Notice.findOneAndDelete({$and: [{ daily:req.params.dailyid }, { dailycomment: req.params.id }, { noticinguser:req.user._id }, { noticetype:'dcomlike' }, { noticieduser:like.postUserId }]});
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -565,7 +565,7 @@ router.post('/Dailylikerecomment/:commentid/:id' , async(req,res) =>{
         res.send(comments);
         if(like.postUserId._id.toString() != req.user._id.toString()){
             try {
-                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like.postUserId, noticetype:'precomlike', time, Daily:like.dailyId, Dailycomment:req.params.commentid, Dailyrecomment:like._id });
+                const notice  = new Notice({ noticinguser:req.user._id, noticieduser:like.postUserId, noticetype:'drecomlike', time, daily:like.dailyId, dailycomment:req.params.commentid, dailyrecomment:like._id });
                 await notice.save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -594,7 +594,7 @@ router.post('/Dailylikerecomment/:commentid/:id' , async(req,res) =>{
 router.delete('/Dailylikerecomment/:commentid/:id' , async(req,res) =>{
     try{
         const like =await Comment.findOneAndUpdate({_id :req.params.id}, {$pull :{ likes:req.user._id}} , {new :true});
-        let [comments] = await Promise.all( [Comment.find({parentcommentId:req.params.commentid}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ Daily:like.dailyId }, { Dailycomment: req.params.commentid }, { Dailyrecomment:req.params.id }, { noticinguser:req.user._id }, { noticetype:'precomlike' }, { noticieduser:like.postUserId }]}) ])
+        let [comments] = await Promise.all( [Comment.find({parentcommentId:req.params.commentid}).populate('postUserId'), Notice.findOneAndDelete({$and: [{ daily:like.dailyId }, { dailycomment: req.params.commentid }, { dailyrecomment:req.params.id }, { noticinguser:req.user._id }, { noticetype:'drecomlike' }, { noticieduser:like.postUserId }]}) ])
         const nowTime = new Date();
         for(let key in comments){
             const commentTime = new Date(comments[key].time);

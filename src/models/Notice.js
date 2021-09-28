@@ -37,14 +37,17 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref : 'PlaylistComment',
     },
-    curationpost : {
+    daily : {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'CurationPost',
+        ref : 'Daily',
     },
-    curationpostcomment:{
+    dailycomment : {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'CurationpostComment',
-
+        ref : 'DailyComment',
+    },
+    dailyrecomment : {
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'DailyComment',
     },
     board : {
         type: mongoose.Schema.Types.ObjectId,

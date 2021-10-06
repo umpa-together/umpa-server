@@ -8,19 +8,21 @@ const chatroomSchema = new mongoose.Schema({
     }],
     messages: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Chatmsg',
+        ref: 'ChatMsg',
     }],
-    
-    Rejectperson: [{
-       type:String
+    time: {
+        type : String
+    },
+    rejectPerson: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
     }],
 });
 
 const chatmsgSchema = new mongoose.Schema({
-    chatroomid: {
+    chatroomId: {
         type: mongoose.Schema.Types.ObjectId,
-        
-        ref: 'Chatroom',
+        ref: 'ChatRoom',
     },
     sender: {
         type: mongoose.Schema.Types.ObjectId,
@@ -36,8 +38,7 @@ const chatmsgSchema = new mongoose.Schema({
     time: {
         type : String
     },
-    image: {
-        type: String,
+    object: {
     },
     isRead : {
         type: Boolean,
@@ -49,5 +50,5 @@ const chatmsgSchema = new mongoose.Schema({
     }
 });
 
-mongoose.model('Chatmsg', chatmsgSchema);
-mongoose.model('Chatroom', chatroomSchema);
+mongoose.model('ChatMsg', chatmsgSchema);
+mongoose.model('ChatRoom', chatroomSchema);

@@ -5,10 +5,6 @@ require('./models/BoardComment');
 require('./models/Playlist');
 require('./models/PlaylistComment');
 require('./models/BoardSong');
-require('./models/Curation');
-require('./models/Curationpost');
-require('./models/CurationpostComment');
-
 require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');
@@ -35,28 +31,22 @@ const reportRoutes = require('./routes/reportRoutes');
 const dailyRoutes = require('./routes/dailyRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const feedRoutes = require('./routes/feedRoutes');
-
-const curationRoutes = require('./routes/curationRoutes');
 const requireAuth = require('./middlewares/requireAuth');
-
 const app = express();
-
 const server =require('http').createServer(app);
 const io = require('socket.io')(server);
 
-const Chatroom = mongoose.model('Chatroom');
-const Chatmsg= mongoose.model('Chatmsg');
-const User= mongoose.model('User');
-
+const ChatRoom = mongoose.model('ChatRoom');
+const ChatMsg= mongoose.model('ChatMsg');
+const User = mongoose.model('User');
+var admin = require('firebase-admin');
 
 app.set('io', io);
 app.use(bodyParser.json());
-
 app.use(authRoutes);
 app.use(applemusicRoutes);
 app.use(userRoutes);
 app.use(noticeRoutes);
-app.use(curationRoutes);
 app.use(djRoutes);
 app.use(WeeklyRoutes);
 app.use(reportRoutes);
@@ -87,35 +77,62 @@ app.get('/', requireAuth, (req, res) => {
     res.send(`Your email: ${req.user.email}`);
 });
 
-
 const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
-
     socket.on('joinroom', function(data){
+        console.log(data.room, 'room id is joined')
         socket.join(data.room);
     })
 
-    
     socket.on('chat message', async function(data){
         var newDate = new Date()
         var time = newDate.toFormat('YYYY/MM/DD HH24:MI:SS');
         var chatroom; 
         try{
-          
-            const chatmsg = await Chatmsg({chatroomid:data.room, time, type:data.type, text:data.text, sender: data.id, isRead:false}).save()
-            chatroom = await Chatroom.findOneAndUpdate({_id:data.room}, {$push: {messages:chatmsg}}, {new:true}).populate('messages');
+            const chatmsg = await ChatMsg({
+                chatroomid: data.room, 
+                time, 
+                type: data.type, 
+                text: data.text, 
+                sender: data.id, 
+                isRead:false
+            }).save()
+            chatroom = await ChatRoom.findOneAndUpdate({
+                _id: data.room
+            }, {
+                $push: { messages: chatmsg }, 
+                $set: { time }
+            }, { 
+                new:true 
+            }).populate('messages', {
+                sender: 1, text: 1, time: 1, isRead: 1, type: 1
+            });
+            const targetId = chatroom.participate[0]._id === data.id ? chatroom.participate[1]._id : chatroom.participate[0]._id 
+            const targetuser = await User.findOne({ _id: targetId });
+            if( targetuser.noticetoken != null  && targetuser._id.toString() != data.id.toString()){
+                var message = {
+                    notification : {
+                        title: targetuser.name,
+                        body : data.text,
+                    },
+                    token : targetuser.noticetoken
+                };
+                try {
+                    admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+                } catch (err) {
+                    return res.status(422).send(err.message);
+                }
+            }
         }catch(err){
+            console.log(err)
         }
-
         var room = socket.room = data.room;
         chat.to(room).emit('chat message', chatroom);
     })
 
     socket.on('end', function(data){
         console.log('end');
-
         socket.disconnect();
     })
-
 })
 
 server.listen(3000, () => {

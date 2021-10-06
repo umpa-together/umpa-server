@@ -46,8 +46,11 @@ router.get('/notice', async(req,res) => {
                     notice[key]['time'] = `${betweenTimeHour}시간전`;
                 }else{
                     const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
-                    if (betweenTimeDay < 365) {
+                    if (betweenTimeDay < 30) {
                         notice[key]['time'] =  `${betweenTimeDay}일전`;
+                    } else {
+                        const betweenMonthDay = Math.floor(betweenTime / 60 / 24 / 24);
+                        notice[key]['time'] = `${betweenMonthDay}달전`;
                     }
                 }
             }
@@ -89,8 +92,11 @@ router.get('/nextNotice/:page', async (req, res) => {
                     notice[key]['time'] = `${betweenTimeHour}시간전`;
                 }else{
                     const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
-                    if (betweenTimeDay < 365) {
+                    if (betweenTimeDay < 30) {
                         notice[key]['time'] =  `${betweenTimeDay}일전`;
+                    } else {
+                        const betweenMonthDay = Math.floor(betweenTime / 60 / 24 / 24);
+                        notice[key]['time'] = `${betweenMonthDay}달전`;
                     }
                 }
             }

@@ -93,8 +93,9 @@ const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
                 time, 
                 type: data.type, 
                 text: data.text, 
-                sender: data.id, 
-                isRead:false
+                sender: data.sender, 
+                receiver: data.receiver,
+                isRead:false,
             }).save()
             chatroom = await ChatRoom.findOneAndUpdate({
                 _id: data.room
@@ -106,9 +107,8 @@ const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
             }).populate('messages', {
                 sender: 1, text: 1, time: 1, isRead: 1, type: 1
             });
-            const targetId = chatroom.participate[0]._id === data.id ? chatroom.participate[1]._id : chatroom.participate[0]._id 
-            const targetuser = await User.findOne({ _id: targetId });
-            if( targetuser.noticetoken != null  && targetuser._id.toString() != data.id.toString()){
+            const targetuser = await User.findOne({ _id: data.receiver });
+            if( targetuser.noticetoken != null  && targetuser._id.toString() != data.sender.toString()){
                 var message = {
                     notification : {
                         title: targetuser.name,

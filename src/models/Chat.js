@@ -29,6 +29,11 @@ const chatmsgSchema = new mongoose.Schema({
         required: true,
         ref: 'User',
     },
+    receiver: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User',
+    },
     type : {
         type: String
     },

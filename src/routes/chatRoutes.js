@@ -79,9 +79,9 @@ router.get('/selectedChat/:chatid', async(req,res) => {
             $and : [{
                 chatroomId: req.params.chatid
             },{ 
-                sender: { $ne: req.user._id }
+                receiver: req.user._id
             },{
-                isRead:false
+                isRead: false
             }]
         }, {$set : { isRead: true }});
         const chatroom = await Chatroom.findOne({
@@ -127,6 +127,22 @@ router.post('/unblockchat', async(req,res) => {
         })
         res.send(chatroom);
     }catch(err){
+        return res.status(422).send(err.message);
+    }
+})
+
+router.get('/messages', async(req, res) => {
+    try {
+        const messages = await Chatmsg.countDocuments({
+            $and: [{
+                receiver: req.user._id
+            }, {
+                isRead: false
+            }]
+        })
+        res.send({ messagesNum: messages })
+    } catch (err) {
+        console.log(err.message)
         return res.status(422).send(err.message);
     }
 })

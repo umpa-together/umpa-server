@@ -43,6 +43,39 @@ router.get('/chatList', async(req,res) => {
     }
 })
 
+router.get('/chatList/:page', async (req, res) => {
+    try{
+        const chatlist = await Chatroom.find({
+            participate: { $in: req.user._id }
+        }).populate('messages', {
+            sender: 1, text: 1, time: 1, isRead: 1
+        }).populate('participate', {
+            name: 1, profileImage: 1
+        }).sort({'time': -1}).skip(req.params.page*20).limit(20);
+        const nowTime = new Date();
+        for(let key in chatlist){
+            const chatTime = new Date(chatlist[key].time);
+            const betweenTime = Math.floor((nowTime.getTime() - chatTime.getTime()) / 1000 / 60);
+            if (betweenTime < 1){
+                chatlist[key].time = '방금전';
+            }else if (betweenTime < 60) {
+                chatlist[key].time = `${betweenTime}분전`;
+            }else{
+                const betweenTimeHour = Math.floor(betweenTime / 60);
+                if (betweenTimeHour < 24) {
+                    chatlist[key].time = `${betweenTimeHour}시간전`;
+                }else{
+                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
+                    if (betweenTimeDay < 365) {
+                        chatlist[key].time =  `${betweenTimeDay}일전`;
+                    }
+                }
+            }
+        }
+        res.send(chatlist);
+    }catch(err){
+        return res.status(422).send(err.message);
+    }})
 router.post('/chat', async (req, res) => {
     const { participate } = req.body;
     try {

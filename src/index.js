@@ -89,7 +89,7 @@ const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
         var chatroom; 
         try{
             const chatmsg = await ChatMsg({
-                chatroomid: data.room, 
+                chatroomId: data.room, 
                 time, 
                 type: data.type, 
                 text: data.text, 

@@ -11,12 +11,16 @@ router.use(requireAuth);
 router.get('/chatList', async(req,res) => {
     try{
         const chatlist = await Chatroom.find({
-            participate: { $in: req.user._id }
+            $and: [
+                { participate: { $in: req.user._id } },
+                { "messages.0" : { $exists : true } }
+            ]
         }).populate('messages', {
             sender: 1, text: 1, time: 1, isRead: 1
         }).populate('participate', {
             name: 1, profileImage: 1
         }).sort({'time': -1}).limit(20)
+
         const nowTime = new Date();
         for(let key in chatlist){
             const chatTime = new Date(chatlist[key].time);
@@ -46,7 +50,10 @@ router.get('/chatList', async(req,res) => {
 router.get('/chatList/:page', async (req, res) => {
     try{
         const chatlist = await Chatroom.find({
-            participate: { $in: req.user._id }
+            $and: [
+                { participate: { $in: req.user._id } },
+                { "messages.0" : { $exists : true } }
+            ]
         }).populate('messages', {
             sender: 1, text: 1, time: 1, isRead: 1
         }).populate('participate', {
@@ -75,7 +82,9 @@ router.get('/chatList/:page', async (req, res) => {
         res.send(chatlist);
     }catch(err){
         return res.status(422).send(err.message);
-    }})
+    }
+})
+
 router.post('/chat', async (req, res) => {
     const { participate } = req.body;
     try {

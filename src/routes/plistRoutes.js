@@ -11,7 +11,7 @@ const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
-
+const UserSong = mongoose.model('PlaylistUserSong');
 const requireAuth = require('../middlewares/requireAuth');
 require('date-utils');
 
@@ -601,6 +601,108 @@ router.delete('/likerecomment/:commentid/:id' , async(req,res) =>{
             }
         }
         res.send(comments);
+    }catch(err){
+        return res.status(422).send(err.message);
+    }
+});
+
+router.post('/userSong/:playlistId' , async(req,res) =>{
+    var newDate = new Date()
+    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
+    const { song } = req.body;
+    try {
+        const userSong = new UserSong({
+            playlistId: req.params.playlistId,
+            postUserId: req.user._id,
+            song: song,
+            time,
+        });
+        await userSong.save()
+        const playlist = await Playlist.findOneAndUpdate({ 
+            _id: req.params.playlistId 
+        }, {
+            $push: { 
+                userSongs: userSong._id
+            }
+        }, {
+            new: true
+        })
+        try {
+            const notice = new Notice({
+                noticinguser: req.user._id, 
+                noticieduser: playlist.postUserId, 
+                noticetype:'pusersong', 
+                time, 
+                playlist: req.params.playlistId 
+            });
+            await notice.save();
+        } catch (err) {
+            return res.status(422).send(err.message);
+        }
+        
+        if(playlist.postUserId._id.toString() != req.user._id.toString()){
+            try {
+                const notice  = new Notice({
+                    noticinguser: req.user._id, 
+                    noticieduser: playlist.postUserId, 
+                    noticetype:'pusersong', 
+                    time, 
+                    playlist: req.params.playlistId,
+                    playlistusersong: userSong._id
+                });
+                await notice.save();
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        const targetuser = await User.findOne({
+            _id: playlist.postUserId
+        });
+        if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
+            var message = {
+                notification : {
+                    body : req.user.name+'님이 ' + userSong.song.attributes.artistName + '-' + userSong.song.attributes.name + ' 을 추천했습니다.',
+                },
+                token : targetuser.noticetoken
+            };
+            try {
+                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        res.send(playlist)
+    } catch(err) {
+        return res.status(422).send(err.message);
+    }
+});
+
+router.delete('/userSong/:playlistId/:userSongId' , async(req,res) =>{
+    try{
+        await UserSong.findOneAndDelete({
+            _id: req.params.userSongId
+        })
+        const playlist = await Playlist.findOneAndUpdate({ 
+            _id: req.params.playlistId
+        }, {
+            $pull: { userSongs: mongoose.Types.ObjectId(req.params.userSongId) }
+        }, {
+            new: true
+        })
+        await Notice.findOneAndDelete({
+            $and: [{
+                playlist: req.params.playlistId
+            }, {
+                noticinguser: req.user._id
+            }, {
+                noticieduser: playlist.postUserId
+            }, {
+                noticetype: 'pusersong'
+            }, {
+                playlistusersong: req.params.userSongId
+            }]
+        })
+        res.send(playlist);
     }catch(err){
         return res.status(422).send(err.message);
     }

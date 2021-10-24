@@ -4,6 +4,7 @@ require('./models/BoardContent')
 require('./models/BoardComment');
 require('./models/Playlist');
 require('./models/PlaylistComment');
+require('./models/PlaylistUserSong');
 require('./models/BoardSong');
 require('./models/Notice');
 require('./models/Hashtag');

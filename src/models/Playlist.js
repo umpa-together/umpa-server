@@ -43,7 +43,12 @@ const playlistSchema = new mongoose.Schema({
     },
     accessedTime: {
         type: Date,
-    }
+    },
+    userSongs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'PlaylistUserSong',
+    }]
 });
 
 mongoose.model('Playlist', playlistSchema);

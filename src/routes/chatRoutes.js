@@ -174,12 +174,9 @@ router.post('/unblockchat', async(req,res) => {
     }
 })
 router.post('/messages', async(req, res) => {
-
     var newDate = new Date()
     var time = newDate.toFormat('YYYY/MM/DD HH24:MI:SS');
     const { text, receiver } = req.body;
-    console.log(text);
-    console.log(receiver);
     try{
         var chat;
         const check = await Chatroom.findOne({
@@ -223,11 +220,11 @@ router.post('/messages', async(req, res) => {
             sender: 1, text: 1, time: 1, isRead: 1, type: 1, song:1,
         });
         const targetuser = await User.findOne({ _id: receiver });
-        if( targetuser.noticetoken != null  && targetuser._id.toString() != data.sender.toString()){
+        if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
             var message = {
                 notification : {
                     title: targetuser.name,
-                    body : data.text,
+                    body : text,
                 },
                 token : targetuser.noticetoken
             };
@@ -238,7 +235,6 @@ router.post('/messages', async(req, res) => {
             }
         }
         res.send(chatroom)
-
     }catch(err){
         console.log(err)
     }

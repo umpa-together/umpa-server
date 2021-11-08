@@ -7,9 +7,9 @@ const request = require('request');
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-    const { email, password, name,informationagree  } = req.body;
+    const { email, password, name, informationagree, songs } = req.body;
     try{
-        const user = new User({ email, password, name, informationagree:informationagree });
+        const user = new User({ email, password, name, informationagree, songs });
         await user.save();
         const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
         res.send({ token });

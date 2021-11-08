@@ -52,7 +52,10 @@ const chatmsgSchema = new mongoose.Schema({
     isDeleted: {
         type: Boolean,
         default: false,
-    }
+    },
+    song: {
+        
+    },
 });
 
 mongoose.model('ChatMsg', chatmsgSchema);

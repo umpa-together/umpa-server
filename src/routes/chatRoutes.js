@@ -4,6 +4,7 @@ const requireAuth = require('../middlewares/requireAuth');
 
 const Chatroom = mongoose.model('ChatRoom');
 const Chatmsg= mongoose.model('ChatMsg');
+const User = mongoose.model('User');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -16,7 +17,7 @@ router.get('/chatList', async(req,res) => {
                 { "messages.0" : { $exists : true } }
             ]
         }).populate('messages', {
-            sender: 1, text: 1, time: 1, isRead: 1
+            sender: 1, text: 1, time: 1, isRead: 1, song: 1,
         }).populate('participate', {
             name: 1, profileImage: 1
         }).sort({'time': -1}).limit(20)
@@ -55,7 +56,7 @@ router.get('/chatList/:page', async (req, res) => {
                 { "messages.0" : { $exists : true } }
             ]
         }).populate('messages', {
-            sender: 1, text: 1, time: 1, isRead: 1
+            sender: 1, text: 1, time: 1, isRead: 1, song:1,
         }).populate('participate', {
             name: 1, profileImage: 1
         }).sort({'time': -1}).skip(req.params.page*20).limit(20);
@@ -106,7 +107,7 @@ router.post('/chat', async (req, res) => {
                     { participate: { $in: req.user._id }}
                 ]
             }).populate('messages', {
-                sender: 1, text: 1, time: 1, isRead: 1, type: 1  
+                sender: 1, text: 1, time: 1, isRead: 1, type: 1, song: 1,
             })
             res.send(result)
         }
@@ -129,7 +130,7 @@ router.get('/selectedChat/:chatid', async(req,res) => {
         const chatroom = await Chatroom.findOne({
             _id: req.params.chatid
         }).populate('messages', {
-            sender: 1, text: 1, time: 1, isRead: 1, type: 1
+            sender: 1, text: 1, time: 1, isRead: 1, type: 1, song: 1,
         })
         res.send(chatroom);
     }catch(err){
@@ -147,7 +148,7 @@ router.post('/blockchat', async(req,res) => {
         }, { 
             new: true 
         }).populate('messages', {
-            sender: 1, text: 1, time: 1, isRead: 1, type: 1
+            sender: 1, text: 1, time: 1, isRead: 1, type: 1, song: 1,
         })
         res.send(chatroom);
     }catch(err){
@@ -165,11 +166,81 @@ router.post('/unblockchat', async(req,res) => {
         },{
             new: true
         }).populate('messages', {
-            sender: 1, text: 1, time: 1, isRead: 1, type: 1
+            sender: 1, text: 1, time: 1, isRead: 1, type: 1, song: 1,
         })
         res.send(chatroom);
     }catch(err){
         return res.status(422).send(err.message);
+    }
+})
+router.post('/messages', async(req, res) => {
+
+    var newDate = new Date()
+    var time = newDate.toFormat('YYYY/MM/DD HH24:MI:SS');
+    const { text, receiver } = req.body;
+    console.log(text);
+    console.log(receiver);
+    try{
+        var chat;
+        const check = await Chatroom.findOne({
+            $and: [
+                { participate: { $in: receiver }},
+                { participate: { $in: req.user._id}}
+            ]
+        })
+        if(check == null){
+            chat = await Chatroom({
+                participate: [receiver, req.user._id]
+            }).save()
+        } else {
+            chat = await Chatroom.findOne({
+                $and:[
+                    { participate: { $in: receiver }},
+                    { participate: { $in: req.user._id }}
+                ]
+            }).populate('messages', {
+                sender: 1, text: 1, time: 1, isRead: 1, type: 1, song: 1,
+            })
+        }
+
+        const chatmsg = await Chatmsg({
+            chatroomId: chat._id, 
+            time, 
+            type: 'text', 
+            text: text, 
+            sender: req.user._id, 
+            receiver: receiver,
+            isRead:false,
+        }).save()
+        chatroom = await Chatroom.findOneAndUpdate({
+            _id: chat._id,
+        }, {
+            $push: { messages: chatmsg }, 
+            $set: { time }
+        }, { 
+            new:true 
+        }).populate('messages', {
+            sender: 1, text: 1, time: 1, isRead: 1, type: 1, song:1,
+        });
+        const targetuser = await User.findOne({ _id: receiver });
+        if( targetuser.noticetoken != null  && targetuser._id.toString() != data.sender.toString()){
+            var message = {
+                notification : {
+                    title: targetuser.name,
+                    body : data.text,
+                },
+                token : targetuser.noticetoken
+            };
+            try {
+                admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        res.send(chatroom)
+
+    }catch(err){
+        console.log(err)
     }
 })
 

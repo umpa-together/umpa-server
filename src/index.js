@@ -17,7 +17,6 @@ require('./models/Feed')
 
 const express = require('express');
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
@@ -40,10 +39,12 @@ const io = require('socket.io')(server);
 const ChatRoom = mongoose.model('ChatRoom');
 const ChatMsg= mongoose.model('ChatMsg');
 const User = mongoose.model('User');
-var admin = require('firebase-admin');
+const admin = require('firebase-admin');
 
 app.set('io', io);
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(requireAuth);
 app.use(authRoutes);
 app.use(applemusicRoutes);
 app.use(userRoutes);
@@ -57,6 +58,7 @@ app.use(boardRoutes);
 app.use(dailyRoutes);
 app.use(chatRoutes);
 app.use(feedRoutes);
+
 
 mongoose.connect(process.env.mongoUri, {
     useNewUrlParser: true,
@@ -74,7 +76,7 @@ db.on('error', (err) => {
     console.log('Error connecting to mongo', err);
 });
 
-app.get('/', requireAuth, (req, res) => {
+app.get('/', (req, res) => {
     res.send(`Your email: ${req.user.email}`);
 });
 

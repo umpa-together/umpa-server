@@ -10,12 +10,12 @@ const {
     checkName
 } = require('../controllers/auth')
 
-router.post('/signup', signUp);
-router.post('/signin', signIn);
-router.get('/googleIdToken/:email/:id', googleSignIn)
-router.get('/appleIdToken/:email/:id', appleSignIn)
-router.get('/kakaoInfo/:token', kakaoSignIn);
-router.get('/naverInfo/:token', naverSignIn);
-router.get('/checkName/:name', checkName);
+router.post('/signUp', signUp);
+router.post('/signIn', signIn);
+router.get('/social/google/:email/:id', googleSignIn)
+router.get('/social/apple/:email/:id', appleSignIn)
+router.get('/social/kakao/:token', kakaoSignIn);
+router.get('/social/naver/:token', naverSignIn);
+router.get('/nickName/:name', checkName);
 
 module.exports = router;

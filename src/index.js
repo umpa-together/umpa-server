@@ -44,19 +44,19 @@ const admin = require('firebase-admin');
 app.set('io', io);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(requireAuth);
 app.use(authRoutes);
-app.use(applemusicRoutes);
-app.use(userRoutes);
-app.use(noticeRoutes);
+app.use(requireAuth);
+app.use('/searchMusic', applemusicRoutes);
+app.use('/user', userRoutes);
+app.use('/notice', noticeRoutes);
 app.use(djRoutes);
 app.use(WeeklyRoutes);
 app.use(reportRoutes);
-app.use(searchRoutes);
-app.use(plistRoutes);
+app.use('/search', searchRoutes);
+app.use('/playlist', plistRoutes);
 app.use(boardRoutes);
-app.use(dailyRoutes);
-app.use(chatRoutes);
+app.use('/daily', dailyRoutes);
+app.use('/chat', chatRoutes);
 app.use(feedRoutes);
 
 

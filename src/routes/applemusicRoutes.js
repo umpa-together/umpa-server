@@ -8,10 +8,10 @@ const {
     searchHint 
 } = require('../controllers/appleMusic')
   
-router.get('/search/:songname', searchSong);
-router.get('/searchartist/:artistname', searchArtist);
-router.get('/searchalbum/:albumname', searchAlbum);
-router.get('/searchNext/:next', searchNext);
-router.get('/searchHint/:term', searchHint);
+router.get('/song/:songname', searchSong);
+router.get('/artist/:artistname', searchArtist);
+router.get('/album/:albumname', searchAlbum);
+router.get('/next/:next', searchNext);
+router.get('/hint/:term', searchHint);
 
 module.exports = router;

@@ -8,10 +8,10 @@ const {
     deleteNotice   
 } = require('../controllers/notice')
 
-router.get('/notice', getNotice)
-router.get('/nextNotice/:page', getNextNotice)
-router.put('/notice/:id', readNotice)
+router.get('/', getNotice)
+router.get('/:page', getNextNotice)
+router.put('/:id', readNotice)
 router.put('/setnotice/:noticetoken', setNotice)
-router.put('/deletenotice', deleteNotice)
+router.delete('/', deleteNotice)
 
 module.exports = router;

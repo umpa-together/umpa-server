@@ -11,8 +11,7 @@ const {
 router.get('/WeekPlaylist', getWeeklyPlaylist)
 router.post('/Weekly', createWeekly)
 router.get('/Weekly', getWeekly)
-router.get('/recent', getRecentPlaylist)
-router.get('/musicArchive', getMusicArchive)
-
+router.get('/main/recent', getRecentPlaylist)
+router.get('/main/musicArchive', getMusicArchive)
 
 module.exports = router;

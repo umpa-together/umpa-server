@@ -45,27 +45,26 @@ const upload = multer({
       }
   })
 });
-
-router.get('/allDailys', getAllDailies)
-router.get('/allDailys/:page', getNextAllDailies)
+router.get('/recomment/:commentid', getRecomment)
+router.get('/all', getAllDailies)
+router.get('/all/:page', getNextAllDailies)
 router.get('/Dailys', getDaily)
 router.get('/Dailys/:page', getNextDaily)
-router.post('/Daily', createDaily)
-router.post('/editDaily', editDaily)
-router.delete('/Daily/:id', deleteDaily)
-router.post('/DailyimgUpload/:id', upload.fields([{name: 'img'}]), uploadImage);
-router.get('/Daily/:id/:postUserId', getSelectedDaily)
-router.post('/Dailycomment/:id', createComment)
-router.delete('/Dailycomment/:id/:commentid', deleteComment)
-router.post('/Dailyrecomment/:id/:commentid', createRecomment)
-router.get('/Dailyrecomment/:commentid', getRecomment)
-router.delete('/Dailyrecomment/:commentid', deleteRecomment)
-router.post('/Dailylike/:id', likeDaily)
-router.delete('/Dailylike/:id', unLikeDaily)
-router.post('/Dailylikecomment/:Dailyid/:id', likeComment)
-router.delete('/Dailylikecomment/:Dailyid/:id', unLikeComment)
-router.post('/Dailylikerecomment/:commentid/:id', likeRecomment)
-router.delete('/Dailylikerecomment/:commentid/:id', unLikeRecomment)
+router.post('/', createDaily)
+router.post('/edit', editDaily)
+router.delete('/:id', deleteDaily)
+router.post('/imgUpload/:id', upload.fields([{name: 'img'}]), uploadImage);
+router.get('/:id/:postUserId', getSelectedDaily)
+router.post('/comment/:id', createComment)
+router.delete('/comment/:id/:commentid', deleteComment)
+router.post('/recomment/:id/:commentid', createRecomment)
+router.delete('/recomment/:commentid', deleteRecomment)
+router.post('/like/:id', likeDaily)
+router.delete('/like/:id', unLikeDaily)
+router.post('/likecomment/:Dailyid/:id', likeComment)
+router.delete('/likecomment/:Dailyid/:id', unLikeComment)
+router.post('/likerecomment/:commentid/:id', likeRecomment)
+router.delete('/likerecomment/:commentid/:id', unLikeRecomment)
 
 module.exports = router;
 

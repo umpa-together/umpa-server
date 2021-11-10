@@ -1,5 +1,4 @@
 const express = require('express');
-const requireAuth = require('../middlewares/requireAuth');
 const router = express.Router();
 const { 
     getChatList,
@@ -12,13 +11,13 @@ const {
     getMessages
 } = require('../controllers/chat')
 
-router.get('/chatList', getChatList)
-router.get('/chatList/:page', getNextChatList)
-router.post('/chat', createChat)
-router.get('/selectedChat/:chatid', getSelectedChat)
-router.post('/blockchat', blockChat)
-router.post('/unblockchat', unBlockChat)
 router.post('/messages', sendMessages)
 router.get('/messages', getMessages)
+router.get('/chatList', getChatList)
+router.get('/chatList/:page', getNextChatList)
+router.post('/', createChat)
+router.get('/:chatid', getSelectedChat)
+router.post('/block', blockChat)
+router.post('/unblock', unBlockChat)
 
 module.exports = router;

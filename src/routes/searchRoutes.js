@@ -9,9 +9,9 @@ const {
     getCurrentHashtag
 } = require('../controllers/search')
 
-router.get('/searchHashtag/:object', getHashtag)
-router.get('/searchAll/:id', getAllContents)
-router.get('/searchHashtagAll/:term', getAllContentsWithHashatg)
+router.get('/hashtag/:object', getHashtag)
+router.get('/all/:id', getAllContents)
+router.get('/hashtagAll/:term', getAllContentsWithHashatg)
 router.get('/hashtagHint/:term', getHashtagHint)
 router.get('/djHint/:term', getDJHint)
 router.get('/currentHashtag', getCurrentHashtag)

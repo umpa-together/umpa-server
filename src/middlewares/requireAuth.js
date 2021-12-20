@@ -14,7 +14,11 @@ module.exports = (req, res, next) => {
             return res.status(401).send({ error: 'You must be logged in.' });
         }
         const { userId } = payload;
-        const user = await User.findById(userId).populate('playlists');
+        const user = await User.findById(userId, {
+            _id: 1, name: 1, following: 1, songs: 1
+        }).populate('todaySong', {
+            song: 1, time: 1
+        })
         req.user = user;
         next();
     });

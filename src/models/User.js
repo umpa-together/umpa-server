@@ -18,7 +18,6 @@ const userSchema = new mongoose.Schema({
     },
     realName: {
         type: String,
-        unique: true,
     },
     introduction: {
         type: String,
@@ -32,18 +31,19 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    boardBookmark: [],
-    scrabContent: [],
-    songs: [],
+    songs: [{
+        type: Object
+    }],
     profileImage: {
         type: String,
     },
     noticetoken:{
         type: String,
     },
-    todaySong: {
-        type: Object
-    },
+    todaySong: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'StorySong'
+    }],
     playlists:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Playlist'
@@ -52,10 +52,6 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Daily'
     }],
-    nominate: {
-        type: Number,
-        default: 0
-    },
     informationagree:{
         type: Boolean,
     },

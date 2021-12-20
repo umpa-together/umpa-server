@@ -1,11 +1,7 @@
 require('./models/User');
-require('./models/Board');
-require('./models/BoardContent')
-require('./models/BoardComment');
 require('./models/Playlist');
 require('./models/PlaylistComment');
 require('./models/PlaylistUserSong');
-require('./models/BoardSong');
 require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');
@@ -14,13 +10,15 @@ require('./models/Daily');
 require('./models/DailyComment');
 require('./models/Chat')
 require('./models/Feed')
+require('./models/RelayPlaylist');
+require('./models/RelaySong');
+require('./models/StorySong');
 
 const express = require('express');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
-const boardRoutes = require('./routes/boardRoutes');
 const plistRoutes = require('./routes/plistRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -31,6 +29,8 @@ const reportRoutes = require('./routes/reportRoutes');
 const dailyRoutes = require('./routes/dailyRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const feedRoutes = require('./routes/feedRoutes');
+const relayRoutes = require('./routes/relayRoutes');
+const storyRoutes = require('./routes/storyRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 const app = express();
 const server =require('http').createServer(app);
@@ -54,11 +54,11 @@ app.use(WeeklyRoutes);
 app.use(reportRoutes);
 app.use('/search', searchRoutes);
 app.use('/playlist', plistRoutes);
-app.use(boardRoutes);
 app.use('/daily', dailyRoutes);
 app.use('/chat', chatRoutes);
 app.use(feedRoutes);
-
+app.use('/relay', relayRoutes);
+app.use('/story', storyRoutes);
 
 mongoose.connect(process.env.mongoUri, {
     useNewUrlParser: true,

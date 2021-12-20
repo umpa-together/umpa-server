@@ -3,8 +3,6 @@ const Playlist = mongoose.model('Playlist');
 const Daily = mongoose.model('Daily');
 const WeeklyPlaylist = mongoose.model('WeeklyPlaylist');
 const WeeklyDaily = mongoose.model('WeeklyDaily');
-const Song = mongoose.model('BoardSong');
-const Board = mongoose.model('Board');
 require('date-utils');
 
 const getWeeklyPlaylist = async (req, res) => {
@@ -117,31 +115,31 @@ const getRecentPlaylist = async (req, res) => {
     }
 }
 
-const getMusicArchive = async (req, res) => {
-    try {
-        const songs = await Song.aggregate([{
-            $group: {
-                _id: "$boardId",
-                songs: {$push: {song: "$song", id: "$_id", likes: "$likes", postUser: "$postUserId"}},
-            }
-        }])
-        const archive = await Board.populate(songs, {path: "_id" })
-        archive.sort(() => Math.random() - 0.5)
-        for(let key in archive) {
-            // except explicit songs
-            archive[key].songs = archive[key].songs.filter(({ song }) => song.attributes.contentRating !== 'explicit')
-            archive[key].songs.sort(() => Math.random() - 0.5)
-        }
-        res.send(archive)
-    } catch (err) {
-        return res.status(422).send(err.message);   
-    }
-}
+//const getMusicArchive = async (req, res) => {
+//    try {
+//        const songs = await Song.aggregate([{
+//            $group: {
+//                _id: "$boardId",
+//                songs: {$push: {song: "$song", id: "$_id", likes: "$likes", postUser: "$postUserId"}},
+//            }
+//        }])
+//        const archive = await Board.populate(songs, {path: "_id" })
+//        archive.sort(() => Math.random() - 0.5)
+//        for(let key in archive) {
+//            // except explicit songs
+//            archive[key].songs = archive[key].songs.filter(({ song }) => song.attributes.contentRating !== 'explicit')
+//            archive[key].songs.sort(() => Math.random() - 0.5)
+//        }
+//        res.send(archive)
+//    } catch (err) {
+//        return res.status(422).send(err.message);   
+//    }
+//}
 
 module.exports = {
     getWeeklyPlaylist,
     createWeekly,
     getWeekly,
     getRecentPlaylist,
-    getMusicArchive
+    //getMusicArchive
 }

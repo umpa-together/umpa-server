@@ -27,9 +27,14 @@ const searchSong = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.songs.next;
-            const result = await JSON.parse(body).results.songs.data;
-            res.send([result, next]);
+            const song = await JSON.parse(body).results.songs;
+            if (song !== undefined) {
+                const next = await JSON.parse(body).results.songs.next;
+                const result = await JSON.parse(body).results.songs.data;
+                res.send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.send([[], null]);
+            }
         });
     } catch (err) {
         return res.status(422).send(err.message);
@@ -50,9 +55,14 @@ const searchArtist = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.artists;
-            const result = await JSON.parse(body).results.artists.data;
-            res.send([result,next]);
+            const artist = await JSON.parse(body).results.artists;
+            if (artist !== undefined) {
+                const next = await JSON.parse(body).results.artists.next;
+                const result = await JSON.parse(body).results.artists.data;
+                res.send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.send([[], null]);
+            }
         });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -73,9 +83,14 @@ const searchAlbum = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.albums;
-            const result = await JSON.parse(body).results.albums.data
-            res.send([result,next]);
+            const albums = await JSON.parse(body).results.albums;
+            if (albums !== undefined) {
+                const next = await JSON.parse(body).results.albums.next;
+                const result = await JSON.parse(body).results.albums.data;
+                res.send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.send([[], null]);
+            }
         });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -83,10 +98,11 @@ const searchAlbum = async (req, res) => {
 }
 
 const searchNext = async (req, res) => {
-    const tmp = req.params.next;
+    const kind = req.params.next;
+    let next = '';
     try { 
         let appleOption = {
-            url: 'https://api.music.apple.com/v1/catalog/kr/search?' + tmp,
+            url: 'https://api.music.apple.com/v1/catalog/kr/search?' + kind,
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -96,15 +112,17 @@ const searchNext = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            if(tmp[tmp.length-2] == 'g'){
-                const next = await JSON.parse(body).results.songs.next;
+            if (kind[kind.length-2] == 'g'){
+                next = await JSON.parse(body).results.songs.next;
                 body = await JSON.parse(body).results.songs.data;
-                res.send([body, next]);
-            }else{
-                const next = await JSON.parse(body).results.artists.next;
+            } else if (kind[kind.length-2] == 't') {
+                next = await JSON.parse(body).results.artists.next;
                 body = await JSON.parse(body).results.artists.data;
-                res.send([body, next]);
+            } else {
+                next = await JSON.parse(body).results.albums.next;
+                body = await JSON.parse(body).results.albums.data;
             }
+            res.send([body, next !== undefined ? next.substr(22) : null]);
         });
     } catch (err) {
         return res.status(422).send(err.message);

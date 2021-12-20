@@ -46,7 +46,7 @@ const getNextDaily = async (req, res) => {
 }
 
 const createDaily = async (req, res) => {
-    const {  textcontent, songs, hashtag } = req.body;
+    const { textcontent, songs, hashtag } = req.body;
     var newDate = new Date()
     var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
     try {

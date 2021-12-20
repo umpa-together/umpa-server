@@ -6,7 +6,7 @@ const reportSchema = new mongoose.Schema({
         required: true,
     },
     time: {
-        type: String,
+        type: Date,
     },
     reason: {
         type: String,

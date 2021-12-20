@@ -22,7 +22,7 @@ const noticeSchema = new mongoose.Schema({
         default: false
     },
     time : {
-        type : String,
+        type : Date,
     },
 
     playlist : {

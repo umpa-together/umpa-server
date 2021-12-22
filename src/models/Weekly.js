@@ -1,19 +1,26 @@
 const mongoose = require('mongoose');
 
 const weeklyPlaylistSchema = new mongoose.Schema({
-    playlist: [],
+    playlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Playlist'
+    }],
     time: {
-        type: String,
+        type: Date,
         required: true
     }
 });
 
-const WeeklyDailySchema = new mongoose.Schema({
+const weeklyDailySchema = new mongoose.Schema({
     daily:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Daily'
-    }]
+    }],
+    time: {
+        type: Date,
+        required: true
+    }
 })
 
 mongoose.model('WeeklyPlaylist', weeklyPlaylistSchema);
-mongoose.model('WeeklyDaily', WeeklyDailySchema)
+mongoose.model('WeeklyDaily', weeklyDailySchema)

@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 
 const playlistSchema = new mongoose.Schema({
-    postUser : {
-        type: String,
-        required: true
-    },
     postUserId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -16,7 +12,7 @@ const playlistSchema = new mongoose.Schema({
         required: true
     },
     time: {
-        type : String,
+        type : Date,
     },
     songs : [],
     comments: [{
@@ -25,7 +21,10 @@ const playlistSchema = new mongoose.Schema({
         ref: 'PlaylistComment',
     }],    
     hashtag : [String],
-    likes : [String],
+    likes : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     views : {
         type: Number,
         default :0,

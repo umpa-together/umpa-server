@@ -20,9 +20,12 @@ const commentSchema = new mongoose.Schema({
         required: true
     },
     time: {
-        type: String
+        type: Date
     },
-    likes: [String],
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     recomments: [{
         type: mongoose.Schema.Types.ObjectId,
         required: true,

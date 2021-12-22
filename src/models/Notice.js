@@ -11,7 +11,6 @@ const noticeSchema = new mongoose.Schema({
         required : true,
         ref : 'User',
     },
-
     noticetype : {
         type : String,
         required :true,
@@ -24,7 +23,6 @@ const noticeSchema = new mongoose.Schema({
     time : {
         type : Date,
     },
-
     playlist : {
         type: mongoose.Schema.Types.ObjectId,
         ref : 'Playlist',
@@ -49,27 +47,6 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref : 'DailyComment',
     },
-    board : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref : 'Board',
-    },
-    boardcontent : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref : 'boardContent',
-    },
-    boardcomment : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardComment',
-    },
-    boardrecomment : {
-        type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardReComment',
-    },
-    boardsong: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardSong',
-    }
-
 });
 
 mongoose.model('Notice', noticeSchema);

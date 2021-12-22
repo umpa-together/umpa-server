@@ -1,3 +1,11 @@
+const express = require('express');
+const mongoose = require('mongoose');
+require("dotenv").config()
+const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+const PORT = 3000
+
 require('./models/User');
 require('./models/Playlist');
 require('./models/PlaylistComment');
@@ -14,51 +22,25 @@ require('./models/RelayPlaylist');
 require('./models/RelaySong');
 require('./models/StorySong');
 
-const express = require('express');
-const mongoose = require('mongoose');
-
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
 const plistRoutes = require('./routes/plistRoutes');
 const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require('./routes/userRoutes');
-const djRoutes = require('./routes/djRoutes');
 const noticeRoutes = require('./routes/noticeRoutes');
-const WeeklyRoutes = require('./routes/WeeklyRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const dailyRoutes = require('./routes/dailyRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const feedRoutes = require('./routes/feedRoutes');
 const relayRoutes = require('./routes/relayRoutes');
 const storyRoutes = require('./routes/storyRoutes');
+const mainRoutes = require('./routes/mainRoutes');
 const requireAuth = require('./middlewares/requireAuth');
-const app = express();
-const server =require('http').createServer(app);
-const io = require('socket.io')(server);
 
 const ChatRoom = mongoose.model('ChatRoom');
 const ChatMsg= mongoose.model('ChatMsg');
 const User = mongoose.model('User');
 const admin = require('firebase-admin');
-
-app.set('io', io);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(authRoutes);
-app.use(requireAuth);
-app.use('/searchMusic', applemusicRoutes);
-app.use('/user', userRoutes);
-app.use('/notice', noticeRoutes);
-app.use(djRoutes);
-app.use(WeeklyRoutes);
-app.use(reportRoutes);
-app.use('/search', searchRoutes);
-app.use('/playlist', plistRoutes);
-app.use('/daily', dailyRoutes);
-app.use('/chat', chatRoutes);
-app.use(feedRoutes);
-app.use('/relay', relayRoutes);
-app.use('/story', storyRoutes);
 
 mongoose.connect(process.env.mongoUri, {
     useNewUrlParser: true,
@@ -76,8 +58,26 @@ db.on('error', (err) => {
     console.log('Error connecting to mongo', err);
 });
 
+app.set('io', io);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(authRoutes);
+app.use(requireAuth);
+app.use('/searchMusic', applemusicRoutes);
+app.use('/user', userRoutes);
+app.use('/notice', noticeRoutes);
+app.use('/report', reportRoutes);
+app.use('/search', searchRoutes);
+app.use('/playlist', plistRoutes);
+app.use('/daily', dailyRoutes);
+app.use('/chat', chatRoutes);
+app.use('/feed', feedRoutes);
+app.use('/relay', relayRoutes);
+app.use('/story', storyRoutes);
+app.use('/main', mainRoutes);
+
 app.get('/', (req, res) => {
-    res.send(`Your email: ${req.user.email}`);
+    res.send('Welcome to umpa');
 });
 
 const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
@@ -139,6 +139,6 @@ const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
     })
 })
 
-server.listen(3000, () => {
+server.listen(PORT, () => {
     console.log('Listening on port 3000');
 });

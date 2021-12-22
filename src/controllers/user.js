@@ -5,6 +5,7 @@ const Playlist = mongoose.model('Playlist');
 const admin = require('firebase-admin');
 require('date-utils');
 
+// 내 정보 가져오기
 const getMyInformation = async (req, res) => {
     const nowTime = new Date();
     try {
@@ -28,6 +29,7 @@ const getMyInformation = async (req, res) => {
     }
 }
 
+// 다른 유저 정보 가져오기
 const getOtherInformation = async (req, res) => {
     try {
         const user = await User.findOne({
@@ -45,6 +47,7 @@ const getOtherInformation = async (req, res) => {
     }
 }
 
+// 프로필 정보 변경
 const editProfile = async (req, res) => {
     const { nickName, name, introduction } = req.body;
     try {
@@ -72,6 +75,7 @@ const editProfile = async (req, res) => {
     }
 }
 
+// 프로필 이미지 변경
 const editProfileImage = async (req, res) => {
     const img = req.file.location;
     try {
@@ -95,6 +99,7 @@ const editProfileImage = async (req, res) => {
     }
 }
 
+// 팔로우하기
 const follow = async (req, res) => {
     try {
         if(!JSON.stringify(req.user.following).includes(req.params.id)) {
@@ -159,6 +164,7 @@ const follow = async (req, res) => {
     }
 }
 
+// 언팔로우하기
 const unFollow = async (req, res) => {
     try{
         const user = await User.findOneAndUpdate({
@@ -199,6 +205,57 @@ const unFollow = async (req, res) => {
     }
 }
 
+// userId에 맞는 대표곡 가져오기
+const getRepresentSongs = async (req, res) => {
+    try {
+        const user = await User.findOne({
+            _id: req.params.userId
+        }, {
+            songs: 1
+        });
+        res.status(200).send(user.songs);
+    } catch (err) { 
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 대표곡 설정
+const postRepresentSongs = async (req, res) => {
+    const { songs } = req.body;
+    try {
+        const user = await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $push: {
+                songs: songs
+            }
+        }, {
+            new: true
+        });
+        res.status(200).send(user.songs);
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 대표곡 수정
+const editRepresentSongs = async (req, res) => {
+    const { songs } = req.body;
+    try {
+        const user = await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $set: {
+                songs: songs
+            }
+        }, {
+            new: true
+        });
+        res.status(200).send(user.songs);
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
 
 
 
@@ -243,6 +300,9 @@ module.exports = {
     editProfileImage,
     follow,
     unFollow,
+    getRepresentSongs,
+    postRepresentSongs,
+    editRepresentSongs,
     getLikePlaylists,
     addSongInPlaylist,
     deleteSongInPlaylist,

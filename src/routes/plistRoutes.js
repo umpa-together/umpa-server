@@ -1,70 +1,48 @@
 const express = require('express');
-const multer  = require('multer');
-const multerS3 = require('multer-s3');
-const aws = require('aws-sdk');
 const router = express.Router();
+const upload = require('../middlewares/upload')
 const {
-    getAllPlaylists,
-    getNextAllPlaylists,
-    createPlaylist,
+    changeTime,
+    changeLikes,
+    addPlaylist,
     editPlaylist,
     deletePlaylist,
     uploadImage,
     getSelectedPlaylist,
-    createComment,
+    addComment,
     deleteComment,
-    createRecomment,
+    addreComment,
     getRecomment,
     deleteRecomment,
-    likePlaylist,
-    unLikePlaylist,
-    likeComment,
-    unLikeComment,
-    likeRecomment,
-    unLikeRecomment,
-    createUserSong,
-    deleteUserSong  
+    likesPlaylist,
+    unlikesPlaylist,
+    likescomment,
+    unlikescomment,
+    likesrecomment,
+    unlikesrecomment,
+    //createUserSong,
+    //deleteUserSong  
 } = require('../controllers/playlist')
 
-const s3 = new aws.S3({
-    accessKeyId: process.env.AWS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
-    region: 'ap-northeast-2'
-});
-
-const upload = multer({
-  storage: multerS3({
-      s3,
-      acl: 'public-read',
-      bucket: 'umpa',
-      metadata: function(req, file, cb) {
-          cb(null, { fieldName: file.fieldname });
-      },
-      key: function(req, file, cb) {
-          cb(null, Date.now().toString());
-      }
-  })
-});
-
-router.get('/all', getAllPlaylists)
-router.get('/all/:page', getNextAllPlaylists)
-router.post('/', createPlaylist)
+router.get('/recomment/:commentid', getRecomment)
+router.get('/time', changeTime)
+router.get('/changelikes', changeLikes)
+router.post('/', addPlaylist)
 router.post('/edit', editPlaylist)
 router.delete('/:id', deletePlaylist)
-router.post('/imgUpload', upload.fields([{name: 'img'}, {name: 'playlistId'}]), uploadImage)
+router.post('/imgUpload', upload('playlist/').fields([{name: 'img'}, {name: 'playlistId'}]), uploadImage)
 router.get('/:id/:postUserId', getSelectedPlaylist)
-router.post('/comment/:id', createComment)
+router.post('/comment/:id', addComment)
 router.delete('/comment/:id/:commentid', deleteComment)
-router.get('/recomment/:commentid', getRecomment)
-router.post('/recomment/:id/:commentid', createRecomment)
+router.post('/recomment/:id/:commentid', addreComment)
 router.delete('/recomment/:commentid', deleteRecomment)
-router.post('/like/:id', likePlaylist)
-router.delete('/like/:id', unLikePlaylist)
-router.post('/likecomment/:playlistid/:id', likeComment)
-router.delete('/likecomment/:playlistid/:id', unLikeComment)
-router.post('/likerecomment/:commentid/:id', likeRecomment)
-router.delete('/likerecomment/:commentid/:id', unLikeRecomment)
-router.post('/userSong/:playlistId', createUserSong)
-router.delete('/userSong/:playlistId/:userSongId', deleteUserSong)
+router.post('/like/:id', likesPlaylist)
+router.delete('/like/:id', unlikesPlaylist)
+router.post('/likecomment/:playlistid/:id', likescomment)
+router.delete('/likecomment/:playlistid/:id', unlikescomment)
+router.post('/likerecomment/:commentid/:id', likesrecomment)
+router.delete('/likerecomment/:commentid/:id', unlikesrecomment)
+//router.post('/userSong/:playlistId', createUserSong)
+//router.delete('/userSong/:playlistId/:userSongId', deleteUserSong)
 
 module.exports = router;

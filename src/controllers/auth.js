@@ -8,7 +8,7 @@ const signUp = async (req, res) => {
     try{
         const user = new User({ email, password, name, informationagree, songs });
         await user.save();
-        const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+        const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
         res.send({ token });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -26,7 +26,7 @@ const signIn = async (req, res) => {
     }
     try{
         await user.comparePassword(password);
-        const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+        const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
         res.send({ token });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -40,7 +40,7 @@ const googleSignIn = async (req, res) => {
     }else{
         try{
             await user.comparePassword(req.params.id);
-            const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+            const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
             res.send([token, req.params.email, req.params.id]);
         } catch (err) {
             return res.status(422).send(err.message);
@@ -55,7 +55,7 @@ const appleSignIn = async (req, res) => {
     }else{
         try{
             await user.comparePassword(req.params.id.toString());
-            const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+            const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
             res.send([token, req.params.email, req.params.id]);
         } catch (err) {
             return res.status(422).send(err.message);
@@ -80,7 +80,7 @@ const kakaoSignIn = async (req, res) => {
                     res.send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
                 } else {
                     await user.comparePassword(bodytemp.id.toString());
-                    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+                    const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
                     res.send([token, bodytemp.kakao_account.email, bodytemp.id.toString()])
                 }
             } catch (err) {
@@ -109,7 +109,7 @@ const naverSignIn = async (req, res) => {
                     res.send([false, body.response.email, body.response.id]);
                 }else{
                     await user.comparePassword(body.response.id);
-                    const token = jwt.sign({ userId: user._id }, 'MY_SECRET_KEY');
+                    const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
                     res.send([token, body.response.email, body.response.id]);
                 }
             } catch (err) {

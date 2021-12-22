@@ -3,16 +3,23 @@ const Playlist = mongoose.model('Playlist');
 const Feed = mongoose.model('Feed')
 const Daily = mongoose.model('Daily')
 
-// add playlists, dailys in feed Model
+// 플리, 데일리를 피드 데이터로 만들기
 const AddFeeds = async (req, res) => {
     try {
-        const [playlist, daily] = await Promise.all([Playlist.find({}, { _id: 1, time: 1, postUserId: 1 }), Daily.find({}, { _id: 1, time: 1, postUserId: 1 })])
+        const [playlist, daily] = await Promise.all([
+            Playlist.find({}, { 
+                _id: 1, time: 1, postUserId: 1 
+            }), 
+            Daily.find({}, { 
+                _id: 1, time: 1, postUserId: 1 
+            })
+        ])
         playlist.map((item) => {
             Feed.create({
                 playlist: item._id,
                 time: item.time,
                 type: 'playlist',
-                postUser: item.postUserId
+                postUserId: item.postUserId
             })
         })
         daily.map((item) => {
@@ -20,7 +27,7 @@ const AddFeeds = async (req, res) => {
                 daily: item._id,
                 time: item.time,
                 type: 'daily',
-                postUser: item.postUserId
+                postUserId: item.postUserId
             })
         })
     } catch (err) {
@@ -28,12 +35,81 @@ const AddFeeds = async (req, res) => {
     }
 }
 
-const getFeed = async (req, res) => {
+// 피드 데이터(플리, 데일리) 가져오기(모든 사람들)
+const getFeedWithAll = async (req, res) => {
+    try {
+        const feeds = await Feed.find({}, {
+            playlist: 1, daily: 1, type: 1
+        }).populate({ 
+            path: 'playlist', 
+            select: {
+                title: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, image: 1
+            },
+            populate: {
+                path: 'postUserId',
+                select: {
+                    name: 1, profileImage: 1
+                }
+            }
+        }).populate({
+            path:'daily', 
+            select: { 
+                textcontent: 1, comments: 1, hashtag: 1, likes: 1, image: 1, song: 1
+            },
+            populate: {
+                path: 'postUserId',
+                select: {
+                    name: 1, profileImage: 1
+                }
+            }
+        }).sort({ 'time': -1 }).limit(20)
+        res.status(200).send(feeds)
+    } catch (err) {
+        return res.status(422).send(err.message);   
+    }
+}
+
+// 다음 피드 데이터(플리, 데일리) 가져오기(모든 사람들)
+const getNextFeedWithAll = async (req, res) => {
+    try {
+        const feeds = await Feed.find({}, {
+            playlist: 1, daily: 1, type: 1
+        }).populate({ 
+            path: 'playlist', 
+            select: {
+                title: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, image: 1, song: 1
+            },
+            populate: {
+                path: 'postUserId',
+                select: {
+                    name: 1, profileImage: 1
+                }
+            }
+        }).populate({
+            path:'daily', 
+            select: { 
+                textcontent: 1, comments: 1, hashtag: 1, likes: 1, image: 1 
+            },
+            populate: {
+                path: 'postUserId',
+                select: {
+                    name: 1, profileImage: 1
+                }
+            }
+        }).sort({ 'time': -1 }).skip(20 * req.params.page).limit(20)
+        res.status(200).send(feeds)
+    } catch (err) {
+        return res.status(422).send(err.message);   
+    }
+}
+
+// 피드 데이터(플리, 데일리) 가져오기(팔로우한 사람들)
+const getFeedWithFollowing = async (req, res) => {
     try {
         const feeds = await Feed.find({ 
             $or: [
-                { postUser: { $in: req.user.following } }, 
-                { postUser: req.user._id } 
+                { postUserId: { $in: req.user.following } }, 
+                { postUserId: req.user._id } 
             ]
         }, {
             playlist: 1, daily: 1, type: 1
@@ -48,8 +124,7 @@ const getFeed = async (req, res) => {
                     name: 1, profileImage: 1
                 }
             }
-        })
-        .populate({
+        }).populate({
             path:'daily', 
             select: { 
                 textcontent: 1, comments: 1, hashtag: 1, likes: 1, image: 1, song: 1
@@ -60,20 +135,20 @@ const getFeed = async (req, res) => {
                     name: 1, profileImage: 1
                 }
             }
-        })
-        .sort({ 'time': -1 }).limit(20)
-        res.send(feeds)
+        }).sort({ 'time': -1 }).limit(20)
+        res.status(200).send(feeds)
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
-const getNextFeed = async (req, res) => { 
+// 다음 피드 데이터(플리, 데일리) 가져오기(팔로우한 사람들)
+const getNextFeedWithFollowing = async (req, res) => { 
     try {
         const feeds = await Feed.find({ 
             $or: [
-                { postUser: { $in: req.user.following } }, 
-                { postUser: req.user._id } 
+                { postUserId: { $in: req.user.following } }, 
+                { postUserId: req.user._id } 
             ]
         }, {
             playlist: 1, daily: 1, type: 1
@@ -88,8 +163,7 @@ const getNextFeed = async (req, res) => {
                     name: 1, profileImage: 1
                 }
             }
-        })
-        .populate({
+        }).populate({
             path:'daily', 
             select: { 
                 textcontent: 1, comments: 1, hashtag: 1, likes: 1, image: 1 
@@ -100,9 +174,8 @@ const getNextFeed = async (req, res) => {
                     name: 1, profileImage: 1
                 }
             }
-        })
-        .skip(20 * req.params.page).sort({ 'time': -1 }).limit(20)
-        res.send(feeds)
+        }).sort({ 'time': -1 }).skip(20 * req.params.page).limit(20)
+        res.status(200).send(feeds)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -110,6 +183,8 @@ const getNextFeed = async (req, res) => {
 
 module.exports = {
     AddFeeds,
-    getFeed,
-    getNextFeed
+    getFeedWithAll,
+    getNextFeedWithAll,
+    getFeedWithFollowing,
+    getNextFeedWithFollowing
 }

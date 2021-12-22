@@ -10,10 +10,6 @@ const commentSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
-    postUser : {
-       type: String,
-       required: true
-    },
     postUserId : {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -24,14 +20,16 @@ const commentSchema = new mongoose.Schema({
         required: true
     },
     time: {
-        type: String
+        type: Date
     },
-    likes: [String],
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     recomments: [{
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'PlaylistComment',
-
     }],
 });
 

@@ -17,7 +17,7 @@ const feedSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    postUser: {
+    postUserId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User',

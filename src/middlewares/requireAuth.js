@@ -9,7 +9,7 @@ module.exports = (req, res, next) => {
     }
     // authorization === 'Bearer asdfsgknlfa' -> 'asdfsgknlfa'
     const token = authorization.replace('Bearer ', '');
-    jwt.verify(token, 'MY_SECRET_KEY', async (err, payload) =>{
+    jwt.verify(token, process.env.TOKEN_SECRET, async (err, payload) =>{
         if (err) {
             return res.status(401).send({ error: 'You must be logged in.' });
         }

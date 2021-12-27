@@ -12,10 +12,7 @@ const playlistSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        default: ''
-    },
-    textcontent: {
-        type: String,
+        default: '',
         required: true
     },
     time: {
@@ -28,7 +25,6 @@ const playlistSchema = new mongoose.Schema({
         ref: 'PlaylistComment',
     }],    
     hashtag : [String],
-    
     likes : [String],
     views : {
         type: Number,
@@ -47,7 +43,12 @@ const playlistSchema = new mongoose.Schema({
     },
     accessedTime: {
         type: Date,
-    }
+    },
+    userSongs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'PlaylistUserSong',
+    }]
 });
 
 mongoose.model('Playlist', playlistSchema);

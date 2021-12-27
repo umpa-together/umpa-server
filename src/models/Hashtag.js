@@ -11,6 +11,11 @@ const hashtagSchema = new mongoose.Schema({
         required: true,
         ref: 'Playlist',
     }],
+    dailyId: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'Daily',
+    }],
     time: {
         type: String,
     },

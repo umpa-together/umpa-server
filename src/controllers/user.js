@@ -3,7 +3,6 @@ const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Playlist = mongoose.model('Playlist');
 const admin = require('firebase-admin');
-require('date-utils');
 
 // 내 정보 가져오기
 const getMyInformation = async (req, res) => {

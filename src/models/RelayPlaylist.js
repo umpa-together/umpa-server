@@ -15,10 +15,14 @@ const relayPlaylistSchema = new mongoose.Schema({
     representSong: {
         type: Object
     },
-    views : {
+    views: {
         type: Number,
-        default :0,
+        default: 0,
     },
+    image: {
+        type: String,
+        default: ''
+    }
 });
 
 mongoose.model('RelayPlaylist', relayPlaylistSchema);

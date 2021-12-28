@@ -37,6 +37,8 @@ const getCurrentRelay = async (req, res) => {
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
             if (0 <= betweenTime && betweenTime <= 4) {
+                result.push(item)
+                /*
                 const songs = RelaySong.aggregate([
                     {
                         $match: {
@@ -52,9 +54,11 @@ const getCurrentRelay = async (req, res) => {
                     }
                 ])
                 target.push([item, songs])
+                */
             }
         })
 
+        /*
         for (const item of target) {
             const playlist = item[0]
             const songsLists = item[1]
@@ -78,7 +82,53 @@ const getCurrentRelay = async (req, res) => {
                 })
             })
         }
+        */
         res.status(200).send(result);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+const getSelectedRelay = async (req, res) => {
+    try {
+        const relayPlaylistId = req.params.id;
+        const relayPlaylist = await RelayPlaylist.findOne({
+            _id: relayPlaylistId
+        }, {
+            postUserId: 1, title: 1, createdTime: 1, image: 1
+        });
+        const songs = await RelaySong.aggregate([
+            {
+                $match: {
+                    playlistId: relayPlaylistId
+                }
+            }, 
+            {
+                $project: {
+                    likeCount: { $size: "$like" },
+                    unlikeCount: { $size: "$unlike" },
+                    song: 1,
+                }
+            }
+        ])
+        songs.map((song) => {
+            song.score = song.likeCount / (song.likeCount + song.unlikeCount)
+        })
+        songs.sort(function(a, b)  {
+            if (a.score > b.score) return -1;
+            if (a.score < b.score) return 1;
+            return 0;
+        });
+        songs.map((song) => {
+            delete song.likeCount
+            delete song.unlikeCount
+            delete song.score
+        })
+        const result = {
+            playlist: relayPlaylist,
+            songs: songs.slice(0, 6)
+        }
+        res.status(200).send(result)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -177,6 +227,7 @@ const unlikeRelaySong = async (req, res) =>{
 module.exports = {
     postRelayPlaylist,
     getCurrentRelay,
+    getSelectedRelay,
     postRelaySong,
     getRelaySong,
     likeRelaySong,

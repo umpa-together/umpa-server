@@ -3,6 +3,7 @@ const router = express.Router();
 const upload = require('../middlewares/upload')
 const { 
     changeTime,
+    curationToDaily,
     addDaily,
     editDaily,
     deleteDaily,
@@ -22,6 +23,7 @@ const {
 } = require('../controllers/daily')
 
 router.get('/time', changeTime);
+router.get('/curation', curationToDaily);
 router.get('/recomment/:commentid', getRecomment)
 router.post('/', addDaily)
 router.post('/edit', editDaily)

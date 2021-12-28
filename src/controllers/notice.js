@@ -8,7 +8,7 @@ admin.initializeApp({
     credential : admin.credential.cert(serviceAccount)
 });
 
-// time fields string -> Date 변경 / 게시판 관련된 알림 삭제
+// time fields string -> Date 변경 / 게시판, 큐레이션 관련된 알림 삭제
 const changeTime = async (req, res) => {
     try {
         const notice = await Notice.find()
@@ -20,6 +20,8 @@ const changeTime = async (req, res) => {
                 { noticetype: 'brecom' },
                 { noticetype: 'brecomlike' },
                 { noticetype: 'bsonglike' },
+                { noticetype: 'culike' },
+                { noticetype: 'ccom' }
             ]
         })
         notice.map(async (item) => {

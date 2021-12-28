@@ -21,6 +21,7 @@ require('./models/Feed')
 require('./models/RelayPlaylist');
 require('./models/RelaySong');
 require('./models/StorySong');
+require('./models/CurationPost');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

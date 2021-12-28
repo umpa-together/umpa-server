@@ -5,9 +5,8 @@ const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
+const Curation = mongoose.model('CurationPost');
 const admin = require('firebase-admin');
-
-require('date-utils');
 
 // time fields string -> Date 변경
 const changeTime = async (req, res) => {
@@ -34,6 +33,44 @@ const changeTime = async (req, res) => {
                 }
             })
         })
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 큐레이션 데일리로
+const curationToDaily = async (req, res) => {
+    try {
+        const curation = await Curation.find();
+        Object.values(curation).forEach(async (item) => {
+            const { postUserId, time, textcontent, likes, object, isSong } = item
+            if(isSong) {
+                const daily = await new Daily({
+                    postUserId: postUserId,
+                    textcontent: textcontent,
+                    time: new Date(time),
+                    song: object,
+                    likes: likes,
+                }).save();
+                await User.findOneAndUpdate({
+                    _id: postUserId,
+                }, {
+                    $push: {
+                        dailys: daily._id
+                    }
+                })
+                Object.values(likes).forEach(async (user) => {
+                    await new Notice({
+                        noticinguser: user, 
+                        noticieduser: postUserId, 
+                        noticetype: 'dlike', 
+                        time: new Date(time), 
+                        daily: daily._id 
+                    }).save();
+                })
+            }
+        })
+        res.send(curation);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -800,6 +837,7 @@ const unLikeRecomment = async (req, res) => {
 
 module.exports = {
     changeTime,
+    curationToDaily,
     addDaily,
     editDaily,
     deleteDaily,

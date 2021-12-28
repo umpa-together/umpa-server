@@ -25,6 +25,23 @@ const postRelayPlaylist = async (req, res) => {
     }
 }
 
+const postRepresentSong = async (req, res) => {
+    try {
+        const { song } = req.body;
+        const id = req.params.id;
+        await RelayPlaylist.findOneAndUpdate({
+            _id: id
+        }, {
+            $set: {
+                representSong: song
+            }
+        })
+        res.status(200).send('hello world')
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
 // 현재 릴레이가 진행중인 플레이리스트 가져오기(늘 2개, 4일 유지 2일 간격 생산)
 const getCurrentRelay = async (req, res) => {
     try {
@@ -89,18 +106,39 @@ const getCurrentRelay = async (req, res) => {
     }
 }
 
+const getRelayLists = async (req, res) => {
+    try {
+        const nowTime = new Date();
+        const relayPlaylists = await RelayPlaylist.find({}, {
+            title: 1, postUserId: 1, image: 1, createdTime: 1
+        });
+        let result = []
+        Object.values(relayPlaylists).forEach((item) => {
+            const { createdTime } = item
+            const postTime = new Date(createdTime);
+            const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
+            if (betweenTime <= 4) {
+                result.push(item)
+            }
+        })
+        res.status(200).send(result)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
 const getSelectedRelay = async (req, res) => {
     try {
         const relayPlaylistId = req.params.id;
         const relayPlaylist = await RelayPlaylist.findOne({
             _id: relayPlaylistId
         }, {
-            postUserId: 1, title: 1, createdTime: 1, image: 1
+            postUserId: 1, title: 1, createdTime: 1, image: 1, representSong: 1
         });
         const songs = await RelaySong.aggregate([
             {
                 $match: {
-                    playlistId: relayPlaylistId
+                    playlistId: mongoose.Types.ObjectId(relayPlaylistId)
                 }
             }, 
             {
@@ -174,13 +212,16 @@ const getRelaySong = async (req, res) => {
             song: 1,
             like: 1,
             unlike: 1
+        }).populate('postUserId', {
+            name: 1, profileImage: 1
         })
         const result = songs.map((item) => {
-            const { like, unlike, _id, song } = item
+            const { like, unlike, _id, song, postUserId } = item
             if(!like.includes(req.user._id) && !unlike.includes(req.user._id)) {
                 return {
                     _id: _id,
-                    song: song
+                    song: song,
+                    postUserId: postUserId
                 }
             }
         })
@@ -226,7 +267,9 @@ const unlikeRelaySong = async (req, res) =>{
 
 module.exports = {
     postRelayPlaylist,
+    postRepresentSong,
     getCurrentRelay,
+    getRelayLists,
     getSelectedRelay,
     postRelaySong,
     getRelaySong,

@@ -3,7 +3,9 @@ const router = express.Router();
 
 const {
     postRelayPlaylist,
+    postRepresentSong,
     getCurrentRelay,
+    getRelayLists,
     getSelectedRelay,
     postRelaySong,
     getRelaySong,
@@ -12,7 +14,9 @@ const {
 } = require('../controllers/relay')
 
 router.post('/', postRelayPlaylist);
+router.post('/:id', postRepresentSong);
 router.get('/', getCurrentRelay);
+router.get('/lists', getRelayLists);
 router.get('/:id', getSelectedRelay);
 router.post('/song/:playlistId', postRelaySong);
 router.get('/song/:playlistId', getRelaySong);

@@ -6,6 +6,7 @@ const {
   getOtherInformation,
   editProfile,
   editProfileImage,
+  getFollow,
   follow,
   unFollow,
   getRepresentSongs,
@@ -21,6 +22,7 @@ router.get('/', getMyInformation)
 router.get('/other/:id', getOtherInformation)
 router.post('/editProfile', editProfile)
 router.post('/editProfileImage', upload('profileImage/').single('img'), editProfileImage)
+router.get('/follow/:id', getFollow)
 router.post('/follow/:id', follow)
 router.delete('/follow/:id', unFollow)
 router.get('/songs/:userId', getRepresentSongs)

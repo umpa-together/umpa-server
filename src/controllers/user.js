@@ -15,13 +15,23 @@ const getMyInformation = async (req, res) => {
         }, {
             new: true, 
             projection: {
-                name: 1, realName: 1, introduction: 1, songs: 1, profileImage: 1, myPlaylists: 1,
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1, 
+                myPlaylists: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
             },
         }).populate('playlists', {
-            title: 1, hashtag: 1, image: 1,
+            songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
         }).populate('dailys', {
-
-        });
+            song: 1, image: 1, textcontent: 1, time: 1,
+        }).populate('relaysongs',{
+            song: 1, time: 1,
+        })
         res.status(200).send(user);
     } catch (err) {
         return res.status(422).send(err.message); 
@@ -34,12 +44,22 @@ const getOtherInformation = async (req, res) => {
         const user = await User.findOne({
             _id : req.params.id
         }, {
-            name: 1, realName: 1, introduction: 1, songs: 1, profileImage: 1, todaySong: 1
+            name: 1, 
+            realName: 1, 
+            introduction: 1, 
+            songs: 1, 
+            profileImage: 1, 
+            myPlaylists: 1,
+            genre: 1, 
+            follower: 1,
+            following: 1,
         }).populate('playlists', {
-            title: 1, hashtag: 1, image: 1,
+            songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
         }).populate('dailys', {
-
-        });
+            song: 1, image: 1, textcontent: 1, time: 1,
+        }).populate('relaysongs',{
+            song: 1, time: 1,
+        })
         res.status(200).send(user);
     } catch (err) {
         return res.status(422).send(err.message); 
@@ -97,6 +117,21 @@ const editProfileImage = async (req, res) => {
         return res.status(422).send(err.message); 
     }
 }
+// 팔로우 가져오기
+const getFollow =  async (req, res) => {
+    try {
+      const user = await User.findOne({
+          _id: req.params.id
+      }).populate('follower', {
+        name: 1, profileImage:1,
+      }).populate('following', {
+        name: 1, profileImage:1,
+      });
+      res.status(200).send(user);
+    } catch (err) {
+        return res.status(422).send(err.message)
+    }
+}
 
 // 팔로우하기
 const follow = async (req, res) => {
@@ -107,15 +142,25 @@ const follow = async (req, res) => {
             }, {
                 $push : { follower : req.user._id }
             }, {
-                upsert: true, 
-                projection: {
-                    name: 1, realName: 1, introduction: 1, songs: 1, profileImage: 1, todaySong: 1, noticetoken: 1
+                  upsert: true, 
+                  projection: {
+                  name: 1, 
+                  realName: 1, 
+                  introduction: 1, 
+                  songs: 1, 
+                  profileImage: 1, 
+                  myPlaylists: 1,
+                  genre: 1, 
+                  follower: 1,
+                  following: 1,
                 }
             }).populate('playlists', {
-                title: 1, hashtag: 1, image: 1,
+                songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
             }).populate('dailys', {
-    
-            });
+                song: 1, image: 1, textcontent: 1, time: 1,
+            }).populate('relaysongs',{
+                song: 1, time: 1,
+            })
             res.status(200).send(user);
             await Promise.all([
                 User.findOneAndUpdate({
@@ -173,13 +218,23 @@ const unFollow = async (req, res) => {
         }, {
             new: true,
             projection: {
-                name: 1, realName: 1, introduction: 1, songs: 1, profileImage: 1, todaySong: 1, noticetoken: 1
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1, 
+                myPlaylists: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
             }
         }).populate('playlists', {
-            title: 1, hashtag: 1, image: 1,
+            songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
         }).populate('dailys', {
-
-        });
+            song: 1, image: 1, textcontent: 1, time: 1,
+        }).populate('relaysongs',{
+            song: 1, time: 1,
+        })
         res.status(200).send(user);
         await Promise.all([
             User.findOneAndUpdate({
@@ -256,9 +311,6 @@ const editRepresentSongs = async (req, res) => {
     }
 }
 
-
-
-
 const getLikePlaylists = async (req, res) => {
     try {
         const playlists = await Playlist.find({likes: {$in : req.user._id}}, {title: 1, hashtag: 1, image: 1, postUserId: 1});
@@ -297,6 +349,7 @@ module.exports = {
     getOtherInformation,
     editProfile,
     editProfileImage,
+    getFollow,
     follow,
     unFollow,
     getRepresentSongs,

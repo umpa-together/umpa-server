@@ -50,7 +50,11 @@ const userSchema = new mongoose.Schema({
     }],
     dailys: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Daily'
+        ref: 'Daily',
+    }],
+    relaysongs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'RelaySong',
     }],
     informationagree:{
         type: Boolean,

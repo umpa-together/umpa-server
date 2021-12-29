@@ -22,6 +22,7 @@ require('./models/RelayPlaylist');
 require('./models/RelaySong');
 require('./models/StorySong');
 require('./models/CurationPost');
+require('./models/AddedSong');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
@@ -36,6 +37,7 @@ const feedRoutes = require('./routes/feedRoutes');
 const relayRoutes = require('./routes/relayRoutes');
 const storyRoutes = require('./routes/storyRoutes');
 const mainRoutes = require('./routes/mainRoutes');
+const addedRoutes = require('./routes/addedRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 
 const ChatRoom = mongoose.model('ChatRoom');
@@ -76,6 +78,7 @@ app.use('/feed', feedRoutes);
 app.use('/relay', relayRoutes);
 app.use('/story', storyRoutes);
 app.use('/main', mainRoutes);
+app.use('/added', addedRoutes);
 
 app.get('/', (req, res) => {
     res.send('Welcome to umpa');

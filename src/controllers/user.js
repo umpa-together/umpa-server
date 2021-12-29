@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
-const Playlist = mongoose.model('Playlist');
 const admin = require('firebase-admin');
 
 // 내 정보 가져오기
@@ -256,42 +255,6 @@ const editRepresentSongs = async (req, res) => {
     }
 }
 
-
-
-
-const getLikePlaylists = async (req, res) => {
-    try {
-        const playlists = await Playlist.find({likes: {$in : req.user._id}}, {title: 1, hashtag: 1, image: 1, postUserId: 1});
-        res.send(playlists.reverse())
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
-const addSongInPlaylist = async (req, res) => {
-    const { song } = req.body;
-    var newDate = new Date()
-    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
-    try {
-        song.time = time;
-        const user = await User.findOneAndUpdate({_id: req.user._id}, {$push: {myPlaylists: song}}, {new: true});
-        res.send(user.myPlaylists);
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
-const deleteSongInPlaylist = async (req, res) => {
-    try {
-        const user = await User.findOne({_id: req.user._id});
-        user.myPlaylists = user.myPlaylists.filter((item) => item.time !=req.params.time)
-        res.send(user.myPlaylists)
-        user.save();
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
 module.exports = {
     getMyInformation,
     getOtherInformation,
@@ -302,7 +265,4 @@ module.exports = {
     getRepresentSongs,
     postRepresentSongs,
     editRepresentSongs,
-    getLikePlaylists,
-    addSongInPlaylist,
-    deleteSongInPlaylist,
 }

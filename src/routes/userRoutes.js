@@ -11,10 +11,6 @@ const {
   getRepresentSongs,
   postRepresentSongs,
   editRepresentSongs,
-
-  getLikePlaylists,
-  addSongInPlaylist,
-  deleteSongInPlaylist,
 } = require('../controllers/user')
 
 router.get('/', getMyInformation)
@@ -26,9 +22,5 @@ router.delete('/follow/:id', unFollow)
 router.get('/songs/:userId', getRepresentSongs)
 router.post('/songs', postRepresentSongs)
 router.post('/songs/edit', editRepresentSongs)
-
-router.get('/likePlaylists', getLikePlaylists)
-router.post('/songinPlaylists', addSongInPlaylist)
-router.get('/songinPlaylists/:time', deleteSongInPlaylist)
 
 module.exports = router;

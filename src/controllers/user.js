@@ -215,21 +215,6 @@ const editProfileImage = async (req, res) => {
         return res.status(422).send(err.message); 
     }
 }
-// 팔로우 가져오기
-const getFollow =  async (req, res) => {
-    try {
-      const user = await User.findOne({
-          _id: req.params.id
-      }).populate('follower', {
-        name: 1, profileImage:1,
-      }).populate('following', {
-        name: 1, profileImage:1,
-      });
-      res.status(200).send(user);
-    } catch (err) {
-        return res.status(422).send(err.message)
-    }
-}
 
 // 팔로우 정보 가져오기
 const getFollow =  async (req, res) => {

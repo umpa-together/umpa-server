@@ -44,23 +44,29 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'StorySong'
     }],
-    playlists:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Playlist'
-    }],
-    dailys: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Daily'
-    }],
     informationagree:{
         type: Boolean,
     },
-    myPlaylists: [{
-        type: Object
-    }],
     accessedTime: {
         type: Date,
-    }
+    },
+    genre: [{
+        type: String
+    }],
+    myPlaylists: {},
+    playlistGuide: {},
+    curationGuide:{},
+    boardGuide:{},
+    createGuide:{},
+    chats:{},
+    boardBookmark:{},
+    scrabContent:{},
+    songsView:{},
+    playlists:{},
+    curationposts:{},
+    dailys:{},
+    relaysongs:{},
+    nominate: {}
 });
 
 userSchema.pre('save', function(next){

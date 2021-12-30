@@ -4,6 +4,8 @@ const Notice = mongoose.model('Notice');
 const Genre = mongoose.model('Genre');
 const Playlist = mongoose.model('Playlist');
 const Daily = mongoose.model('Daily');
+const RelayPlaylist = mongoose.model('RelayPlaylist');
+const RelaySong = mongoose.model('RelaySong');
 const admin = require('firebase-admin');
 
 const genreLists = [
@@ -53,7 +55,6 @@ const addGenreLists = async (req, res) => {
 const deleteField = async (req, res) => {
     try {
         const users = await User.updateMany({
-
         },{
             $unset: {
                 myPlaylists: 1,
@@ -79,8 +80,8 @@ const deleteField = async (req, res) => {
 
 // 내 정보 가져오기
 const getMyInformation = async (req, res) => {
-    const nowTime = new Date();
     try {
+        const nowTime = new Date();
         const user = await User.findOneAndUpdate({ 
             _id: req.user._id 
         }, {
@@ -98,7 +99,8 @@ const getMyInformation = async (req, res) => {
                 following: 1,
             },
         })
-        const [playlist, daily] = await Promise.all([
+        let relayPlaylist = []
+        const [playlist, daily, relaySong] = await Promise.all([
             Playlist.find({
                 postUserId: req.user._id
             }, {
@@ -108,11 +110,33 @@ const getMyInformation = async (req, res) => {
                 postUserId: req.user._id
             }, {
                 song: 1, image: 1, textcontent: 1, time: 1,
+            }),
+            RelaySong.find({
+                $and: [{
+                    postUserId: req.user._id
+                }, {
+                    approved: true
+                }]
+            }, {
+                playlistId: 1, song: 1
             })
         ])
+        for (const item of relaySong) {
+            const { song, playlistId } = item
+            const playlist = await RelayPlaylist.findOne({
+                _id: playlistId
+            }, {
+                title: 1, createdTime: 1, image: 1,
+            })
+            relayPlaylist.push({
+                playlist,
+                song
+            })
+        }
         const contents = {
             playlist: playlist,
-            daily: daily
+            daily: daily,
+            relay: relayPlaylist
         }
         res.status(200).send([user, contents]);
     } catch (err) {
@@ -136,7 +160,8 @@ const getOtherInformation = async (req, res) => {
             follower: 1, 
             following: 1,
         })
-        const [playlist, daily] = await Promise.all([
+        let relayPlaylist = []
+        const [playlist, daily, relaySong] = await Promise.all([
             Playlist.find({
                 postUserId: req.params.id
             }, {
@@ -146,11 +171,33 @@ const getOtherInformation = async (req, res) => {
                 postUserId: req.params.id
             }, {
                 song: 1, image: 1, textcontent: 1, time: 1,
+            }),
+            RelaySong.find({
+                $and: [{
+                    postUserId: req.params.id
+                }, {
+                    approved: true
+                }]
+            }, {
+                playlistId: 1, song: 1
             })
         ])
+        for (const item of relaySong) {
+            const { song, playlistId } = item
+            const playlist = await RelayPlaylist.findOne({
+                _id: playlistId
+            }, {
+                title: 1, createdTime: 1, image: 1,
+            })
+            relayPlaylist.push({
+                playlist,
+                song
+            })
+        }
         const contents = {
             playlist: playlist,
-            daily: daily
+            daily: daily,
+            relay: relayPlaylist
         }
         res.status(200).send([user, contents]);
     } catch (err) {
@@ -160,8 +207,8 @@ const getOtherInformation = async (req, res) => {
 
 // 프로필 정보 변경
 const editProfile = async (req, res) => {
-    const { nickName, name, introduction } = req.body;
     try {
+        const { nickName, name, introduction } = req.body;
         const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
@@ -191,8 +238,8 @@ const editProfile = async (req, res) => {
 
 // 프로필 이미지 변경
 const editProfileImage = async (req, res) => {
-    const img = req.file.location;
     try {
+        const img = req.file.location;
         const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
@@ -371,8 +418,8 @@ const getRepresentSongs = async (req, res) => {
 
 // 대표곡 설정
 const postRepresentSongs = async (req, res) => {
-    const { songs } = req.body;
     try {
+        const { songs } = req.body;
         const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
@@ -390,8 +437,8 @@ const postRepresentSongs = async (req, res) => {
 
 // 대표곡 수정
 const editRepresentSongs = async (req, res) => {
-    const { songs } = req.body;
     try {
+        const { songs } = req.body;
         const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {

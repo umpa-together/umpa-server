@@ -4,6 +4,7 @@ const router = express.Router();
 const {
     postRelayPlaylist,
     postRepresentSong,
+    updateApprovedSong,
     getCurrentRelay,
     getRelayLists,
     getSelectedRelay,
@@ -15,6 +16,7 @@ const {
 
 router.post('/', postRelayPlaylist);
 router.post('/:id', postRepresentSong);
+router.get('/approve', updateApprovedSong);
 router.get('/', getCurrentRelay);
 router.get('/lists', getRelayLists);
 router.get('/:id', getSelectedRelay);

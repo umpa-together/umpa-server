@@ -121,13 +121,6 @@ const addPlaylist = async (req, res) => {
                 return res.status(422).send(err.message);
            }
         });
-        await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $push: { playlists: playlist._id }
-        }, {
-            new: true
-        })
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -216,13 +209,6 @@ const deletePlaylist = async (req, res) => {
             }), 
             Notice.deleteMany({
                 playlist: playlistId
-            }),
-            User.findOneAndUpdate({
-                _id: req.user._id
-            }, {
-                $pull:{ playlists: playlistId }
-            }, {
-                new: true
             }),
             Feed.deleteOne({ 
                 playlist: playlistId

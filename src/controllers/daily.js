@@ -52,13 +52,6 @@ const curationToDaily = async (req, res) => {
                     song: object,
                     likes: likes,
                 }).save();
-                await User.findOneAndUpdate({
-                    _id: postUserId,
-                }, {
-                    $push: {
-                        dailys: daily._id
-                    }
-                })
                 Object.values(likes).forEach(async (user) => {
                     await new Notice({
                         noticinguser: user, 
@@ -118,13 +111,6 @@ const addDaily = async (req, res) => {
                 return res.status(422).send(err.message);
             }
         });
-        await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $push: { dailys:daily._id }
-        }, {
-            new: true
-        })
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -213,13 +199,6 @@ const deleteDaily = async (req, res) => {
             }), 
             Notice.deleteMany({
                 daily: dailyId
-            }),
-            User.findOneAndUpdate({
-                _id: req.user._id
-            }, {
-                $pull: { dailys: dailyId }
-            }, {
-                new: true
             }),
             Feed.deleteOne({ 
                 daily: dailyId 

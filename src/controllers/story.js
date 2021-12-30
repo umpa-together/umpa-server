@@ -49,7 +49,7 @@ const getMyStory = async (req, res) => {
     const nowTime = new Date()
     try {
         if (req.user.todaySong.length === 0) {
-            res.status(200).send([null, storyViewUsers]);
+            res.status(200).send([null, []]);
         } else {
             const lastStory = req.user.todaySong[req.user.todaySong.length-1];
             const tomorrowTime = new Date(new Date().setDate(lastStory.time.getDate()+1))
@@ -78,7 +78,7 @@ const getMyStory = async (req, res) => {
                 ])
                 res.status(200).send([lastStory, viewer[0].view]);
             } else {
-                res.status(200).send([null, storyViewUsers]);
+                res.status(200).send([null, []]);
             }
         }
     } catch (err) {

@@ -85,6 +85,8 @@ app.get('/', (req, res) => {
     res.send('Welcome to umpa');
 });
 
+app.set("etag", false);
+
 const chat = io.use(requireAuth).of('chat').on('connection', function(socket){
     socket.on('joinroom', function(data){
         console.log(data.room, 'room id is joined')

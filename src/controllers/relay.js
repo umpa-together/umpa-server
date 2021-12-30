@@ -25,6 +25,7 @@ const postRelayPlaylist = async (req, res) => {
     }
 }
 
+// 대표곡 설정
 const postRepresentSong = async (req, res) => {
     try {
         const { song } = req.body;
@@ -37,6 +38,58 @@ const postRepresentSong = async (req, res) => {
             }
         })
         res.status(200).send('hello world')
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 기간 끝난 플레이리스트 곡 승인
+const updateApprovedSong = async (req, res) => {
+    try {
+        const nowTime = new Date();
+        const relayPlaylists = await RelayPlaylist.find({}, {
+            createdTime: 1
+        });
+        Object.values(relayPlaylists).forEach(async (item) => {
+            const { createdTime, _id } = item
+            const postTime = new Date(createdTime);
+            const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
+            if (betweenTime > 4) {
+                const songs = await RelaySong.aggregate([
+                    {
+                        $match: {
+                            playlistId: _id
+                        }
+                    }, 
+                    {
+                        $project: {
+                            likeCount: { $size: "$like" },
+                            unlikeCount: { $size: "$unlike" },
+                            song: 1,
+                        }
+                    }
+                ])
+                Object.values(songs).forEach((song) => {
+                    song.score = song.likeCount / (song.likeCount + song.unlikeCount)
+                })
+                songs.sort(function(a, b)  {
+                    if (a.score > b.score) return -1;
+                    if (a.score < b.score) return 1;
+                    return 0;
+                });
+                songs.slice(0, 6).map(async (song) => {
+                    const { _id: id } = song
+                    await RelaySong.findOneAndUpdate({ 
+                        _id: id
+                    }, {
+                        $set: {
+                            approved: true
+                        }
+                    })
+                })
+            }
+        })
+        res.status(200).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -55,78 +108,40 @@ const getCurrentRelay = async (req, res) => {
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
             if (0 <= betweenTime && betweenTime <= 4) {
                 result.push(item)
-                /*
-                const songs = RelaySong.aggregate([
-                    {
-                        $match: {
-                            playlistId: _id
-                        }
-                    }, 
-                    {
-                        $project: {
-                            likeCount: { $size: "$like" },
-                            unlikeCount: { $size: "$unlike" },
-                            song: 1,
-                        }
-                    }
-                ])
-                target.push([item, songs])
-                */
             }
         })
-
-        /*
-        for (const item of target) {
-            const playlist = item[0]
-            const songsLists = item[1]
-            await songsLists.then((songs) => {
-                Object.values(songs).forEach((song) => {
-                    song.score = song.likeCount / (song.likeCount + song.unlikeCount)
-                })
-                songs.sort(function(a, b)  {
-                    if (a.score > b.score) return -1;
-                    if (a.score < b.score) return 1;
-                    return 0;
-                });
-                songs.map((song) => {
-                    delete song.likeCount
-                    delete song.unlikeCount
-                    delete song.score
-                })
-                result.push({
-                    playlist: playlist,
-                    songs: songs.slice(0, 6)
-                })
-            })
-        }
-        */
         res.status(200).send(result);
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
+// 완성된 리스트 가저오기
 const getRelayLists = async (req, res) => {
     try {
         const nowTime = new Date();
         const relayPlaylists = await RelayPlaylist.find({}, {
             title: 1, postUserId: 1, image: 1, createdTime: 1
-        });
-        let result = []
+        }).sort({'createdTime': -1});
+        let current = []
+        let complete = []
         Object.values(relayPlaylists).forEach((item) => {
             const { createdTime } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
             if (betweenTime <= 4) {
-                result.push(item)
+                current.push(item)
+            } else {
+                complete.push(item)
             }
         })
-        res.status(200).send(result)
+        res.status(200).send(current.concat(complete))
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
+// 선택한 릴레이 정보 가져오기
 const getSelectedRelay = async (req, res) => {
     try {
         const relayPlaylistId = req.params.id;
@@ -268,6 +283,7 @@ const unlikeRelaySong = async (req, res) =>{
 module.exports = {
     postRelayPlaylist,
     postRepresentSong,
+    updateApprovedSong,
     getCurrentRelay,
     getRelayLists,
     getSelectedRelay,

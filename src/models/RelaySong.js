@@ -24,6 +24,10 @@ const relaySongSchema = new mongoose.Schema({
     }],
     time: {
         type: Date
+    },
+    approved: {
+        type: Boolean,
+        default: false
     }
 });
 

@@ -23,6 +23,7 @@ require('./models/RelaySong');
 require('./models/StorySong');
 require('./models/CurationPost');
 require('./models/AddedSong');
+require('./models/Genre');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

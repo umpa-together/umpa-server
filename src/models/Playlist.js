@@ -11,6 +11,10 @@ const playlistSchema = new mongoose.Schema({
         default: '',
         required: true
     },
+    content: {
+        type: String,
+        default: '',     
+    },
     time: {
         type : Date,
     },

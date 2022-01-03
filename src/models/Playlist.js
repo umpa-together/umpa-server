@@ -11,9 +11,9 @@ const playlistSchema = new mongoose.Schema({
         default: '',
         required: true
     },
-    content: {
+    textcontent: {
         type: String,
-        default: '',     
+        default: '',
     },
     time: {
         type : Date,

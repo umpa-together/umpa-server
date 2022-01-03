@@ -90,7 +90,8 @@ const addPlaylist = async (req, res) => {
             content,
             time, 
             songs, 
-            hashtag 
+            hashtag,
+            textcontent: content
         }).save();
         Feed.create({
             playlist: playlist._id,

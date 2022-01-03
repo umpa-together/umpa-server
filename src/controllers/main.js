@@ -5,6 +5,7 @@ const Daily = mongoose.model('Daily');
 const WeeklyPlaylist = mongoose.model('WeeklyPlaylist');
 const WeeklyDaily = mongoose.model('WeeklyDaily');
 const Hashtag = mongoose.model('Hashtag');
+const AddedSong = mongoose.model('AddedSong');
 
 // time fields string -> Date 변경
 const changeTime = async (req, res) => {
@@ -90,9 +91,7 @@ const getRecentPlaylist = async (req, res) => {
                 $exists: true
             }
         }, {
-            title: 1, accessedTime: 1, image: 1, hashtag: 1
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
+            title: 1, accessedTime: 1, image: 1, songs: 1
         })
         playlists.sort(function(a, b) {
             if(nowTime.getTime() - a.accessedTime.getTime() > nowTime.getTime() - b.accessedTime.getTime())  return 1;
@@ -212,6 +211,37 @@ const postWeekly = async (req, res) => {
 // 메인 DJ 추천
 const getMainRecommendDJ = async (req, res) => {
     try {
+        const userScoreLists = []
+        const { songs } = req.user
+        const songId = [] // score 5
+        const addedSongId = [] // score 4
+        const playlistsId = [] // score 3
+        const myPlaylist = await Playlist.aggregate([
+            {
+                $match: {
+                    postUserId: req.user._id
+                }
+            }, {
+                $project: {
+                    songs: 1
+                }
+            }
+        ])
+        const addedSongs = await AddedSong.aggregate([
+            {
+                $match: {
+                    postUserId: req.user._id
+                }
+            }, {
+                $project: {
+                    song: 1
+                }
+            }
+        ])
+        songs.map(({ id }) => songId.push(id))
+        myPlaylist.map(({ songs }) => songs.map(({ id }) => playlistsId.push(id)))
+        addedSongs.map(({ song }) => addedSongId.push(song.id))
+
         const users = await User.find({ 
             $and: [{
                 _id: { $ne: req.user._id }
@@ -219,75 +249,80 @@ const getMainRecommendDJ = async (req, res) => {
                 _id: { $nin: req.user.following }
             }] 
         }, { 
-            playlists: 1, songs: 1, myPlaylists: 1, profileImage: 1, name: 1, introduction: 1 
-        }).populate('playlists', { 
-            image: 1, songs: 1, postUserId: 1 
+            songs: 1, profileImage: 1, name: 1, genre: 1
         })
-        const me = await User.findOne({
-            _id: req.user._id
-        }, {
-            playlists: 1, songs: 1, myPlaylists: 1
-        }).populate('playlists', {
-            songs: 1
-        })
-        const userScoreLists = []
-        const { playlists, songs, myPlaylists } = me
-        const songsId  = songs.map(({ id }) => id ) // score 5
-        const myPlaylistsId = myPlaylists.map(({ id }) =>  id ) // score 4
-        const playlistsId = [] // score 3
-        playlists.map(({ songs }) => songs.map(({ id }) => playlistsId.push(id)))
-        users.forEach((user) => {
-            const { songs, myPlaylists, playlists, name, introduction, _id: id, profileImage } = user
-            const userSongsId = songs.map(({ id }) => id) // score 5 
-            const userMyPlaylistsId = myPlaylists.map(({ id }) => id) // score 4
-            let userPlaylistsId = [] // score 3
-            // let userPlaylistsLikeId = []
+        for (const user of users){
+            const { songs, _id: id, genre, name, profileImage } = user
             let userScore = 0
-            
-            playlists.map(({ songs }) => songs.map(({ id }) => userPlaylistsId.push(id)))
-            // playlists.map(({ likes }) => userPlaylistsLikeId.push(likes))
-            
-            songsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (25)
-                if(userMyPlaylistsId.includes(id)) userScore += (20)
-                if(userPlaylistsId.includes(id))    userScore += (15)
+            const userSongId = [] // score 5
+            const userAddedSongId = [] // score 4
+            const userPlaylistId = [] // score 3
+            const userPlaylists = await Playlist.aggregate([
+                {
+                    $match: {
+                        postUserId: user._id
+                    }
+                }, {
+                    $project: {
+                        songs: 1
+                    }
+                }
+            ])
+            const userAddedSong = await AddedSong.aggregate([
+                {
+                    $match: {
+                        postUserId: user._id
+                    }
+                }, {
+                    $project: {
+                        song: 1
+                    }
+                }
+            ])
+            songs.map(({ id }) => userSongId.push(id))
+            userPlaylists.map(({ songs }) => songs.map(({ id }) => userPlaylistId.push(id)))
+            userAddedSong.map(({ song }) => userAddedSongId.push(song.id))
+            songId.filter((id) => {
+                if(userSongId.includes(id)) userScore += 25
+                if(userAddedSongId.includes(id))    userScore += 20
+                if(userPlaylistId.includes(id)) userScore += 15
             })
-            myPlaylistsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (20)
-                if(userMyPlaylistsId.includes(id)) userScore += (16)
-                if(userPlaylistsId.includes(id))    userScore += (9) 
+            userAddedSong.filter((id) => {
+                if(userSongId.includes(id)) userScore += 20
+                if(userAddedSongId.includes(id))    userScore += 16
+                if(userPlaylistId.includes(id)) userScore += 12
             })
-            playlistsId.filter((id) => {
-                if(userSongsId.includes(id))    userScore += (15) 
-                if(userMyPlaylistsId.includes(id)) userScore += (12)
-                if(userPlaylistsId.includes(id))    userScore += (9) 
+            userPlaylistId.filter((id) => {
+                if(userSongId.includes(id)) userScore += 15
+                if(userAddedSongId.includes(id))    userScore += 12
+                if(userPlaylistId.includes(id)) userScore += 9
             })
-            // userPlaylistsLikeId.filter((id) => {
-            //     if(id.toString() === req.user._id.toString()) userScore += 15
-            // })
-    
             userScoreLists.push({ 
+                _id: id,
                 score: userScore, 
-                playlists: playlists, 
-                songs: songs,
-                id: id, 
+                genre: genre,
+                songs: songs[0],
                 name: name, 
-                introduction: introduction, 
-                profileImage: profileImage 
+                profileImage: profileImage,
+                playlistCount: userPlaylists.length
             })
-        })
-    
+        }
         userScoreLists.sort(function(a, b) {
             if(a.score > b.score) return -1;
             if(a.score < b.score) return 1;
             return 0;
         });
         userScoreLists.sort(function(a, b) {
-            if((a.score === 0 && b.score === 0) && (a.playlists.length > b.playlists.length)) return -1;
-            if((a.score === 0 && b.score === 0) && (a.playlists.length < b.playlists.length)) return 1;
+            if((a.score === 0 && b.score === 0) && (a.playlistCount > b.playlistCount)) return -1;
+            if((a.score === 0 && b.score === 0) && (a.playlistCount < b.playlistCount)) return 1;
             return 0;
         })
-        res.send(userScoreLists)
+        const result = userScoreLists.slice(0,10).map((user) => {
+            delete user.score
+            delete user.playlistCount
+            return user
+        })
+        res.status(200).send(result)
     } catch (err) {
         return res.status(422).send(err.message); 
     }

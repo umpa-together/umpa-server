@@ -100,13 +100,12 @@ const getCurrentRelay = async (req, res) => {
     try {
         const nowTime = new Date();
         const relayPlaylists = await RelayPlaylist.find();
-        let target = []
         let result = []
         Object.values(relayPlaylists).forEach((item) => {
-            const { _id, createdTime } = item
+            const { createdTime } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
-            if (0 <= betweenTime && betweenTime <= 4) {
+            if (0 <= betweenTime && betweenTime < 4) {
                 result.push(item)
             }
         })

@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const RecentKeyword = mongoose.model('RecentKeyword');
 const request = require('request');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
@@ -28,9 +30,31 @@ const searchSong = async (req, res) => {
         }
         request(appleOption, async (err, response, body) => {
             const song = await JSON.parse(body).results.songs;
+            const keyword = await RecentKeyword.findOne({
+                keyword: req.params.songname
+            })
+            if(keyword) {
+                await RecentKeyword.findOneAndUpdate({
+                    keyword: req.params.songname
+                }, {
+                    $set: {
+                        time: new Date()
+                    }
+                }, {
+                    new: true
+                })
+            } else {
+                await new RecentKeyword({
+                    keyword: req.params.songname,
+                    postUserId: req.user._id,
+                    time: new Date()
+                }).save()
+            }
             if (song !== undefined) {
-                const next = await JSON.parse(body).results.songs.next;
-                const result = await JSON.parse(body).results.songs.data;
+                const [next, result] = await Promise.all([
+                    JSON.parse(body).results.songs.next,
+                    JSON.parse(body).results.songs.data
+                ])
                 res.send([result, next !== undefined ? next.substr(22) : null]);
             } else {
                 res.send([[], null]);
@@ -57,8 +81,10 @@ const searchArtist = async (req, res) => {
         request(appleOption, async (err, response, body) => {
             const artist = await JSON.parse(body).results.artists;
             if (artist !== undefined) {
-                const next = await JSON.parse(body).results.artists.next;
-                const result = await JSON.parse(body).results.artists.data;
+                const [next,result] = await Promise.all([
+                    JSON.parse(body).results.artists.next,
+                    JSON.parse(body).results.artists.data
+                ])
                 res.send([result, next !== undefined ? next.substr(22) : null]);
             } else {
                 res.send([[], null]);
@@ -85,8 +111,10 @@ const searchAlbum = async (req, res) => {
         request(appleOption, async (err, response, body) => {
             const albums = await JSON.parse(body).results.albums;
             if (albums !== undefined) {
-                const next = await JSON.parse(body).results.albums.next;
-                const result = await JSON.parse(body).results.albums.data;
+                const [next, result] = await Promise.all([
+                    JSON.parse(body).results.albums.next,
+                    JSON.parse(body).results.albums.data
+                ])
                 res.send([result, next !== undefined ? next.substr(22) : null]);
             } else {
                 res.send([[], null]);
@@ -113,14 +141,20 @@ const searchNext = async (req, res) => {
         }
         request(appleOption, async (err, response, body) => {
             if (kind[kind.length-2] == 'g'){
-                next = await JSON.parse(body).results.songs.next;
-                body = await JSON.parse(body).results.songs.data;
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.songs.next,
+                    JSON.parse(body).results.songs.data
+                ])
             } else if (kind[kind.length-2] == 't') {
-                next = await JSON.parse(body).results.artists.next;
-                body = await JSON.parse(body).results.artists.data;
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.artists.next,
+                    JSON.parse(body).results.artists.data
+                ])
             } else {
-                next = await JSON.parse(body).results.albums.next;
-                body = await JSON.parse(body).results.albums.data;
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.albums.next,
+                    JSON.parse(body).results.albums.data
+                ])
             }
             res.send([body, next !== undefined ? next.substr(22) : null]);
         });

@@ -24,6 +24,7 @@ require('./models/StorySong');
 require('./models/CurationPost');
 require('./models/AddedSong');
 require('./models/Genre');
+require('./models/RecentKeyword');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

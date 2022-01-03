@@ -82,14 +82,15 @@ const changeLikes = async (req, res) => {
 // 플리 만들기
 const addPlaylist = async (req, res) => {
     try {
-        const { title, songs, hashtag } = req.body;
+        const { title, content, songs, hashtag } = req.body;
         const time = new Date()
         const playlist = await new Playlist({ 
             postUserId: req.user._id, 
             title, 
             time, 
             songs, 
-            hashtag 
+            hashtag,
+            textcontent: content
         }).save();
         Feed.create({
             playlist: playlist._id,

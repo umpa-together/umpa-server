@@ -87,6 +87,7 @@ const addPlaylist = async (req, res) => {
         const playlist = await new Playlist({ 
             postUserId: req.user._id, 
             title, 
+            content,
             time, 
             songs, 
             hashtag,
@@ -247,7 +248,7 @@ const getSelectedPlaylist = async (req, res) => {
                 }, {
                     new: true,
                     projection: {
-                        title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                     },
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
@@ -274,7 +275,7 @@ const getSelectedPlaylist = async (req, res) => {
                 }, { 
                     new: true,
                     projection: {
-                        title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                     }, 
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
@@ -318,7 +319,7 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent:1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -373,7 +374,7 @@ const addComment = async (req, res) => {
 // 댓글 삭제
 const deleteComment = async (req, res) => {
     try {
-        const commentId = req.params.commentid;
+        const commentId = req.params.commentId;
         const playlistId = req.params.id;
         await Comment.deleteMany({
             $or: [{
@@ -390,7 +391,7 @@ const deleteComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent:1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -426,7 +427,7 @@ const addreComment = async (req, res) => {
         const { text } = req.body;
         const time = new Date()
         const playlistId = req.params.id
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comment = await new Comment({ 
             playlistId: playlistId, 
             parentcommentId: commentId,
@@ -491,7 +492,7 @@ const addreComment = async (req, res) => {
 // 대댓글 가져오기
 const getRecomment = async (req, res) => {
     try {
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comments = await Comment.find({
             parentcommentId: commentId
         }, {
@@ -508,7 +509,7 @@ const getRecomment = async (req, res) => {
 // 대댓글 삭제
 const deleteRecomment = async (req, res) => {
     try {
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comment = await Comment.findOneAndDelete({
             _id: commentId
         });
@@ -640,7 +641,7 @@ const unlikesPlaylist = async (req, res) => {
 const likescomment = async (req, res) => {
     try {
         const time = new Date();
-        const playlistId = req.params.playlistid
+        const playlistId = req.params.playlistId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -699,7 +700,7 @@ const likescomment = async (req, res) => {
 // 댓글 좋아요 취소
 const unlikescomment = async (req, res) => {
     try {
-        const playlistId = req.params.playlistid
+        const playlistId = req.params.playlistId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -744,7 +745,7 @@ const unlikescomment = async (req, res) => {
 const likesrecomment = async (req, res) => {
     try{
         const time = new Date()
-        const parentId = req.params.commentid
+        const parentId = req.params.commentId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -800,7 +801,7 @@ const likesrecomment = async (req, res) => {
 // 대댓글 좋아요 취소
 const unlikesrecomment = async (req, res) => {
     try{
-        const parentId = req.params.commentid
+        const parentId = req.params.commentId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId

@@ -72,13 +72,13 @@ const curationToDaily = async (req, res) => {
 // 데일리 만들기
 const addDaily = async (req, res) => {
     try {
-        const { textcontent, songs, hashtag } = req.body;
+        const { textcontent, song, hashtag } = req.body;
         const time = new Date()
         const daily = await new Daily({ 
             postUserId: req.user._id, 
             textcontent, 
             time, 
-            song: songs[0], 
+            song,
             hashtag 
         }).save();
         Feed.create({
@@ -136,7 +136,7 @@ const uploadImage = async (req, res) => {
 
 // 데일리 수정하기
 const editDaily = async (req, res) => {
-    const { textcontent, songs, hashtag, DailyId } = req.body;
+    const { textcontent, song, hashtag, DailyId } = req.body;
     const time = new Date()
     try {
         const daily = await Daily.findOne({
@@ -177,7 +177,7 @@ const editDaily = async (req, res) => {
             _id: DailyId
         }, {
             $set: { 
-                textcontent, song: songs[0], hashtag
+                textcontent, song: song, hashtag
             }
         })
         res.status(200).send(daily)
@@ -354,7 +354,7 @@ const addComment = async (req, res) => {
 // 댓글 삭제
 const deleteComment = async (req, res) => {
     try {
-        const commentId = req.params.commentid;
+        const commentId = req.params.commentId;
         const dailyId = req.params.id;
         await Comment.deleteMany({
             $or: [{
@@ -403,7 +403,7 @@ const addreComment = async (req, res) => {
         const { text } = req.body;
         const time = new Date()
         const dailyId = req.params.id
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comment = await new Comment({ 
             dailyId: dailyId,
             parentcommentId: commentId, 
@@ -468,7 +468,7 @@ const addreComment = async (req, res) => {
 // 대댓글 가져오기
 const getRecomment = async (req, res) => {
     try {
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comments = await Comment.find({
             parentcommentId: commentId
         }, {
@@ -485,7 +485,7 @@ const getRecomment = async (req, res) => {
 // 대댓글 삭제
 const deleteRecomment = async (req, res) => {
     try {
-        const commentId = req.params.commentid
+        const commentId = req.params.commentId
         const comment = await Comment.findOneAndDelete({
             _id: commentId
         });
@@ -615,7 +615,7 @@ const unLikeDaily = async (req, res) => {
 const likeComment = async (req, res) => {
     try{
         const time = new Date();
-        const dailyId = req.params.Dailyid
+        const dailyId = req.params.dailyId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -674,7 +674,7 @@ const likeComment = async (req, res) => {
 // 댓글 좋아요 취소
 const unLikeComment = async (req, res) => {
     try{
-        const dailyId = req.params.Dailyid
+        const dailyId = req.params.dailyId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -719,7 +719,7 @@ const unLikeComment = async (req, res) => {
 const likeRecomment = async (req, res) => {
     try{
         const time = new Date();
-        const parentId = req.params.commentid
+        const parentId = req.params.commentId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
@@ -775,7 +775,7 @@ const likeRecomment = async (req, res) => {
 // 대댓글 좋아요 취소
 const unLikeRecomment = async (req, res) => {
     try{
-        const parentId = req.params.commentid
+        const parentId = req.params.commentId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId

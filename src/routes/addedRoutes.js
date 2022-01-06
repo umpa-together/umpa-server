@@ -4,14 +4,18 @@ const {
     changeData,
     postAddedSong,
     getAddedSong,
+    deleteAddedSong,
     postAddedPlaylist,
-    getAddedPlaylist
+    getAddedPlaylist,
+    deleteAddedPlaylist
 } = require('../controllers/added')
 
 router.post('/change', changeData);
 router.post('/', postAddedSong);
 router.get('/', getAddedSong);
-router.post('/playlist', postAddedPlaylist);
+router.delete('/:id', deleteAddedSong);
+router.post('/playlist/:id', postAddedPlaylist);
 router.get('/playlist', getAddedPlaylist);
+router.delete('/playlist/:id', deleteAddedPlaylist);
 
 module.exports = router;

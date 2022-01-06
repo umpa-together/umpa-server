@@ -21,7 +21,7 @@ const changeTime = async (req, res) => {
                 { noticetype: 'brecomlike' },
                 { noticetype: 'bsonglike' },
                 { noticetype: 'culike' },
-                { noticetype: 'ccom' }
+                { noticetype: 'ccom' },
             ]
         })
         notice.map(async (item) => {
@@ -44,6 +44,8 @@ const getNotice = async (req, res) => {
     try {
         const notice = await Notice.find({ 
             noticieduser: req.user._id 
+        }, {
+            noticetype: 1, time: 1
         }).populate('noticinguser', { 
             profileImage: 1, name: 1 
         }).populate('playlist', { 
@@ -68,8 +70,11 @@ const getNotice = async (req, res) => {
 // 알림 데이터 페이징 받아오기
 const getNextNotice = async (req, res) => {
     try{
-        const notice = await Notice.find({ noticieduser: req.user._id })
-        .populate('noticinguser', { 
+        const notice = await Notice.find({ 
+            noticieduser: req.user._id 
+        }, {
+            noticetype: 1, time: 1
+        }).populate('noticinguser', { 
             profileImage: 1, name: 1 
         }).populate('playlist', { 
             title: 1, image: 1, postUserId: 1 

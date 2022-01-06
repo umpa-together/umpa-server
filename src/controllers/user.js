@@ -208,14 +208,34 @@ const getOtherInformation = async (req, res) => {
 // 프로필 정보 변경
 const editProfile = async (req, res) => {
     try {
-        const { nickName, name, introduction } = req.body;
+        const { nickName, name, introduction, genre, songs } = req.body;
+        req.user.genre.map(async (genre) => {
+            await Genre.findOneAndUpdate({
+                genre: genre
+            }, {
+                $pull: {
+                    user: req.user._id
+                }
+            })
+        })
+        genre.map(async (genre) => {
+            await Genre.findOneAndUpdate({
+                genre: genre
+            }, {
+                $push: {
+                    user: req.user._id
+                }
+            })
+        })
         const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
             $set: { 
                 name: nickName, 
                 realName: name, 
-                introduction: introduction
+                introduction: introduction,
+                genre: genre,
+                songs: songs
             }
         }, {
             new: true,
@@ -435,25 +455,7 @@ const postRepresentSongs = async (req, res) => {
     }
 }
 
-// 대표곡 수정
-const editRepresentSongs = async (req, res) => {
-    try {
-        const { songs } = req.body;
-        const user = await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $set: {
-                songs: songs
-            }
-        }, {
-            new: true
-        });
-        res.status(200).send(user.songs);
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
+// 장르 목록 가져오기
 const getGenreLists = async (req, res) => {
     try {
         const genreLists = await Genre.find({}, {
@@ -466,6 +468,7 @@ const getGenreLists = async (req, res) => {
     }
 }
 
+// 장르 올리기
 const postGenre = async (req, res) => {
     try {
         const { genreLists } = req.body;
@@ -522,7 +525,6 @@ module.exports = {
     unFollow,
     getRepresentSongs,
     postRepresentSongs,
-    editRepresentSongs,
     getGenreLists,
     postGenre,
 }

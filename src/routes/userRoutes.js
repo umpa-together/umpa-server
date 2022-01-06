@@ -13,7 +13,6 @@ const {
   unFollow,
   getRepresentSongs,
   postRepresentSongs,
-  editRepresentSongs,
   getGenreLists,
   postGenre
 } = require('../controllers/user')
@@ -29,7 +28,6 @@ router.post('/follow/:id', follow)
 router.delete('/follow/:id', unFollow)
 router.get('/songs/:userId', getRepresentSongs)
 router.post('/songs', postRepresentSongs)
-router.post('/songs/edit', editRepresentSongs)
 router.get('/genre', getGenreLists)
 router.post('/genre', postGenre)
 

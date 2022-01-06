@@ -594,6 +594,8 @@ const unLikeDaily = async (req, res) => {
                 projection: {
                     textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                 }
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, noticetoken: 1
             }),
             Notice.findOneAndDelete({
                 $and: [{ 

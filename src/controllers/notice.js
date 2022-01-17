@@ -49,7 +49,7 @@ const getNotice = async (req, res) => {
         }).populate('noticinguser', { 
             profileImage: 1, name: 1 
         }).populate('playlist', { 
-            title: 1, image: 1, postUserId: 1 
+            title: 1, image: 1, postUserId: 1, songs:1
         }).populate('playlistcomment', { 
             text: 1 
         }).populate('playlistrecomment', { 
@@ -77,7 +77,7 @@ const getNextNotice = async (req, res) => {
         }).populate('noticinguser', { 
             profileImage: 1, name: 1 
         }).populate('playlist', { 
-            title: 1, image: 1, postUserId: 1 
+            title: 1, image: 1, postUserId: 1, songs:1
         }).populate('playlistcomment', { 
             text: 1 
         }).populate('playlistrecomment', { 

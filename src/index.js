@@ -26,6 +26,7 @@ require('./models/AddedSong');
 require('./models/Genre');
 require('./models/RecentKeyword');
 require('./models/AddedPlaylist');
+require('./models/Theme');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

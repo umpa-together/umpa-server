@@ -3,6 +3,7 @@ const router = express.Router();
 const { 
     signUp,
     signIn,
+    withdrawal,
     googleSignIn,
     appleSignIn,
     kakaoSignIn,
@@ -12,6 +13,7 @@ const {
 
 router.post('/signUp', signUp);
 router.post('/signIn', signIn);
+router.delete('/withdrawal/:id', withdrawal);
 router.get('/social/google/:email/:id', googleSignIn)
 router.get('/social/apple/:email/:id', appleSignIn)
 router.get('/social/kakao/:token', kakaoSignIn);

@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const User = mongoose.model('User');
+const Notice = mongoose.model('Notice');
+const StorySong = mongoose.model('StorySong');
+const RelaySong = mongoose.model('RelaySong');
+const RelayPlaylist = mongoose.model('RelayPlaylist');
+const Genre = mongoose.model('Genre');
+const RecentKeyword = mongoose.model('RecentKeyword');
+const Playlist = mongoose.model('Playlist');
+const PlaylistComment = mongoose.model('PlaylistComment');
+const Daily = mongoose.model('Daily');
+const DailyComment = mongoose.model('DailyComment');
+const AddedSong = mongoose.model('AddedSong');
+const AddedPlaylist = mongoose.model('AddedPlaylist');
+const Hashtag = mongoose.model('Hashtag');
+const Feed = mongoose.model('Feed');
 const request = require('request');
 
 const signUp = async (req, res) => {
@@ -32,6 +46,219 @@ const signIn = async (req, res) => {
         return res.status(422).send(err.message);
     }
 }
+
+const withdrawal = async (req, res) => {
+    try {
+        const id = req.params.id
+        const user = await User.findById(id, {
+            following: 1, follower: 1, genre: 1
+        })
+
+        // 장르 user 필드에서 삭제
+        for(genreName of user.genre) {
+            await Genre.findOneAndUpdate({
+                genre: genreName
+            }, {
+                $pull: {
+                    user: mongoose.Types.ObjectId(id)
+                }
+            })
+        }
+
+        // 상대방 follower 필드에서 삭제
+        for (following of user.following) {
+            await User.findOneAndUpdate({
+                _id: following
+            }, {
+                $pull: {
+                    follower: mongoose.Types.ObjectId(id)
+                }
+            })
+        }
+
+        // 상대방 following 필드에서 삭제
+        for (follower of user.follower) {
+            await User.findOneAndUpdate({
+                _id: follower
+            }, {
+                $pull: {
+                    following: mongoose.Types.ObjectId(id)
+                }
+            })
+        }
+
+        // 최근 검색어 삭제
+        // 스토리 곡 삭제
+        // 릴레이 음악 삭제
+        // 담은 곡 삭제
+        // 담은 플레이리스트 삭제
+        // 피드 삭제
+        await Promise.all([
+            RecentKeyword.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            }),
+            StorySong.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            }),
+            RelaySong.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            }),
+            AddedSong.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            }),
+            AddedPlaylist.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            }),
+            Feed.deleteMany({
+                postUserId: mongoose.Types.ObjectId(id)
+            })
+        ])
+
+        // 릴레이 플리 postUserId 필드에서 삭제
+        const relayPlaylist = await RelayPlaylist.find({}, {
+            postUserId: 1
+        })
+        for (eachPlaylist of relayPlaylist) {
+            await RelayPlaylist.findOneAndUpdate({
+                _id: eachPlaylist._id
+            }, {
+                $pull: {
+                    postUserId: mongoose.Types.ObjectId(id)
+                }
+            })
+        }
+
+        // 플리 삭제 및 관련 댓글 삭제
+        const playlist = await Playlist.aggregate([
+            {
+                $match: {
+                    postUserId: mongoose.Types.ObjectId(id)
+                }
+            }, {
+                $project: {
+                    comments: 1, hashtag: 1
+                }
+            }
+        ])
+        for(item of playlist) {
+            const { _id: id, comments, hashtag } = item
+            for(comment of comments){
+                await PlaylistComment.findOneAndDelete({
+                    _id: comment
+                })
+            }
+            await AddedPlaylist.deleteMany({
+                playlistId: id
+            })
+            for(text of hashtag) {
+                await Hashtag.findOneAndUpdate({
+                    hashtag: text
+                }, {
+                    $pull: {
+                        playlistId: mongoose.Types.ObjectId(id)
+                    }
+                })
+            }
+        }
+        await Playlist.deleteMany({
+            postUserId: mongoose.Types.ObjectId(id)
+        })
+        const playlistComments = await PlaylistComment.aggregate([
+            {
+                $match: {
+                    postUserId: mongoose.Types.ObjectId(id)
+                }
+            }, {
+                $project: {
+                    recomments: 1
+                }
+            }
+        ])
+        for (item of playlistComments) {
+            const { recomments } = item
+            for (recomment of recomments) {
+                await PlaylistComment.findOneAndDelete({
+                    _id: recomment
+                })
+            }
+        }
+        await PlaylistComment.deleteMany({
+            postUserId: mongoose.Types.ObjectId(id)
+        })
+
+        // 데일리 및 관련 댓글 삭제
+        const daily = await Daily.aggregate([
+            {
+                $match: {
+                    postUserId: mongoose.Types.ObjectId(id)
+                }
+            }, {
+                $project: {
+                    comments: 1, hashtag: 1
+                }
+            }
+        ])
+        for(item of daily) {
+            const { _id: id, comments, hashtag } = item
+            for(comment of comments){
+                await DailyComment.findOneAndDelete({
+                    _id: comment
+                })
+            }
+            for(hash of hashtag) {
+                await Hashtag.findOneAndUpdate({
+                    hashtag: hash
+                }, {
+                    $pull: {
+                        dailyId: mongoose.Types.ObjectId(id)
+                    }
+                })
+            }
+        }
+        await Daily.deleteMany({
+            postUserId: mongoose.Types.ObjectId(id)
+        })
+        const dailyComments = await DailyComment.aggregate([
+            {
+                $match: {
+                    postUserId: mongoose.Types.ObjectId(id)
+                }
+            }, {
+                $project: {
+                    recomments: 1
+                }
+            }
+        ])
+        for (item of dailyComments) {
+            const { recomments } = item
+            for (recomment of recomments) {
+                await DailyComment.findOneAndDelete({
+                    _id: recomment
+                })
+            }
+        }
+        await DailyComment.deleteMany({
+            postUserId: mongoose.Types.ObjectId(id)
+        })
+
+        // 알림 삭제
+        await Notice.deleteMany({
+            $or: [{
+                noticinguser: mongoose.Types.ObjectId(id)
+            }, {
+                noticieduser: mongoose.Types.ObjectId(id)
+            }]
+        })
+
+        // 아이디 삭제
+        await User.deleteOne({
+            _id: id
+        })
+        res.send()
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+} 
 
 const googleSignIn = async (req, res) => {
     const user = await User.findOne({ email: req.params.email });
@@ -133,6 +360,7 @@ const checkName = async (req, res) => {
 module.exports = {
     signUp,
     signIn,
+    withdrawal,
     googleSignIn,
     appleSignIn,
     kakaoSignIn,

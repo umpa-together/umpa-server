@@ -8,6 +8,7 @@ const {
   getOtherInformation,
   editProfile,
   editProfileImage,
+  editBackgroundImage,
   getFollow,
   follow,
   unFollow,
@@ -23,6 +24,7 @@ router.get('/', getMyInformation)
 router.get('/other/:id', getOtherInformation)
 router.post('/editProfile', editProfile)
 router.post('/editProfileImage', upload('profileImage/').single('img'), editProfileImage)
+router.post('/editBackgroundImage', upload('backgroundImage/').single('img'), editBackgroundImage)
 router.get('/follow/:id', getFollow);
 router.post('/follow/:id', follow)
 router.delete('/follow/:id', unFollow)

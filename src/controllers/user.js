@@ -34,7 +34,6 @@ const genreLists = [
     '해외포크',
     '뉴에이지',
     '월드뮤직',
-
 ]
 
 // 장르 데이터 등록하기
@@ -94,6 +93,7 @@ const getMyInformation = async (req, res) => {
                 introduction: 1, 
                 songs: 1, 
                 profileImage: 1,
+                backgroundImage: 1,
                 genre: 1, 
                 follower: 1,
                 following: 1,
@@ -155,6 +155,7 @@ const getOtherInformation = async (req, res) => {
             introduction: 1, 
             songs: 1, 
             profileImage: 1, 
+            backgroundImage: 1,
             todaySong: 1,
             genre: 1, 
             follower: 1, 
@@ -245,6 +246,7 @@ const editProfile = async (req, res) => {
                 introduction: 1, 
                 songs: 1, 
                 profileImage: 1,
+                backgroundImage: 1,
                 genre: 1, 
                 follower: 1,
                 following: 1,
@@ -260,24 +262,31 @@ const editProfile = async (req, res) => {
 const editProfileImage = async (req, res) => {
     try {
         const img = req.file.location;
-        const user = await User.findOneAndUpdate({
+        await User.findOneAndUpdate({
             _id: req.user._id
         }, {
             $set: { profileImage: img }
         }, {
             new: true,
-            projection: {
-                name: 1, 
-                realName: 1, 
-                introduction: 1, 
-                songs: 1, 
-                profileImage: 1,
-                genre: 1, 
-                follower: 1,
-                following: 1,
-            },
         })
-        res.status(200).send(user);
+        res.status(204).send();
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 프로필 배경 변경
+const editBackgroundImage = async (req, res) => {
+    try { 
+        const img = req.file.location;
+        await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $set: { backgroundImage: img }
+        }, {
+            new: true,
+        })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message); 
     }
@@ -317,6 +326,7 @@ const follow = async (req, res) => {
                     introduction: 1, 
                     songs: 1, 
                     profileImage: 1, 
+                    backgroundImage: 1,
                     todaySong: 1, 
                     noticetoken: 1,
                     genre: 1, 
@@ -324,14 +334,24 @@ const follow = async (req, res) => {
                     following: 1,
                 }
             })
-            res.status(200).send(user);
-            await Promise.all([
+            const [me] = await Promise.all([
                 User.findOneAndUpdate({
                     _id: req.user._id
                 }, {
                     $push : { following : req.params.id }
                 }, {
-                    upsert: true
+                    new: true,
+                    projection: {
+                        name: 1, 
+                        realName: 1, 
+                        introduction: 1, 
+                        songs: 1, 
+                        profileImage: 1,
+                        backgroundImage: 1,
+                        genre: 1, 
+                        follower: 1,
+                        following: 1,
+                    }
                 }),
                 new Notice({ 
                     noticinguser: req.user._id, 
@@ -340,7 +360,7 @@ const follow = async (req, res) => {
                     time: new Date()
                 }).save()
             ])
-    
+            res.status(200).send([me, user]);
             if(user.noticetoken !== null && user._id.toString() !== req.user._id.toString()){
                 let message = {
                     notification: {
@@ -363,13 +383,27 @@ const follow = async (req, res) => {
                 introduction: 1, 
                 songs: 1, 
                 profileImage: 1, 
+                backgroundImage: 1,
                 todaySong: 1, 
                 noticetoken: 1,
                 genre: 1, 
                 follower: 1,
                 following: 1,
             })
-            res.status(200).send(user);
+            const me = await User.findOne({
+                _id: req.user._id
+            }, {
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1,
+                backgroundImage: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
+            })
+            res.status(200).send([me, user]);
         }
     } catch (err) {
         return res.status(422).send(err.message);
@@ -391,6 +425,7 @@ const unFollow = async (req, res) => {
                 introduction: 1, 
                 songs: 1, 
                 profileImage: 1, 
+                backgroundImage: 1,
                 todaySong: 1, 
                 noticetoken: 1,
                 genre: 1, 
@@ -398,14 +433,24 @@ const unFollow = async (req, res) => {
                 following: 1,
             }
         })
-        res.status(200).send(user);
-        await Promise.all([
+        const [me] = await Promise.all([
             User.findOneAndUpdate({
                 _id: req.user._id
             }, {
                 $pull: { following :req.params.id }
             }, {
-                new: true
+                new: true,
+                projection: {
+                    name: 1, 
+                    realName: 1, 
+                    introduction: 1, 
+                    songs: 1, 
+                    profileImage: 1,
+                    backgroundImage: 1,
+                    genre: 1, 
+                    follower: 1,
+                    following: 1,
+                }
             }), 
             Notice.findOneAndDelete({
                 $and: [{ 
@@ -417,6 +462,7 @@ const unFollow = async (req, res) => {
                 }]
             }) 
         ]);
+        res.status(200).send([me, user]);
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -461,7 +507,6 @@ const getGenreLists = async (req, res) => {
         const genreLists = await Genre.find({}, {
             genre: 1
         })
-        genreLists.sort(() => Math.random() - 0.5);
         res.status(200).send(genreLists);
     } catch (err) {
         return res.status(422).send(err.message); 
@@ -502,6 +547,7 @@ const postGenre = async (req, res) => {
                 introduction: 1, 
                 songs: 1, 
                 profileImage: 1,
+                backgroundImage: 1,
                 genre: 1, 
                 follower: 1,
                 following: 1,
@@ -520,6 +566,7 @@ module.exports = {
     getOtherInformation,
     editProfile,
     editProfileImage,
+    editBackgroundImage,
     getFollow,
     follow,
     unFollow,

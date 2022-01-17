@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Daily = mongoose.model('Daily');
 const Comment = mongoose.model('DailyComment');
-const User = mongoose.model('User');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
@@ -228,8 +227,10 @@ const getSelectedDaily = async (req, res) => {
         let daily , comments;
         if(postUserId === req.user._id){
             [daily, comments] = await Promise.all([
-                Daily.findOne({ 
+                Daily.findOneAndUpdate({ 
                     _id: dailyId 
+                }, {
+                    $set: { accessedTime: new Date() }
                 }, {
                     textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
                 }).populate('postUserId', {
@@ -251,7 +252,8 @@ const getSelectedDaily = async (req, res) => {
                 Daily.findOneAndUpdate({
                     _id: dailyId 
                 }, {
-                    $inc :{ views:1 }
+                    $inc :{ views:1 },
+                    $set: { accessedTime: new Date() }
                 }, { 
                     new: true,
                     projection: {

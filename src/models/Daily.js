@@ -39,6 +39,9 @@ const dailySchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    accessedTime: {
+        type: Date,
+    },
 });
 
 mongoose.model('Daily', dailySchema);

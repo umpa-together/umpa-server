@@ -291,9 +291,9 @@ const getFollow =  async (req, res) => {
       }, {
           _id: 1
       }).populate('follower', {
-        name: 1, profileImage:1,
+        name: 1, profileImage:1, songs: 1,
       }).populate('following', {
-        name: 1, profileImage:1,
+        name: 1, profileImage:1, songs: 1,
       });
       res.status(200).send(user);
     } catch (err) {

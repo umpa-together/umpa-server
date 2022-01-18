@@ -31,7 +31,11 @@ const searchSong = async (req, res) => {
         request(appleOption, async (err, response, body) => {
             const song = await JSON.parse(body).results.songs;
             const keyword = await RecentKeyword.findOne({
-                keyword: req.params.songname
+                $and: [{
+                    keyword: req.params.songname,
+                }, {
+                    postUserId: req.user._id
+                }]
             })
             if(keyword) {
                 await RecentKeyword.findOneAndUpdate({

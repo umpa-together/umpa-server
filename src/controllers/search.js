@@ -21,9 +21,9 @@ const getAllContents = async (req, res) => {
                     }
                 }]
             }, {
-                image: 1, title: 1, songs: 1,
+                image: 1, title: 1, songs: 1, time:1,
             }).populate('postUserId', { 
-                name: 1, profileImage: 1 
+                name: 1, profileImage: 1,
             }), 
             User.find({
                 $or: [{
@@ -36,7 +36,7 @@ const getAllContents = async (req, res) => {
                     }
                 }]
             }, { 
-                profileImage: 1, name: 1
+                profileImage: 1, name: 1, songs: 1,
             }), 
             Daily.find({
                 textcontent: {
@@ -91,7 +91,7 @@ const getSelectedContents = async (req, res) => {
             User.find({
                 songs: { $elemMatch: { id: songId }}
             }, { 
-                profileImage: 1, name: 1
+                profileImage: 1, name: 1, songs: 1,
             })
         ])
         const result = {

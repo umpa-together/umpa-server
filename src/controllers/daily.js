@@ -232,7 +232,7 @@ const getSelectedDaily = async (req, res) => {
                 }, {
                     $set: { accessedTime: new Date() }
                 }, {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
                 }), 
@@ -257,7 +257,7 @@ const getSelectedDaily = async (req, res) => {
                 }, { 
                     new: true,
                     projection: {
-                        textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1
+                        textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
                     }
                 }).populate('postUserId', {
                     name: 1, profileImage: 1

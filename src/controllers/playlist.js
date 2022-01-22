@@ -138,7 +138,9 @@ const uploadImage = async (req, res) => {
         }, {
             $set: {
                 image: img
-            }
+            },
+        },  {
+            new: true
         });
         res.status(200).send([playlist, []]);
     } catch (err) {

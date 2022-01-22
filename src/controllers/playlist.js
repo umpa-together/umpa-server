@@ -133,7 +133,6 @@ const uploadImage = async (req, res) => {
     try {
         const img = req.files['img'][0].location;
         const { playlistId } = req.body;
-        console.log(img, playlistId);
         const playlist = await Playlist.findOneAndUpdate({
             _id: playlistId
         }, {

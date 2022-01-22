@@ -16,8 +16,6 @@ module.exports = (req, res, next) => {
         const { userId } = payload;
         const user = await User.findById(userId, {
             _id: 1, name: 1, following: 1, songs: 1, genre: 1
-        }).populate('todaySong', {
-            song: 1, time: 1
         })
         req.user = user;
         next();

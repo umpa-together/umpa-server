@@ -99,7 +99,7 @@ const addPlaylist = async (req, res) => {
             type: 'playlist',
             postUserId: req.user._id
         })
-        res.status(200).send(playlist._id);
+        res.status(200).send([playlist, []]);  
         hashtag.forEach(async(text) => {
             try{
                 const hashtagr = await Hashtag.findOne({
@@ -133,14 +133,16 @@ const uploadImage = async (req, res) => {
     try {
         const img = req.files['img'][0].location;
         const { playlistId } = req.body;
-        await Playlist.findOneAndUpdate({
+        const playlist = await Playlist.findOneAndUpdate({
             _id: playlistId
         }, {
             $set: {
                 image: img
-            }
+            },
+        },  {
+            new: true
         });
-        res.status(200).send();
+        res.status(200).send([playlist, []]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -248,7 +250,7 @@ const getSelectedPlaylist = async (req, res) => {
                 }, {
                     new: true,
                     projection: {
-                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                     },
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
@@ -275,7 +277,7 @@ const getSelectedPlaylist = async (req, res) => {
                 }, { 
                     new: true,
                     projection: {
-                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                     }, 
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
@@ -319,7 +321,7 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent:1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -391,7 +393,7 @@ const deleteComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent:1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -550,7 +552,7 @@ const likesPlaylist = async (req, res) => {
         const playlist = await Playlist.findOne({
             _id: playlistId
         }, {
-            title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+            title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
@@ -565,7 +567,7 @@ const likesPlaylist = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -616,7 +618,7 @@ const unlikesPlaylist = async (req, res) => {
             }, {
                 new :true,
                 projection: {
-                    title: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1

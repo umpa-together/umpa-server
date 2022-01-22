@@ -12,13 +12,6 @@ const postStory = async (req, res) => {
             time: new Date()
         }).save();
         res.status(200).send(storySong);
-        await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $push: { todaySong: storySong._id }
-        }, {
-            new: true
-        });
     } catch (err) {
         return res.status(422).send(err.message); 
     }
@@ -28,16 +21,9 @@ const postStory = async (req, res) => {
 const deleteStory = async (req, res) => {
     try {
         const storyId = req.params.storyId
-        await Promise.all([
-            StorySong.findOneAndDelete({
-                _id: storyId
-            }),
-            User.findOneAndUpdate({
-                _id: req.user._id
-            }, {
-                $pull: { todaySong: storyId }
-            })
-        ])
+        await StorySong.findOneAndDelete({
+            _id: storyId
+        })
         res.status(200).send();
     } catch (err) {
         return res.status(422).send(err.message); 
@@ -48,10 +34,17 @@ const deleteStory = async (req, res) => {
 const getMyStory = async (req, res) => {
     const nowTime = new Date()
     try {
-        if (req.user.todaySong.length === 0) {
+        const lastStory = await StorySong.findOne({
+            postUserId: req.user._id
+        }, {
+            view: 1, song: 1, time: 1, likes: 1
+        }).populate('postUserId', {
+            name: 1,
+            profileImage: 1
+        }).sort({ time: -1 }).limit(1);
+        if (lastStory === null) {
             res.status(200).send([null, []]);
         } else {
-            const lastStory = req.user.todaySong[req.user.todaySong.length-1];
             const tomorrowTime = new Date(new Date().setDate(lastStory.time.getDate()+1))
             if(nowTime <= tomorrowTime) {
                 const { _id: id } = lastStory
@@ -72,7 +65,9 @@ const getMyStory = async (req, res) => {
                     {
                         $project: {
                             'view.name': 1,
-                            'view.profileImage': 1
+                            'view.profileImage': 1,
+                            'view.songs': 1,
+                            'view._id': 1
                         }
                     }
                 ])
@@ -108,7 +103,7 @@ const getOtherStoryWithAll = async (req, res) => {
             ]
             
         }, {
-            view: 1, song: 1
+            view: 1, song: 1, likes: 1
         }).populate('postUserId', {
             name: 1,
             profileImage: 1
@@ -172,20 +167,26 @@ const readStory = async (req, res) => {
     try {
         const storyId = req.params.storyId
         StorySong.findOne({
-            _id: storyId
+            $and: [{
+                _id: storyId
+            }, {
+                postUserId: { $ne: req.user._id }
+            }]
         }).exec(async (_, data) => {
-            const { view } = data
-            if(!view.includes(req.user._id)) {
-                await StorySong.findOneAndUpdate({
-                    _id: storyId
-                }, {
-                    $push: {
-                        view: req.user._id
-                    }
-                })
+            if (data) {
+                const { view } = data
+                if(!view.includes(req.user._id)) {
+                    await StorySong.findOneAndUpdate({
+                        _id: storyId
+                    }, {
+                        $push: {
+                            view: req.user._id
+                        }
+                    })
+                }
             }
-            res.status(200).send()
         })
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message); 
     }  
@@ -208,6 +209,56 @@ const getStoryCalendar = async (req, res) => {
     }
 }
 
+// 스토리 좋아요
+const likeStory = async (req, res) => {
+    try {
+        const storyId = req.params.id
+        const story = await StorySong.findById(storyId, {
+            likes: 1
+        })
+        if (story) {
+            if(!story.likes.includes(req.user._id)) {
+                await StorySong.findOneAndUpdate({
+                    _id: storyId
+                }, {
+                    $push: {
+                        likes: req.user._id
+                    }
+                })
+            }
+            res.status(204).send()
+        } else {
+            res.status(400).send()
+        }
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 스토리 좋아요 취소
+const unlikeStory = async (req, res) => {
+    try {
+        const storyId = req.params.id
+        const story = await StorySong.findById(storyId, {
+            likes: 1
+        })
+        if (story) {
+            await StorySong.findOneAndUpdate({
+                _id: storyId
+            }, {
+                $pull: {
+                    likes: req.user._id
+                }
+            })
+            res.status(204).send()
+        } else {
+            res.status(400).send()
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);  
+    }
+}
+
 module.exports = {
     postStory,
     deleteStory,
@@ -215,5 +266,7 @@ module.exports = {
     getOtherStoryWithAll,
     getOtherStoryWithFollowing,
     readStory,
-    getStoryCalendar
+    getStoryCalendar,
+    likeStory,
+    unlikeStory
 }

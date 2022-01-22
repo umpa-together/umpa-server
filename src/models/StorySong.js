@@ -15,7 +15,11 @@ const storySongSchema = new mongoose.Schema({
     }],
     time: {
         type: Date
-    }
+    },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }]
 });
 
 mongoose.model('StorySong', storySongSchema);

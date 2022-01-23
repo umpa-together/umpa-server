@@ -105,13 +105,15 @@ const getMyInformation = async (req, res) => {
             Playlist.find({
                 postUserId: req.user._id
             }, {
-                songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
+                songs: 1, title: 1, hashtag: 1, image: 1, time: 1, likes: 1,
+            }).sort({ time: -1 }).populate('postUserId', {
+                _id: 1,
             }),
             Daily.find({
                 postUserId: req.user._id
             }, {
-                song: 1, image: 1, textcontent: 1, time: 1,
-            }),
+                song: 1, image: 1, textcontent: 1, time: 1, likes: 1,
+            }).sort({ time: -1 }),
             RelaySong.find({
                 $and: [{
                     postUserId: req.user._id
@@ -167,13 +169,15 @@ const getOtherInformation = async (req, res) => {
             Playlist.find({
                 postUserId: req.params.id
             }, {
-                songs: 1, title: 1, hashtag: 1, image: 1, time: 1,
-            }),
+                songs: 1, title: 1, hashtag: 1, image: 1, time: 1, postUserId: 1, likes: 1,
+            }).sort({ time: -1 }).populate('postUserId', {
+                _id: 1,
+            }), 
             Daily.find({
                 postUserId: req.params.id
             }, {
-                song: 1, image: 1, textcontent: 1, time: 1,
-            }),
+                song: 1, image: 1, textcontent: 1, time: 1, likes: 1,
+            }).sort({ time: -1 }),
             RelaySong.find({
                 $and: [{
                     postUserId: req.params.id

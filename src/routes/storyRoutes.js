@@ -8,7 +8,9 @@ const {
     getOtherStoryWithAll,
     getOtherStoryWithFollowing,
     readStory,
-    getStoryCalendar
+    getStoryCalendar,
+    likeStory,
+    unlikeStory,
 } = require('../controllers/story')
 
 router.post('/', postStory);
@@ -18,5 +20,7 @@ router.get('/other', getOtherStoryWithAll);
 router.get('/following', getOtherStoryWithFollowing)
 router.put('/:storyId', readStory)
 router.get('/calendar/:userId', getStoryCalendar);
+router.put('/like/:id', likeStory);
+router.put('/unlike/:id', unlikeStory);
 
 module.exports = router;

@@ -43,10 +43,6 @@ const userSchema = new mongoose.Schema({
     noticetoken:{
         type: String,
     },
-    todaySong: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'StorySong'
-    }],
     informationagree:{
         type: Boolean,
     },
@@ -69,7 +65,8 @@ const userSchema = new mongoose.Schema({
     curationposts:{},
     dailys:{},
     relaysongs:{},
-    nominate: {}
+    nominate: {},
+    todaySong: {},
 });
 
 userSchema.pre('save', function(next){

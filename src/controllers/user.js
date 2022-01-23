@@ -68,7 +68,8 @@ const deleteField = async (req, res) => {
                 playlists:1,
                 curationposts:1,
                 dailys:1,
-                relaysongs:1
+                relaysongs:1,
+                todaySong: 1
             }
         })
         res.status(200).send(users)

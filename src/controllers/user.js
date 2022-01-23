@@ -107,7 +107,7 @@ const getMyInformation = async (req, res) => {
             }, {
                 songs: 1, title: 1, hashtag: 1, image: 1, time: 1, likes: 1,
             }).sort({ time: -1 }).populate('postUserId', {
-                name: 1,
+                _id: 1,
             }),
             Daily.find({
                 postUserId: req.user._id
@@ -171,7 +171,7 @@ const getOtherInformation = async (req, res) => {
             }, {
                 songs: 1, title: 1, hashtag: 1, image: 1, time: 1, postUserId: 1, likes: 1,
             }).sort({ time: -1 }).populate('postUserId', {
-                name: 1,
+                _id: 1,
             }), 
             Daily.find({
                 postUserId: req.params.id

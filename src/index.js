@@ -9,7 +9,6 @@ const PORT = 3000
 require('./models/User');
 require('./models/Playlist');
 require('./models/PlaylistComment');
-require('./models/PlaylistUserSong');
 require('./models/Notice');
 require('./models/Hashtag');
 require('./models/Weekly');
@@ -27,6 +26,7 @@ require('./models/Genre');
 require('./models/RecentKeyword');
 require('./models/AddedPlaylist');
 require('./models/Theme');
+require('./models/PlaylistRecomment');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

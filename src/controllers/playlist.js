@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 const Playlist = mongoose.model('Playlist');
 const Comment = mongoose.model('PlaylistComment');
-const User = mongoose.model('User');
+const Recomment = mongoose.model('PlaylistRecomment');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
-//const UserSong = mongoose.model('PlaylistUserSong');
 const admin = require('firebase-admin');
 
 // time fields string -> Date 변경
@@ -79,6 +78,48 @@ const changeLikes = async (req, res) => {
     }
 }
 
+// comment, recomment 데이터 정제하기
+const commentData = async (req, res) => {
+    try {
+        const recomments = await Comment.find({
+            parentcommentId: { 
+                $ne: ""
+            }
+        }, {
+            playlistId: 1, postUserId: 1, text: 1, time: 1, likes: 1, parentcommentId: 1
+        })
+        recomments.map(async (item) => {
+            const { playlistId, _id: id, postUserId, text, time, likes, parentcommentId } = item
+            await Playlist.findOneAndUpdate({
+                _id: playlistId
+            }, {
+                $pull: { comments: id }
+            })
+            const newRecomment = await new Recomment({
+                playlistId: playlistId,
+                parentCommentId: parentcommentId,
+                postUserId: postUserId,
+                text: text,
+                time: time,
+                likes: likes
+            }).save()
+            await Playlist.findOneAndUpdate({
+                _id: playlistId
+            }, {
+                $push: { comments: newRecomment._id }
+            })
+        })
+        await Comment.deleteMany({
+            parentcommentId: { 
+                $ne: ""
+            }
+        })
+        res.send(recomments)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
 // 플리 만들기
 const addPlaylist = async (req, res) => {
     try {
@@ -99,7 +140,7 @@ const addPlaylist = async (req, res) => {
             type: 'playlist',
             postUserId: req.user._id
         })
-        res.status(200).send([playlist, []]);  
+        res.status(201).send([playlist, []]);  
         hashtag.forEach(async(text) => {
             try{
                 const hashtagr = await Hashtag.findOne({
@@ -141,8 +182,8 @@ const uploadImage = async (req, res) => {
             },
         },  {
             new: true
-        });
-        res.status(200).send([playlist, []]);
+        })
+        res.status(201).send([playlist, []]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -151,7 +192,7 @@ const uploadImage = async (req, res) => {
 // 플리 수정하기
 const editPlaylist = async (req, res) => {
     try {
-        const { title, songs, hashtag, playlistId } = req.body;
+        const { title, content, songs, hashtag, playlistId } = req.body;
         const time = new Date()
         const playlist = await Playlist.findOne({
             _id: playlistId
@@ -187,14 +228,21 @@ const editPlaylist = async (req, res) => {
                 });   
             }
         })
-        await Playlist.findOneAndUpdate({
+        const updatePlaylist = await Playlist.findOneAndUpdate({
             _id: playlistId
         }, {
             $set: {
-                title, songs, hashtag
+                title, songs, hashtag, textcontent: content
             }
+        }, {
+            new: true,
+            projection: {
+                title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+            },
+        }).populate('postUserId', {
+            name: 1, profileImage: 1
         })
-        res.status(200).send()
+        res.status(200).send(updatePlaylist)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -216,6 +264,9 @@ const deletePlaylist = async (req, res) => {
             }),
             Feed.deleteOne({ 
                 playlist: playlistId
+            }),
+            Recomment.deleteMany({
+                playlistId: playlistId
             })
         ]);
         const hashtag = playlist.hashtag
@@ -228,7 +279,7 @@ const deletePlaylist = async (req, res) => {
                 new: true
             })
         })
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -240,60 +291,57 @@ const getSelectedPlaylist = async (req, res) => {
         const nowTime = new Date();
         const postUserId = req.params.postUserId
         const playlistId = req.params.id
-        let playlist, comments;
-        if(postUserId === req.user._id){
-            [playlist , comments] = await Promise.all([
-                Playlist.findOneAndUpdate({
-                    _id: playlistId 
-                }, {
-                    $set: { accessedTime: nowTime }
-                }, {
-                    new: true,
-                    projection: {
-                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
-                    },
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                }), 
-                Comment.find({
-                    $and: [{
-                        playlistId: playlistId
-                    }, {
-                        parentcommentId: ""
-                    }]
-                }, {
-                    parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                })
-            ])
+        let playlist, comments, recomments;
+        if(postUserId.toString() === req.user._id.toString()){
+            playlist = await Playlist.findOneAndUpdate({
+                _id: playlistId 
+            }, {
+                $set: { accessedTime: nowTime }
+            }, {
+                new: true,
+                projection: {
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                },
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            })
         } else {
-            [playlist , comments] = await Promise.all([ 
-                Playlist.findOneAndUpdate({
-                    _id: playlistId
-                }, {
-                    $inc: { views:1 },  
-                    $set: { accessedTime :nowTime }
-                }, { 
-                    new: true,
-                    projection: {
-                        title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
-                    }, 
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                }), 
-                Comment.find({
-                    $and : [{
-                        playlistId: playlistId
-                    }, {
-                        parentcommentId: ""
-                    }]
-                }, {
-                    parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                })
-            ])
+            playlist = await Playlist.findOneAndUpdate({
+                _id: playlistId
+            }, {
+                $inc: { views:1 },  
+                $set: { accessedTime :nowTime }
+            }, { 
+                new: true,
+                projection: {
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                }, 
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            })
+        }
+        [comments, recomments] = await Promise.all([
+            Comment.find({
+                playlistId: playlistId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
         }
         res.status(200).send([playlist, comments]);  
     } catch (err) {
@@ -313,7 +361,7 @@ const addComment = async (req, res) => {
             text, 
             time 
         }).save();
-        let [playlist, comments]=  await Promise.all([
+        const [playlist, comments, recomments]=  await Promise.all([
             Playlist.findOneAndUpdate({
                 _id: playlistId
             }, {
@@ -325,20 +373,30 @@ const addComment = async (req, res) => {
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
-            }), 
+            }),
             Comment.find({
-                $and : [{
-                    playlistId: playlistId
-                },{
-                    parentcommentId: ""
-                }]
+                playlistId: playlistId
             }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
+                text: 1, time: 1, likes: 1, recomment: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
-            })
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
         ]);
-        res.status(200).send([playlist, comments]);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send(comments);
         const targetuser = playlist.postUserId;
         if(targetuser._id.toString() !== req.user._id.toString()){
             try {
@@ -378,14 +436,29 @@ const deleteComment = async (req, res) => {
     try {
         const commentId = req.params.commentId;
         const playlistId = req.params.id;
-        await Comment.deleteMany({
-            $or: [{
+        await Promise.all([
+            Comment.deleteMany({
                 _id: commentId
+            }),
+            Recomment.deleteMany({
+                parentCommentId: commentId
+            })
+        ])
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                playlistId: playlistId
             }, {
-                parentcommentId: commentId
-            } ]
-        });
-        let [playlist,comments] = await Promise.all([
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
             Playlist.findOneAndUpdate({
                 _id: playlistId
             }, {
@@ -397,65 +470,82 @@ const deleteComment = async (req, res) => {
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
-            }), 
-            Comment.find({
-                $and: [{
-                    playlistId: playlistId
-                }, {
-                    parentcommentId: ""
-                }]
-            }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-            }).populate('postUserId', {
-                name: 1, profileImage: 1, 
             }),
             Notice.deleteMany({
                 $and: [{ 
                     playlist: playlistId 
                 }, { 
-                    playlistcomment: commentId }
-                ]
-            }),
+                    playlistcomment: commentId 
+                }]
+            })
         ])
-        res.status(200).send([playlist, comments]);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
 // 대댓글 작성
-const addreComment = async (req, res) => {
+const addRecomment = async (req, res) => {
     try {
         const { text } = req.body;
         const time = new Date()
         const playlistId = req.params.id
         const commentId = req.params.commentId
-        const comment = await new Comment({ 
+        const newComment = await new Recomment({ 
             playlistId: playlistId, 
-            parentcommentId: commentId,
+            parentCommentId: commentId,
             postUserId: req.user._id, 
             text, 
             time
         }).save();
-        const [parentcomment, recomments] = await Promise.all([
-            Comment.findOneAndUpdate({
-                _id: commentId
+        const [comments, parentcomment, recomments] = await Promise.all([
+            Comment.find({
+                playlistId: playlistId
             }, {
-                $push: { recomments: comment._id }
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Comment.findOne({
+                playlistId: playlistId
+            }, {
+                _id: 1
             }).populate('playlistId', {
                 title: 1
             }).populate('postUserId', {
-                noticetoken: 1
+                _id: 1, noticetoken: 1
             }),
-            Comment.find({
-                parentcommentId: commentId
+            Recomment.find({
+                playlistId: playlistId
             }, {
-                text: 1, time: 1, likes: 1,
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
-            })
+            }),
+            Playlist.findOneAndUpdate({
+                _id: playlistId
+            }, {
+                $push: { comments: newComment._id }
+            }, {
+                new: true,
+            }),
         ])
-        res.status(200).send(recomments);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send(comments);
         const targetuser = parentcomment.postUserId
         if(targetuser._id.toString() != req.user._id.toString()){
             try {
@@ -466,7 +556,7 @@ const addreComment = async (req, res) => {
                     time, 
                     playlist: playlistId, 
                     playlistcomment: commentId, 
-                    playlistrecomment: comment._id 
+                    playlistrecomment: newComment._id 
                 }).save();
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -491,53 +581,53 @@ const addreComment = async (req, res) => {
     }
 }
 
-// 대댓글 가져오기
-const getRecomment = async (req, res) => {
-    try {
-        const commentId = req.params.commentId
-        const comments = await Comment.find({
-            parentcommentId: commentId
-        }, {
-            text: 1, time: 1, likes: 1,
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        });
-        res.status(200).send(comments);
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
 // 대댓글 삭제
 const deleteRecomment = async (req, res) => {
     try {
         const commentId = req.params.commentId
-        const comment = await Comment.findOneAndDelete({
+        const playlistId = req.params.id;
+        const comment = await Recomment.findOneAndDelete({
             _id: commentId
         });
-        await Comment.findOneAndUpdate({
-            _id: comment.parentcommentId
-        }, {
-            $pull: { recomments: commentId }
-        })
-        const [comments] = await Promise.all([
+        const [comments, recomments] = await Promise.all([
             Comment.find({
-                parentcommentId: comment.parentcommentId
+                playlistId: playlistId
             }, {
-                text: 1, time: 1, likes: 1,
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
-            }), 
+            }),
+            Playlist.findOneAndUpdate({
+                _id: playlistId
+            }, {
+                $pull: { comments: commentId }
+            }, {
+                new: true,
+            }),
             Notice.deleteMany({
                 $and: [{ 
                     playlist: comment.playlistId 
                 }, { 
-                    playlistcomment: mongoose.Types.ObjectId(comment.parentcommentId) 
+                    playlistcomment: mongoose.Types.ObjectId(comment.parentCommentId) 
                 }, { 
-                    playlistrecomment: comment._id }
-                ]
+                    playlistrecomment: comment._id 
+                }]
             })
         ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -654,17 +744,29 @@ const likescomment = async (req, res) => {
         }).populate('postUserId', {
             noticetoken: 1
         });
-        const comments = await Comment.find({
-            $and: [{
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
                 playlistId: playlistId
             }, {
-                parentcommentId: ""
-            }]
-        }, {
-            parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        })
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
         const targetuser = like.postUserId
         if(targetuser._id.toString() !== req.user._id.toString()){
@@ -711,15 +813,18 @@ const unlikescomment = async (req, res) => {
         }, {
             new: true
         });
-        const [comments] = await Promise.all([
+        const [comments, recomments] = await Promise.all([
             Comment.find({
-                $and: [{
-                    playlistId: playlistId
-                }, {
-                    parentcommentId:""
-                }]
+                playlistId: playlistId
             }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             }),
@@ -737,6 +842,13 @@ const unlikescomment = async (req, res) => {
                 }]
             }) 
         ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -747,9 +859,9 @@ const unlikescomment = async (req, res) => {
 const likesrecomment = async (req, res) => {
     try{
         const time = new Date()
-        const parentId = req.params.commentId
+        const playlistId = req.params.playlistId
         const commentId = req.params.id
-        const like = await Comment.findOneAndUpdate({
+        const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
             $push: { likes: req.user._id }
@@ -758,13 +870,29 @@ const likesrecomment = async (req, res) => {
         }).populate('postUserId', {
             noticetoken: 1
         });
-        const comments = await Comment.find({
-            parentcommentId: parentId
-        }, {
-            text: 1, time: 1, likes: 1,
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        })
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                playlistId: playlistId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
         const targetuser = like.postUserId
         if(targetuser._id.toString() !== req.user._id.toString()){
@@ -775,7 +903,6 @@ const likesrecomment = async (req, res) => {
                     noticetype: 'precomlike', 
                     time, 
                     playlist: like.playlistId, 
-                    playlistcomment: parentId, 
                     playlistrecomment: commentId
                 }).save();
             } catch (err) {
@@ -803,28 +930,33 @@ const likesrecomment = async (req, res) => {
 // 대댓글 좋아요 취소
 const unlikesrecomment = async (req, res) => {
     try{
-        const parentId = req.params.commentId
+        const playlistId = req.params.playlistId
         const commentId = req.params.id
-        const like = await Comment.findOneAndUpdate({
+        const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
             $pull: { likes:req.user._id }
         } , {
             new: true
         });
-        const [comments] = await Promise.all([
+        const [comments, recomments] = await Promise.all([
             Comment.find({
-                parentcommentId: parentId
+                playlistId: playlistId
             }, {
-                text: 1, time: 1, likes: 1,
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                playlistId: playlistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             }),
             Notice.findOneAndDelete({
                 $and: [{ 
                     playlist: like.playlistId 
-                }, { 
-                    playlistcomment: parentId 
                 }, { 
                     playlistrecomment: commentId 
                 }, {
@@ -836,119 +968,24 @@ const unlikesrecomment = async (req, res) => {
                 }]
             }) 
         ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
-/*
-const createUserSong = async (req, res) => {
-    var newDate = new Date()
-    var time = newDate.toFormat('YYYY-MM-DD HH24:MI:SS');
-    const { song } = req.body;
-    try {
-        const userSong = new UserSong({
-            playlistId: req.params.playlistId,
-            postUserId: req.user._id,
-            song: song,
-            time,
-        });
-        await userSong.save()
-        const playlist = await Playlist.findOneAndUpdate({ 
-            _id: req.params.playlistId 
-        }, {
-            $push: { 
-                userSongs: userSong._id
-            }
-        }, {
-            new: true
-        })
-        try {
-            const notice = new Notice({
-                noticinguser: req.user._id, 
-                noticieduser: playlist.postUserId, 
-                noticetype:'pusersong', 
-                time, 
-                playlist: req.params.playlistId 
-            });
-            await notice.save();
-        } catch (err) {
-            return res.status(422).send(err.message);
-        }
-        
-        if(playlist.postUserId._id.toString() != req.user._id.toString()){
-            try {
-                const notice  = new Notice({
-                    noticinguser: req.user._id, 
-                    noticieduser: playlist.postUserId, 
-                    noticetype:'pusersong', 
-                    time, 
-                    playlist: req.params.playlistId,
-                    playlistusersong: userSong._id
-                });
-                await notice.save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        const targetuser = await User.findOne({
-            _id: playlist.postUserId
-        });
-        if( targetuser.noticetoken != null  && targetuser._id.toString() != req.user._id.toString()){
-            var message = {
-                notification : {
-                    body : req.user.name+'님이 ' + userSong.song.attributes.artistName + '-' + userSong.song.attributes.name + ' 을 추천했습니다.',
-                },
-                token : targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        res.send(playlist)
-    } catch(err) {
-        return res.status(422).send(err.message);
-    }
-}
-
-const deleteUserSong = async (req, res) => {
-    try{
-        await UserSong.findOneAndDelete({
-            _id: req.params.userSongId
-        })
-        const playlist = await Playlist.findOneAndUpdate({ 
-            _id: req.params.playlistId
-        }, {
-            $pull: { userSongs: mongoose.Types.ObjectId(req.params.userSongId) }
-        }, {
-            new: true
-        })
-        await Notice.findOneAndDelete({
-            $and: [{
-                playlist: req.params.playlistId
-            }, {
-                noticinguser: req.user._id
-            }, {
-                noticieduser: playlist.postUserId
-            }, {
-                noticetype: 'pusersong'
-            }, {
-                playlistusersong: req.params.userSongId
-            }]
-        })
-        res.send(playlist);
-    }catch(err){
-        return res.status(422).send(err.message);
-    }
-}
-*/
 
 module.exports = {
     changeTime,
     changeLikes,
+    commentData,
     addPlaylist,
     editPlaylist,
     deletePlaylist,
@@ -956,8 +993,7 @@ module.exports = {
     getSelectedPlaylist,
     addComment,
     deleteComment,
-    addreComment,
-    getRecomment,
+    addRecomment,
     deleteRecomment,
     likesPlaylist,
     unlikesPlaylist,
@@ -965,6 +1001,4 @@ module.exports = {
     unlikescomment,
     likesrecomment,
     unlikesrecomment,
-    //createUserSong,
-    //deleteUserSong
 }

@@ -4,6 +4,7 @@ const upload = require('../middlewares/upload')
 const {
     changeTime,
     changeLikes,
+    commentData,
     addPlaylist,
     editPlaylist,
     deletePlaylist,
@@ -11,8 +12,7 @@ const {
     getSelectedPlaylist,
     addComment,
     deleteComment,
-    addreComment,
-    getRecomment,
+    addRecomment,
     deleteRecomment,
     likesPlaylist,
     unlikesPlaylist,
@@ -20,13 +20,11 @@ const {
     unlikescomment,
     likesrecomment,
     unlikesrecomment,
-    //createUserSong,
-    //deleteUserSong  
 } = require('../controllers/playlist')
 
-router.get('/recomment/:commentId', getRecomment)
 router.get('/time', changeTime)
 router.get('/changelikes', changeLikes)
+router.get('/commentData', commentData);
 router.post('/', addPlaylist)
 router.post('/edit', editPlaylist)
 router.delete('/:id', deletePlaylist)
@@ -34,15 +32,13 @@ router.post('/imgUpload', upload('playlist/').fields([{name: 'img'}, {name: 'pla
 router.get('/:id/:postUserId', getSelectedPlaylist)
 router.post('/comment/:id', addComment)
 router.delete('/comment/:id/:commentId', deleteComment)
-router.post('/recomment/:id/:commentId', addreComment)
-router.delete('/recomment/:commentId', deleteRecomment)
+router.post('/recomment/:id/:commentId', addRecomment)
+router.delete('/recomment/:id/:commentId', deleteRecomment)
 router.post('/like/:id', likesPlaylist)
 router.delete('/like/:id', unlikesPlaylist)
 router.post('/likecomment/:playlistId/:id', likescomment)
 router.delete('/likecomment/:playlistId/:id', unlikescomment)
-router.post('/likerecomment/:commentId/:id', likesrecomment)
-router.delete('/likerecomment/:commentId/:id', unlikesrecomment)
-//router.post('/userSong/:playlistId', createUserSong)
-//router.delete('/userSong/:playlistId/:userSongId', deleteUserSong)
+router.post('/likerecomment/:playlistId/:id', likesrecomment)
+router.delete('/likerecomment/:playlistId/:id', unlikesrecomment)
 
 module.exports = router;

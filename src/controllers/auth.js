@@ -18,10 +18,12 @@ const Feed = mongoose.model('Feed');
 const request = require('request');
 
 const signUp = async (req, res) => {
-    const { email, password, name, informationagree, songs } = req.body;
+    const { email, password } = req.body;
     try{
-        const user = new User({ email, password, name, informationagree, songs });
-        await user.save();
+        const user = await new User({ 
+            email, 
+            password 
+        }).save();
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
         res.send({ token });
     }catch (err) {

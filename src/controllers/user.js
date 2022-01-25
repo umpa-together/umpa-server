@@ -112,7 +112,7 @@ const getMyInformation = async (req, res) => {
             Daily.find({
                 postUserId: req.user._id
             }, {
-                song: 1, image: 1, textcontent: 1, time: 1, likes: 1,
+                song: 1, image: 1, textcontent: 1, time: 1, likes: 1, postUserId: 1,
             }).sort({ time: -1 }),
             RelaySong.find({
                 $and: [{
@@ -176,7 +176,7 @@ const getOtherInformation = async (req, res) => {
             Daily.find({
                 postUserId: req.params.id
             }, {
-                song: 1, image: 1, textcontent: 1, time: 1, likes: 1,
+                song: 1, image: 1, textcontent: 1, time: 1, likes: 1, postUserId: 1,
             }).sort({ time: -1 }),
             RelaySong.find({
                 $and: [{

@@ -44,7 +44,7 @@ const addGenreLists = async (req, res) => {
                 genre: genre
             }).save();
         })
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);    
     }
@@ -215,7 +215,7 @@ const getOtherInformation = async (req, res) => {
 const editProfile = async (req, res) => {
     try {
         const { nickName, name, introduction, genre, songs } = req.body;
-        req.user.genre.map(async (genre) => {
+        req.user.genre.forEach(async (genre) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {
@@ -224,7 +224,7 @@ const editProfile = async (req, res) => {
                 }
             })
         })
-        genre.map(async (genre) => {
+        genre.forEach(async (genre) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {
@@ -522,7 +522,7 @@ const getGenreLists = async (req, res) => {
 const postGenre = async (req, res) => {
     try {
         const { genreLists } = req.body;
-        req.user.genre.map(async (genre) => {
+        req.user.genre.forEach(async (genre) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {
@@ -531,7 +531,7 @@ const postGenre = async (req, res) => {
                 }
             })
         })
-        genreLists.map(async (genre) => {
+        genreLists.forEach(async (genre) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {

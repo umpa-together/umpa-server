@@ -19,7 +19,7 @@ const postRelayPlaylist = async (req, res) => {
                 createdTime: new Date()
             }).save()
         })
-        res.status(200).send('hello world')
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -37,7 +37,7 @@ const postRepresentSong = async (req, res) => {
                 representSong: song
             }
         })
-        res.status(200).send('hello world')
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -77,7 +77,7 @@ const updateApprovedSong = async (req, res) => {
                     if (a.score < b.score) return 1;
                     return 0;
                 });
-                songs.slice(0, 6).map(async (song) => {
+                songs.slice(0, 6).forEach(async (song) => {
                     const { _id: id } = song
                     await RelaySong.findOneAndUpdate({ 
                         _id: id
@@ -89,7 +89,7 @@ const updateApprovedSong = async (req, res) => {
                 })
             }
         })
-        res.status(200).send()
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -163,7 +163,7 @@ const getSelectedRelay = async (req, res) => {
                 }
             }
         ])
-        songs.map((song) => {
+        songs.forEach((song) => {
             song.score = song.likeCount / (song.likeCount + song.unlikeCount)
         })
         songs.sort(function(a, b)  {
@@ -171,14 +171,15 @@ const getSelectedRelay = async (req, res) => {
             if (a.score < b.score) return 1;
             return 0;
         });
-        songs.map((song) => {
+        const resultSongs = songs.slice(0, 6).map((song) => {
             delete song.likeCount
             delete song.unlikeCount
             delete song.score
+            return song
         })
         const result = {
             playlist: relayPlaylist,
-            songs: songs.slice(0, 6)
+            songs: resultSongs
         }
         res.status(200).send(result)
     } catch (err) {

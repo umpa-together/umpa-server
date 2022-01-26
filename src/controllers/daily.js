@@ -151,8 +151,7 @@ const editDaily = async (req, res) => {
         }, {
             hashtag: 1
         });
-        const prevHashtag = daily.hashtag;
-        prevHashtag.map(async (hashtag) => {
+        daily.hashtag.forEach(async (hashtag) => {
             await Hashtag.findOneAndUpdate({
                 hashtag: hashtag 
             }, {
@@ -161,19 +160,19 @@ const editDaily = async (req, res) => {
                 new: true
             })
         })
-        hashtag.forEach(async (text) => {
+        hashtag.forEach(async (newHashtag) => {
             const hashtagr = await Hashtag.findOne({
-                hashtag: text
+                hashtag: newHashtag
             })
             if(hashtagr == null){
                 await new Hashtag({
-                    hashtag: text, 
+                    hashtag: newHashtag, 
                     dailyId: DailyId, 
                     time
                 }).save();
             } else {
                 await Hashtag.findOneAndUpdate({
-                    hashtag: text 
+                    hashtag: newHashtag 
                 }, {
                     $set: { time }, 
                     $push: { dailyId : DailyId }
@@ -221,8 +220,7 @@ const deleteDaily = async (req, res) => {
                 dailyId: dailyId
             })
         ]);
-        const hashtag = daily.hashtag
-        hashtag.map(async (hashtag) => {
+        daily.hashtag.forEach(async (hashtag) => {
             await Hashtag.findOneAndUpdate({
                 hashtag: hashtag
             }, {

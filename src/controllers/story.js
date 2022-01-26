@@ -11,7 +11,7 @@ const postStory = async (req, res) => {
             song: song,
             time: new Date()
         }).save();
-        res.status(200).send(storySong);
+        res.status(201).send(storySong);
     } catch (err) {
         return res.status(422).send(err.message); 
     }
@@ -24,7 +24,7 @@ const deleteStory = async (req, res) => {
         await StorySong.findOneAndDelete({
             _id: storyId
         })
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message); 
     }
@@ -108,7 +108,7 @@ const getOtherStoryWithAll = async (req, res) => {
             name: 1,
             profileImage: 1
         })
-        storySongs.map((story) => {
+        storySongs.forEach((story) => {
             const { view } = story
             if(view.includes(req.user._id)) {
                 readUser.push(story)
@@ -148,7 +148,7 @@ const getOtherStoryWithFollowing = async (req, res) => {
             name: 1,
             profileImage: 1
         })
-        storySongs.map((story) => {
+        storySongs.forEach((story) => {
             const { view } = story
             if(view.includes(req.user._id)) {
                 readUser.push(story)
@@ -203,7 +203,7 @@ const getStoryCalendar = async (req, res) => {
         }).populate('todaySong', {
             song: 1, time: 1
         });
-        res.send(story.todaySong)
+        res.status(200).send(story.todaySong)
     } catch (err) {
         return res.status(422).send(err.message); 
     }

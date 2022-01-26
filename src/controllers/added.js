@@ -35,7 +35,7 @@ const postAddedSong = async (req, res) => {
             song: song,
             time: new Date()
         }).save();
-        res.status(200).send();
+        res.status(201).send();
     } catch (err) {
         return res.status(422).send(err.message);   
     }
@@ -82,7 +82,7 @@ const postAddedPlaylist = async (req, res) => {
             playlistId: playlistId,
             time: new Date()
         }).save();
-        res.status(200).send();
+        res.status(201).send();
     } catch (err) {
         return res.status(422).send(err.message);   
     }

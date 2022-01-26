@@ -105,7 +105,7 @@ const getAllContents = async (req, res) => {
                         }
                     }]
                 }, {
-                    image: 1, title: 1, songs: 1, time:1,
+                    image: 1, title: 1, songs: 1, time:1, postUserId: 1,
                 }), 
                 User.find({
                     $or: [{
@@ -210,7 +210,7 @@ const getSelectedContents = async (req, res) => {
                     $elemMatch: { id: songId }
                 }
             }, {
-                image: 1, title: 1, songs: 1, time: 1
+                image: 1, title: 1, songs: 1, time: 1, postUserId: 1,
             }),
             Daily.find({
                 'song.id': songId

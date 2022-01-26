@@ -369,7 +369,7 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -396,7 +396,7 @@ const addComment = async (req, res) => {
                 }
             }
         }
-        res.status(201).send(comments);
+        res.status(201).send([playlist, comments]);
         const targetuser = playlist.postUserId;
         if(targetuser._id.toString() !== req.user._id.toString()){
             try {
@@ -444,7 +444,7 @@ const deleteComment = async (req, res) => {
                 parentCommentId: commentId
             })
         ])
-        const [comments, recomments] = await Promise.all([
+        const [comments, recomments, playlist] = await Promise.all([
             Comment.find({
                 playlistId: playlistId
             }, {
@@ -466,7 +466,7 @@ const deleteComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -486,7 +486,7 @@ const deleteComment = async (req, res) => {
                 }
             }
         }
-        res.status(200).send(comments);
+        res.status(200).send([playlist, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -506,7 +506,7 @@ const addRecomment = async (req, res) => {
             text, 
             time
         }).save();
-        const [comments, parentcomment, recomments] = await Promise.all([
+        const [comments, parentcomment, recomments, playlist] = await Promise.all([
             Comment.find({
                 playlistId: playlistId
             }, {
@@ -515,7 +515,7 @@ const addRecomment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
             Comment.findOne({
-                playlistId: playlistId
+                _id: commentId
             }, {
                 _id: 1
             }).populate('playlistId', {
@@ -536,6 +536,11 @@ const addRecomment = async (req, res) => {
                 $push: { comments: newComment._id }
             }, {
                 new: true,
+                projection: {
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                },
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
             }),
         ])
         for(let comment of comments){
@@ -545,7 +550,7 @@ const addRecomment = async (req, res) => {
                 }
             }
         }
-        res.status(201).send(comments);
+        res.status(201).send([playlist, comments]);
         const targetuser = parentcomment.postUserId
         if(targetuser._id.toString() != req.user._id.toString()){
             try {
@@ -589,7 +594,7 @@ const deleteRecomment = async (req, res) => {
         const comment = await Recomment.findOneAndDelete({
             _id: commentId
         });
-        const [comments, recomments] = await Promise.all([
+        const [comments, recomments, playlist] = await Promise.all([
             Comment.find({
                 playlistId: playlistId
             }, {
@@ -610,6 +615,11 @@ const deleteRecomment = async (req, res) => {
                 $pull: { comments: commentId }
             }, {
                 new: true,
+                projection: {
+                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                },
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
             }),
             Notice.deleteMany({
                 $and: [{ 
@@ -628,7 +638,7 @@ const deleteRecomment = async (req, res) => {
                 }
             }
         }
-        res.status(200).send(comments);
+        res.status(200).send([playlist, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -980,7 +990,6 @@ const unlikesrecomment = async (req, res) => {
         return res.status(422).send(err.message);
     }
 }
-
 
 module.exports = {
     changeTime,

@@ -44,7 +44,7 @@ const addGenreLists = async (req, res) => {
                 genre: genre
             }).save();
         })
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);    
     }

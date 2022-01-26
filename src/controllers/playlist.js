@@ -114,7 +114,7 @@ const commentData = async (req, res) => {
                 $ne: ""
             }
         })
-        res.send(recomments)
+        res.status(200).send(recomments)
     } catch (err) {
         return res.status(422).send(err.message);
     }

@@ -103,7 +103,7 @@ const readNotice = async (req, res) => {
         }, { 
             isRead: true 
         })
-        res.status(200).send();
+        res.status(204).send();
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -119,7 +119,7 @@ const setNotice = async (req, res) => {
         }, {
             new: true
         });
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -135,7 +135,7 @@ const deleteNotice = async (req, res) => {
         }, {
             new: true
         });
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }

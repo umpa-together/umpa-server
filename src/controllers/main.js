@@ -21,7 +21,7 @@ const addThemeLists = async (req, res) => {
                 title: theme
             }).save();
         })
-        res.status(200).send();
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);    
     }
@@ -112,7 +112,7 @@ const getRecentPlaylist = async (req, res) => {
         }, {
             title: 1, image: 1, songs: 1
         }).sort({'accessedTime': -1}).limit(10)
-        res.send(playlists)
+        res.status(200).send(playlists)
     } catch (err) {
         return res.status(422).send(err.message);   
     }
@@ -128,7 +128,7 @@ const getRecentDaily = async (req, res) => {
         }, {
             song: 1, postUserId: 1
         }).sort({'accessedTime': -1}).limit(10)
-        res.send(dailes)
+        res.status(200).send(dailes)
     } catch (err) {
         return res.status(422).send(err.message);   
     }

@@ -19,7 +19,7 @@ const postRelayPlaylist = async (req, res) => {
                 createdTime: new Date()
             }).save()
         })
-        res.status(200).send('hello world')
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -37,7 +37,7 @@ const postRepresentSong = async (req, res) => {
                 representSong: song
             }
         })
-        res.status(200).send('hello world')
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -89,7 +89,7 @@ const updateApprovedSong = async (req, res) => {
                 })
             }
         })
-        res.status(200).send()
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }

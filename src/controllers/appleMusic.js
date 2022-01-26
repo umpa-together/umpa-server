@@ -59,9 +59,9 @@ const searchSong = async (req, res) => {
                     JSON.parse(body).results.songs.next,
                     JSON.parse(body).results.songs.data
                 ])
-                res.send([result, next !== undefined ? next.substr(22) : null]);
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
             } else {
-                res.send([[], null]);
+                res.status(200).send([[], null]);
             }
         });
     } catch (err) {
@@ -89,9 +89,9 @@ const searchArtist = async (req, res) => {
                     JSON.parse(body).results.artists.next,
                     JSON.parse(body).results.artists.data
                 ])
-                res.send([result, next !== undefined ? next.substr(22) : null]);
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
             } else {
-                res.send([[], null]);
+                res.status(200).send([[], null]);
             }
         });
     }catch (err) {
@@ -119,9 +119,9 @@ const searchAlbum = async (req, res) => {
                     JSON.parse(body).results.albums.next,
                     JSON.parse(body).results.albums.data
                 ])
-                res.send([result, next !== undefined ? next.substr(22) : null]);
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
             } else {
-                res.send([[], null]);
+                res.status(200).send([[], null]);
             }
         });
     }catch (err) {
@@ -160,7 +160,7 @@ const searchNext = async (req, res) => {
                     JSON.parse(body).results.albums.data
                 ])
             }
-            res.send([body, next !== undefined ? next.substr(22) : null]);
+            res.status(200).send([body, next !== undefined ? next.substr(22) : null]);
         });
     } catch (err) {
         return res.status(422).send(err.message);
@@ -182,7 +182,7 @@ const searchHint = async (req, res) => {
         }
         request(appleOption, async (err, response, body) => {
             body = await JSON.parse(body).results.terms;
-            res.send(body);
+            res.status(200).send(body);
         })
     } catch (err) {
         return res.status(422).send(err.message);

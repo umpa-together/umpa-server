@@ -25,7 +25,7 @@ const signUp = async (req, res) => {
             password 
         }).save();
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-        res.send({ token });
+        res.status(201).send({ token });
     }catch (err) {
         return res.status(422).send(err.message);
     }
@@ -43,7 +43,7 @@ const signIn = async (req, res) => {
     try{
         await user.comparePassword(password);
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-        res.send({ token });
+        res.status(200).send({ token });
     }catch (err) {
         return res.status(422).send(err.message);
     }
@@ -256,7 +256,7 @@ const withdrawal = async (req, res) => {
         await User.deleteOne({
             _id: id
         })
-        res.send()
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -265,12 +265,12 @@ const withdrawal = async (req, res) => {
 const googleSignIn = async (req, res) => {
     const user = await User.findOne({ email: req.params.email });
     if(user == null){
-        res.send([false, req.params.email, req.params.id]);
+        res.status(200).send([false, req.params.email, req.params.id]);
     }else{
         try{
             await user.comparePassword(req.params.id);
             const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-            res.send([token, req.params.email, req.params.id]);
+            res.status(200).send([token, req.params.email, req.params.id]);
         } catch (err) {
             return res.status(422).send(err.message);
         }
@@ -280,12 +280,12 @@ const googleSignIn = async (req, res) => {
 const appleSignIn = async (req, res) => {
     const user = await User.findOne({ email: req.params.email });
     if(user == null){
-        res.send([false, req.params.email, req.params.id]);
+        res.status(200).send([false, req.params.email, req.params.id]);
     }else{
         try{
             await user.comparePassword(req.params.id.toString());
             const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-            res.send([token, req.params.email, req.params.id]);
+            res.status(200).send([token, req.params.email, req.params.id]);
         } catch (err) {
             return res.status(422).send(err.message);
         }
@@ -306,11 +306,11 @@ const kakaoSignIn = async (req, res) => {
                 const bodytemp = await JSON.parse(body);
                 const user = await User.findOne({ email: bodytemp.kakao_account.email });
                 if(user == null){
-                    res.send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
+                    res.status(200).send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
                 } else {
                     await user.comparePassword(bodytemp.id.toString());
                     const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-                    res.send([token, bodytemp.kakao_account.email, bodytemp.id.toString()])
+                    res.status(200).send([token, bodytemp.kakao_account.email, bodytemp.id.toString()])
                 }
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -335,11 +335,11 @@ const naverSignIn = async (req, res) => {
                 body = await JSON.parse(body);
                 const user = await User.findOne({ email: body.response.email });
                 if(user == null){
-                    res.send([false, body.response.email, body.response.id]);
+                    res.status(200).send([false, body.response.email, body.response.id]);
                 }else{
                     await user.comparePassword(body.response.id);
                     const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-                    res.send([token, body.response.email, body.response.id]);
+                    res.status(200).send([token, body.response.email, body.response.id]);
                 }
             } catch (err) {
                 return res.status(422).send(err.message);
@@ -353,7 +353,7 @@ const naverSignIn = async (req, res) => {
 const checkName = async (req, res) => {
     try {
         const user = await User.findOne({ name: req.params.name });
-        res.send(user == null)
+        res.status(200).send(user == null)
     } catch (err) {
         return res.status(422).send(err.message); 
     }   

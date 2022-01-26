@@ -125,7 +125,7 @@ const getAllContents = async (req, res) => {
                         $regex: `${term}`
                     }
                 }, { 
-                    image: 1, song: 1, textcontent: 1
+                    image: 1, song: 1, textcontent: 1, postUserId: 1,
                 }),
                 Hashtag.find({
                     hashtag: {
@@ -215,7 +215,7 @@ const getSelectedContents = async (req, res) => {
             Daily.find({
                 'song.id': songId
             }, { 
-                image: 1, song: 1, textcontent: 1
+                image: 1, song: 1, textcontent: 1, postUserId: 1,
             }),
             User.find({
                 songs: { $elemMatch: { id: songId }}

@@ -79,14 +79,17 @@ const addDaily = async (req, res) => {
             time, 
             song,
             hashtag 
-        }).save();
+        }).save()
+        await daily.populate('postUserId', {
+            name: 1, profileImage: 1
+        }).execPopulate();
         Feed.create({
             daily: daily._id,
             time,
             type: 'daily',
             postUserId: req.user._id
         })
-        res.status(200).send(daily._id);
+        res.status(200).send([daily, []]);
         hashtag.forEach(async(text) => {
             try {
                 const hashtagr = await Hashtag.findOne({
@@ -121,13 +124,17 @@ const uploadImage = async (req, res) => {
         const img = req.files['img'];
         let imgArr = [];
         if(img !== undefined)    img.forEach((item) => imgArr.push(item.location))
-        const dailyId = req.params.id;
+        const { dailyId } = req.body;
         const daily = await Daily.findOneAndUpdate({
             _id: dailyId
         }, {
             $set: { image: imgArr }
+        }, {
+            new: true
+        }).populate('postUserId', {
+            name: 1, profileImage: 1
         });
-        res.status(200).send(daily);
+        res.status(200).send([daily,[]]);
     } catch (err) {
         return res.status(422).send(err.message);
     }

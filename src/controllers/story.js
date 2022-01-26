@@ -108,7 +108,7 @@ const getOtherStoryWithAll = async (req, res) => {
             name: 1,
             profileImage: 1
         })
-        storySongs.map((story) => {
+        storySongs.forEach((story) => {
             const { view } = story
             if(view.includes(req.user._id)) {
                 readUser.push(story)
@@ -148,7 +148,7 @@ const getOtherStoryWithFollowing = async (req, res) => {
             name: 1,
             profileImage: 1
         })
-        storySongs.map((story) => {
+        storySongs.forEach((story) => {
             const { view } = story
             if(view.includes(req.user._id)) {
                 readUser.push(story)

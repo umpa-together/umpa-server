@@ -199,8 +199,7 @@ const editPlaylist = async (req, res) => {
         }, {
             hashtag: 1
         });
-        const prevHashtag = playlist.hashtag;
-        prevHashtag.map(async (hashtag) => {
+        playlist.hashtag.forEach(async (hashtag) => {
             await Hashtag.findOneAndUpdate({
                 hashtag: hashtag
             }, {
@@ -209,19 +208,19 @@ const editPlaylist = async (req, res) => {
                 new: true
             })
         })
-        hashtag.forEach(async (text) => {
+        hashtag.forEach(async (newHashtag) => {
             const hashtagr = await Hashtag.findOne({
-                hashtag: text
+                hashtag: newHashtag
             })
             if (hashtagr == null) {
                 await new Hashtag({
-                    hashtag: text, 
+                    hashtag: newHashtag, 
                     playlistId: playlistId, 
                     time
                 }).save()
             } else {
                 await Hashtag.findOneAndUpdate({
-                    hashtag: text
+                    hashtag: newHashtag
                 }, {
                     $set: { time }, 
                     $push: { playlistId : playlistId } 
@@ -269,8 +268,7 @@ const deletePlaylist = async (req, res) => {
                 playlistId: playlistId
             })
         ]);
-        const hashtag = playlist.hashtag
-        hashtag.map(async (hashtag) => {
+        playlist.hashtag(async (hashtag) => {
             await Hashtag.findOneAndUpdate({
                 hashtag: hashtag
             }, {

@@ -5,6 +5,7 @@ const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const Curation = mongoose.model('CurationPost');
+const Recomment = mongoose.model('DailyRecomment');
 const admin = require('firebase-admin');
 
 // time fields string -> Date 변경
@@ -89,7 +90,7 @@ const addDaily = async (req, res) => {
             type: 'daily',
             postUserId: req.user._id
         })
-        res.status(200).send([daily, []]);
+        res.status(201).send([daily, []]);
         hashtag.forEach(async(text) => {
             try {
                 const hashtagr = await Hashtag.findOne({
@@ -179,14 +180,21 @@ const editDaily = async (req, res) => {
                 });   
             }
         })
-        await Daily.findOneAndUpdate({
+        const updateDaily = await Daily.findOneAndUpdate({
             _id: DailyId
         }, {
             $set: { 
                 textcontent, song: song, hashtag
             }
+        }, {
+            new: true,
+            projection: {
+                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+            }
+        }).populate('postUserId', {
+            name: 1, profileImage: 1
         })
-        res.status(200).send(daily)
+        res.status(200).send(updateDaily)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -208,6 +216,9 @@ const deleteDaily = async (req, res) => {
             }),
             Feed.deleteOne({ 
                 daily: dailyId 
+            }),
+            Recomment.deleteMany({
+                dailyId: dailyId
             })
         ]);
         const hashtag = daily.hashtag
@@ -220,7 +231,7 @@ const deleteDaily = async (req, res) => {
                 new: true
             })
         })
-        res.status(200).send(daily) ;
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -231,58 +242,56 @@ const getSelectedDaily = async (req, res) => {
     try {
         const postUserId = req.params.postUserId
         const dailyId = req.params.id
-        let daily , comments;
+        let daily, comments, recomments;
         if(postUserId === req.user._id){
-            [daily, comments] = await Promise.all([
-                Daily.findOneAndUpdate({ 
-                    _id: dailyId 
-                }, {
-                    $set: { accessedTime: new Date() }
-                }, {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                }), 
-                Comment.find({
-                    $and: [{
-                        dailyId: dailyId
-                    }, {
-                        parentcommentId: ""
-                    }]
-                }, {
-                    parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                })])
+            daily = await Daily.findOneAndUpdate({ 
+                _id: dailyId 
+            }, {
+                $set: { accessedTime: new Date() }
+            }, {
+                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            })
         } else {
-            [daily, comments] = await Promise.all([ 
-                Daily.findOneAndUpdate({
-                    _id: dailyId 
-                }, {
-                    $inc :{ views:1 },
-                    $set: { accessedTime: new Date() }
-                }, { 
-                    new: true,
-                    projection: {
-                        textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
-                    }
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                }), 
-                Comment.find({
-                    $and : [{
-                        dailyId: dailyId
-                    }, {
-                        parentcommentId: ""
-                    }]
-                }, {
-                    parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-                }).populate('postUserId', {
-                    name: 1, profileImage: 1
-                })
-            ])
+            daily= await Daily.findOneAndUpdate({
+                _id: dailyId 
+            }, {
+                $inc :{ views:1 },
+                $set: { accessedTime: new Date() }
+            }, { 
+                new: true,
+                projection: {
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                }
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            })
         }
-        res.status(200).send([daily , comments]); 
+        [comments, recomments] = await Promise.all([
+            Comment.find({
+                dailyId: dailyId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1 
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            })
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send([daily, comments]); 
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -300,7 +309,7 @@ const addComment = async (req, res) => {
             text, 
             time 
         }).save();
-        let [daily, comments] =  await Promise.all([
+        let [daily, comments, recomments] =  await Promise.all([
             Daily.findOneAndUpdate({
                 _id: dailyId 
             }, {
@@ -308,24 +317,34 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    textcontent: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
             }), 
             Comment.find({ 
-                $and: [{
-                    dailyId: dailyId
-                }, {
-                    parentcommentId: ""
-                }]
+                dailyId: dailyId
             }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             })
         ]);
-        res.status(200).send(comments);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send([daily, comments]);
         const targetuser = daily.postUserId;
         if(targetuser._id.toString() !== req.user._id.toString()){
             try {
@@ -365,22 +384,26 @@ const deleteComment = async (req, res) => {
     try {
         const commentId = req.params.commentId;
         const dailyId = req.params.id;
-        await Comment.deleteMany({
-            $or: [{
+        await Promise.all([
+            Comment.deleteMany({
                 _id: commentId
-            }, {
-                parentcommentId: commentId
-            }]
-        });
-        let [comments] = await Promise.all([
+            }),
+            Recomment.deleteMany({
+                parentCommentId: commentId
+            })
+        ])
+        let [comments, recomments, daily] = await Promise.all([
             Comment.find({
-                $and: [{
-                    dailyId: dailyId
-                }, {
-                    parentcommentId: ""
-                }]
+                dailyId: dailyId
             }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             }),
@@ -389,7 +412,12 @@ const deleteComment = async (req, res) => {
             }, {
                 $pull: { comments: commentId }
             }, {
-                new: true 
+                new: true,
+                projection: {
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                }
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, noticetoken: 1
             }), 
             Notice.deleteMany({
                 $and: [{ 
@@ -398,47 +426,79 @@ const deleteComment = async (req, res) => {
                     dailycomment: commentId 
                 }]
             }),
-            
         ])
-        res.status(200).send(comments);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send([daily, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
 // 대댓글 작성
-const addreComment = async (req, res) => {
+const addRecomment = async (req, res) => {
     try {
         const { text } = req.body;
         const time = new Date()
         const dailyId = req.params.id
         const commentId = req.params.commentId
-        const comment = await new Comment({ 
+        const comment = await new Recomment({ 
             dailyId: dailyId,
-            parentcommentId: commentId, 
+            parentCommentId: commentId, 
             postUserId: req.user._id, 
             text, 
             time 
         }).save();
-        const [parentcomment, recomments] = await Promise.all([
-            Comment.findOneAndUpdate({
+        const [comments, parentcomment, recomments, daily] = await Promise.all([
+            Comment.find({
+                dailyId: dailyId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Comment.findOne({
                 _id: commentId
             }, {
-                $push: { recomments: comment._id }
+                _id: 1
             }).populate('dailyId', {
                 textcontent: 1
             }).populate('postUserId', {
-                noticetoken: 1
+                _id: 1, noticetoken: 1
             }),
-            Comment.find({
-                parentcommentId: commentId
+            Recomment.find({
+                dailyId: dailyId
             }, {
-                text: 1, time: 1, likes: 1
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
-                name: 1, profileImage:1
+                name: 1, profileImage: 1
+            }),
+            Daily.findOneAndUpdate({
+                _id: dailyId
+            }, {
+                $push: { comments: comment._id }
+            }, { 
+                new: true,
+                projection: {
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                }
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, noticetoken: 1
             })
         ])
-        res.status(200).send(recomments);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send([daily, comments]);
         const targetuser = parentcomment.postUserId
         if(targetuser.toString() !== req.user._id.toString()){
             try {
@@ -474,43 +534,41 @@ const addreComment = async (req, res) => {
     }
 }
 
-// 대댓글 가져오기
-const getRecomment = async (req, res) => {
-    try {
-        const commentId = req.params.commentId
-        const comments = await Comment.find({
-            parentcommentId: commentId
-        }, {
-            text: 1, time: 1, likes: 1
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        });
-        res.status(200).send(comments);
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
 // 대댓글 삭제
 const deleteRecomment = async (req, res) => {
     try {
         const commentId = req.params.commentId
-        const comment = await Comment.findOneAndDelete({
+        const dailyId = req.params.id
+        const comment = await Recomment.findOneAndDelete({
             _id: commentId
         });
-        await Comment.findOneAndUpdate({
-            _id: comment.parentcommentId
-        }, {
-            $pull: { recomments: commentId }
-        })
-        const [comments] = await Promise.all([
+        const [comments, recomments, daily] = await Promise.all([
             Comment.find({
-                parentcommentId: comment.parentcommentId
+                dailyId: dailyId
             }, {
-                text: 1, time: 1, likes: 1
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
-            }), 
+            }),
+            Daily.findOneAndUpdate({
+                _id: dailyId
+            }, {
+                $pull: { comments: commentId }
+            }, {
+                new: true,
+                projection: {
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                }
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
             Notice.deleteMany({
                 $and: [{ 
                     daily: comment.dailyId 
@@ -521,7 +579,14 @@ const deleteRecomment = async (req, res) => {
                 }]
             })
         ])
-        res.status(200).send(comments);
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send([daily, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -637,17 +702,29 @@ const likeComment = async (req, res) => {
         }).populate('postUserId', {
             noticetoken: 1
         });
-        const comments = await Comment.find({
-            $and : [{
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
                 dailyId: dailyId
-            }, { 
-                parentcommentId: ""
-            }]
-        }, {
-            parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        });        
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1   
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
         const targetuser = like.postUserId
         if(targetuser.toString() !== req.user._id.toString()){
@@ -694,18 +771,21 @@ const unLikeComment = async (req, res) => {
         } , {
             new: true
         });
-        const [comments] = await Promise.all([
+        const [comments, recomments] = await Promise.all([
             Comment.find({
-                $and: [{
-                    dailyId: dailyId
-                }, {
-                    parentcommentId: ""
-                }]
+                dailyId: dailyId
             }, {
-                parentcommentId: 1, text: 1, time: 1, likes: 1, recomments: 1
+                text: 1, time: 1, likes: 1, recomment: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
-            }), 
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
             Notice.findOneAndDelete({
                 $and: [{ 
                     daily: dailyId 
@@ -720,6 +800,13 @@ const unLikeComment = async (req, res) => {
                 }]
             }) 
         ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -730,9 +817,9 @@ const unLikeComment = async (req, res) => {
 const likeRecomment = async (req, res) => {
     try{
         const time = new Date();
-        const parentId = req.params.commentId
+        const dailyId = req.params.dailyId
         const commentId = req.params.id
-        const like = await Comment.findOneAndUpdate({
+        const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
             $push: { likes: req.user._id }
@@ -741,13 +828,29 @@ const likeRecomment = async (req, res) => {
         }).populate('postUserId', {
             noticetoken: 1
         });
-        const comments = await Comment.find({
-            parentcommentId: parentId
-        }, {
-            text: 1, time: 1, likes: 1
-        }).populate('postUserId', {
-            name: 1, profileImage: 1
-        });
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                dailyId: dailyId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
         const targetuser = like.postUserId
         if(targetuser._id.toString() != req.user._id.toString()){
@@ -758,7 +861,6 @@ const likeRecomment = async (req, res) => {
                     noticetype: 'drecomlike', 
                     time, 
                     daily:like.dailyId, 
-                    dailycomment: parentId, 
                     dailyrecomment: commentId 
                 }).save();
             } catch (err) {
@@ -786,28 +888,33 @@ const likeRecomment = async (req, res) => {
 // 대댓글 좋아요 취소
 const unLikeRecomment = async (req, res) => {
     try{
-        const parentId = req.params.commentId
+        const dailyId = req.params.dailyId
         const commentId = req.params.id
-        const like = await Comment.findOneAndUpdate({
+        const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
             $pull: { likes:req.user._id } 
         }, {
             new: true
         });
-        const [comments] = await Promise.all([ 
+        const [comments, recomments] = await Promise.all([ 
             Comment.find({
-                parentcommentId: parentId
+                dailyId: dailyId
             }, {
-                text: 1, time: 1, likes: 1,
+                text: 1, time: 1, likes: 1, recomment: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             }), 
+            Recomment.find({
+                dailyId: dailyId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
             Notice.findOneAndDelete({
                 $and: [{ 
                     daily: like.dailyId 
-                }, { 
-                    dailycomment: parentId 
                 }, { 
                     dailyrecomment: commentId 
                 }, { 
@@ -819,6 +926,13 @@ const unLikeRecomment = async (req, res) => {
                 }]
             }) 
         ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
         res.status(200).send(comments);
     }catch(err){
         return res.status(422).send(err.message);
@@ -835,8 +949,7 @@ module.exports = {
     getSelectedDaily,
     addComment,
     deleteComment,
-    addreComment,
-    getRecomment,
+    addRecomment,
     deleteRecomment,
     likeDaily,
     unLikeDaily,

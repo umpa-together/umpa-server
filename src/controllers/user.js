@@ -263,7 +263,7 @@ const editProfile = async (req, res) => {
 const editProfileImage = async (req, res) => {
     try {
         const img = req.file.location;
-        await User.findOneAndUpdate({
+        const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
             $set: { profileImage: img }
@@ -280,7 +280,7 @@ const editProfileImage = async (req, res) => {
 const editBackgroundImage = async (req, res) => {
     try { 
         const img = req.file.location;
-        await User.findOneAndUpdate({
+        const user = await User.findOneAndUpdate({
             _id: req.user._id
         }, {
             $set: { backgroundImage: img }

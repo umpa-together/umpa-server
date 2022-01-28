@@ -33,7 +33,7 @@ const noticeSchema = new mongoose.Schema({
     },
     playlistrecomment : {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'PlaylistComment',
+        ref : 'PlaylistRecomment',
     },
     daily : {
         type: mongoose.Schema.Types.ObjectId,
@@ -45,7 +45,7 @@ const noticeSchema = new mongoose.Schema({
     },
     dailyrecomment : {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'DailyComment',
+        ref : 'DailyRecomment',
     },
 });
 

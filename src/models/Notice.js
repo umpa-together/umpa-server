@@ -47,6 +47,18 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref : 'DailyRecomment',
     },
+    relay: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'RelayPlaylist',
+    },
+    relaycomment : {
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'RelayComment',
+    },
+    relayrecomment : {
+        type: mongoose.Schema.Types.ObjectId,
+        ref : 'RelayRecomment',
+    },
 });
 
 mongoose.model('Notice', noticeSchema);

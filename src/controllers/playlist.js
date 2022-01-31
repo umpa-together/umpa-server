@@ -5,6 +5,7 @@ const Recomment = mongoose.model('PlaylistRecomment');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
+const AddedPlaylist = mongoose.model('AddedPlaylist');
 const admin = require('firebase-admin');
 
 // time fields string -> Date 변경
@@ -265,6 +266,9 @@ const deletePlaylist = async (req, res) => {
                 playlist: playlistId
             }),
             Recomment.deleteMany({
+                playlistId: playlistId
+            }),
+            AddedPlaylist.deleteMany({
                 playlistId: playlistId
             })
         ]);

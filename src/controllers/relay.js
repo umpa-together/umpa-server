@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const RelayPlaylist = mongoose.model('RelayPlaylist');
 const RelaySong = mongoose.model('RelaySong');
+const Comment = mongoose.model('RelayComment')
+const Recomment = mongoose.model('RelayRecomment')
+const Notice = mongoose.model('Notice');
 
 const titleLists = [
     '크리스마스에 듣기 좋은',
@@ -144,44 +147,109 @@ const getRelayLists = async (req, res) => {
 const getSelectedRelay = async (req, res) => {
     try {
         const relayPlaylistId = req.params.id;
-        const relayPlaylist = await RelayPlaylist.findOne({
-            _id: relayPlaylistId
-        }, {
-            postUserId: 1, title: 1, createdTime: 1, image: 1, representSong: 1
-        });
-        const songs = await RelaySong.aggregate([
-            {
-                $match: {
-                    playlistId: mongoose.Types.ObjectId(relayPlaylistId)
+        let evaluateCount = [];
+        const [relayPlaylist, songs, comments, recomments] = await Promise.all([
+            RelayPlaylist.findOne({
+                _id: relayPlaylistId
+            }, {
+                postUserId: 1, title: 1, createdTime: 1, image: 1, representSong: 1, likes: 1, youtubeUrl: 1, hashtags: 1, comments: 1
+            }),
+            RelaySong.aggregate([
+                {
+                    $match: {
+                        playlistId: mongoose.Types.ObjectId(relayPlaylistId)
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        localField: 'postUserId',
+                        foreignField: '_id',
+                        as: 'postUserId',
+                    }
+                },
+                {
+                    $project: {
+                        like: 1,
+                        unlike: 1,
+                        likeCount: { $size: "$like" },
+                        unlikeCount: { $size: "$unlike" },
+                        song: 1,
+                        'postUserId.name': 1,
+                        'postUserId.profileImage': 1,
+                        'postUserId._id': 1,
+                        'postUserId.genre': 1
+                    }
                 }
-            }, 
-            {
-                $project: {
-                    likeCount: { $size: "$like" },
-                    unlikeCount: { $size: "$unlike" },
-                    song: 1,
+            ]),
+            Comment.find({
+                relayId: relayPlaylistId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                relayId: relayPlaylistId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
                 }
             }
-        ])
+        }
+
         songs.forEach((song) => {
-            song.score = song.likeCount / (song.likeCount + song.unlikeCount)
+            const { likeCount, unlikeCount, like, unlike } = song
+            song.score = likeCount / (likeCount + unlikeCount)
+            song.postUser = song.postUserId[0]
+            like.concat(unlike).forEach((person) => {
+                if(!evaluateCount.includes(person.toString())) {
+                    evaluateCount.push(person.toString())
+                }
+            })
         })
+
         songs.sort(function(a, b)  {
             if (a.score > b.score) return -1;
             if (a.score < b.score) return 1;
             return 0;
         });
+
         const resultSongs = songs.slice(0, 6).map((song) => {
             delete song.likeCount
             delete song.unlikeCount
             delete song.score
+            delete song.postUserId
             return song
         })
+
+        const playlist = {
+            title: relayPlaylist.title, 
+            createdTime: relayPlaylist.createdTime,
+            image: relayPlaylist.image,
+            representSong: relayPlaylist.representSong,
+            postUserId: relayPlaylist.postUserId,
+            evaluateCount: evaluateCount.length,
+            _id: relayPlaylist._id,
+            likes: relayPlaylist.likes, 
+            youtubeUrl: relayPlaylist.youtubeUrl,
+            hashtags: relayPlaylist.hashtags,
+            comments: relayPlaylist.comments
+        }        
+
         const result = {
-            playlist: relayPlaylist,
+            playlist: playlist,
             songs: resultSongs
         }
-        res.status(200).send(result)
+        res.status(200).send([result, comments])
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -207,7 +275,7 @@ const postRelaySong = async (req, res) => {
                 new: true
             })
         ])
-        res.status(200).send(relaySong);
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -280,6 +348,559 @@ const unlikeRelaySong = async (req, res) =>{
     } 
 }
 
+// 릴레이 플리 좋아요
+const likeRelayPlaylist = async (req, res) => {
+    try {
+        const relayId = req.params.id
+        const relayPlaylist = await RelayPlaylist.findOne({
+            _id: relayId
+        }, {
+            likes: 1
+        })
+        if(relayPlaylist.likes.includes(req.user._id)) {
+            res.status(400).send()
+        } else {
+            await RelayPlaylist.findOneAndUpdate({
+                _id: relayId
+            }, {
+                $push: {
+                    likes: req.user._id
+                }
+            })
+            res.status(204).send()
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 릴레이 플리 좋아요 취소
+const unLikeRelayPlaylist = async (req, res) => {
+    try {
+        const relayId = req.params.id
+        const relayPlaylist = await RelayPlaylist.findOne({
+            _id: relayId
+        }, {
+            likes: 1
+        })
+        if (relayPlaylist.likes.includes(req.user._id)) {
+            await RelayPlaylist.findOneAndUpdate({ 
+                _id: relayId
+            }, {
+                $pull: {
+                    likes: req.user._id
+                }
+            })
+            res.status(204).send()
+        } else {
+            res.status(400).send()
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 댓글 달기
+const addComment = async (req, res) => {
+    try {
+        const { text } = req.body
+        const relayId = req.params.id
+        const newComment = await new Comment({ 
+            relayId: relayId, 
+            postUserId: req.user._id, 
+            text, 
+            time: new Date() 
+        }).save();
+        const [relay, comments, recomments] = await Promise.all([
+            RelayPlaylist.findOneAndUpdate({
+                _id: relayId
+            }, {
+                $push: { comments: newComment._id }
+            }, {
+                new: true,
+                projection: {
+                    comments: 1
+                }
+            }),
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send([relay.comments, comments])
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 댓글 지우기
+const deleteComment = async (req, res) => {
+    try {
+        const commentId = req.params.commentId
+        const relayId = req.params.id
+        await Promise.all([
+            Comment.deleteMany({
+                _id: commentId
+            }),
+            Recomment.deleteMany({
+                parentCommentId: commentId
+            })
+        ])
+        const [relay, comments, recomments] = await Promise.all([
+            RelayPlaylist.findOneAndUpdate({
+                _id: relayId
+            }, {
+                $pull: { comments: commentId }
+            }, {
+                new: true,
+                projection: {
+                    comments: 1
+                }
+            }),
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send([relay.comments, comments])
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 대댓글 달기
+const addRecomment = async (req, res) => {
+    try {
+        const { text } = req.body;
+        const relayId = req.params.id
+        const commentId = req.params.commentId
+        const newComment = await new Recomment({ 
+            relayId: relayId, 
+            parentCommentId: commentId,
+            postUserId: req.user._id, 
+            text, 
+            time: new Date()
+        }).save();
+        const [relay, parentcomment, comments, recomments] = await Promise.all([
+            RelayPlaylist.findOneAndUpdate({
+                _id: relayId
+            }, {
+                $push: { comments: newComment._id }
+            }, {
+                new: true,
+                projection: {
+                    comments: 1
+                }
+            }),
+            Comment.findOne({
+                _id: commentId
+            }, {
+                _id: 1
+            }).populate('relayId', {
+                title: 1
+            }).populate('postUserId', {
+                _id: 1, noticetoken: 1
+            }),
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])    
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(201).send([relay.comments, comments]);
+        const targetuser = parentcomment.postUserId
+        if(targetuser._id.toString() != req.user._id.toString()){
+            try {
+                await new Notice({ 
+                    noticinguser: req.user._id,  
+                    noticieduser: targetuser._id, 
+                    noticetype: 'rrecom', 
+                    time: new Date(), 
+                    relay: relayId, 
+                    relaycomment: commentId, 
+                    relayrecomment: newComment._id 
+                }).save();
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
+            const message = {
+                notification : {
+                    title: parentcomment.relayId.title,
+                    body : req.user.name+'님이 ' + text + ' 대댓글을 달았습니다.',
+                },
+                token : targetuser.noticetoken
+            };
+            try {
+                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 대댓글 삭제
+const deleteRecomment = async (req, res) => {
+    try {
+        const commentId = req.params.commentId
+        const relayId = req.params.id;
+        const comment = await Recomment.findOneAndDelete({
+            _id: commentId
+        });
+        const [relay, comments, recomments] = await Promise.all([
+            RelayPlaylist.findOneAndUpdate({
+                _id: relayId
+            }, {
+                $pull: { comments: commentId }
+            }, {
+                new: true,
+                projection: {
+                    comments: 1
+                }
+            }),
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Notice.deleteMany({
+                $and: [{ 
+                    relay: comment.playlistId 
+                }, { 
+                    relaycomment: mongoose.Types.ObjectId(comment.parentCommentId) 
+                }, { 
+                    relayrecomment: comment._id 
+                }]
+            })
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send([relay.comments, comments]);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 댓글 좋아요
+const likeComment = async (req, res) => {
+    try {
+        const time = new Date();
+        const relayId = req.params.relayId
+        const commentId = req.params.id
+        const like = await Comment.findOneAndUpdate({
+            _id: commentId
+        }, {
+            $push: { likes : req.user._id }
+        }, {
+            new: true
+        }).populate('postUserId', {
+            noticetoken: 1
+        });
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send(comments);
+        const targetuser = like.postUserId
+        if(targetuser._id.toString() !== req.user._id.toString()){
+            try {
+                await new Notice({ 
+                    noticinguser: req.user._id, 
+                    noticieduser: targetuser._id, 
+                    noticetype:'rcomlike', 
+                    time, 
+                    relay: relayId, 
+                    relaycomment: commentId 
+                }).save();
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
+            const message = {
+                notification: {
+                    body: req.user.name + '님이 ' + like.text + ' 댓글을 좋아합니다.',
+                },
+                token: targetuser.noticetoken
+            };
+            try {
+                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 댓글 좋아요 취소
+const unLikeComment = async (req, res) => {
+    try {
+        const relayId = req.params.relayId
+        const commentId = req.params.id
+        const like = await Comment.findOneAndUpdate({
+            _id: commentId
+        }, {
+            $pull: { likes: req.user._id }
+        }, {
+            new: true
+        });
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Notice.findOneAndDelete({
+                $and: [{ 
+                    relay: relayId 
+                }, { 
+                    relaycomment: commentId
+                }, { 
+                    noticinguser: req.user._id 
+                }, { 
+                    noticetype: 'rcomlike' 
+                }, { 
+                    noticieduser: like.postUserId 
+                }]
+            }) 
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send(comments);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 대댓글 좋아요
+const likeRecomment = async (req, res) => {
+    try {
+        const time = new Date()
+        const relayId = req.params.relayId
+        const commentId = req.params.id
+        const like = await Recomment.findOneAndUpdate({
+            _id: commentId
+        }, {
+            $push: { likes: req.user._id }
+        }, {
+            new: true
+        }).populate('postUserId', {
+            noticetoken: 1
+        });
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send(comments);
+        const targetuser = like.postUserId
+        if(targetuser._id.toString() !== req.user._id.toString()){
+            try {
+                await new Notice({ 
+                    noticinguser: req.user._id, 
+                    noticieduser: targetuser._id, 
+                    noticetype: 'rrecomlike', 
+                    time, 
+                    relay: like.playlistId, 
+                    relayrecomment: commentId
+                }).save();
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
+            const message = {
+                notification: {
+                    body: req.user.name + '님이 ' + like.text + ' 대댓글을 좋아합니다.',
+                },
+                token: targetuser.noticetoken
+            };
+            try {
+                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+            } catch (err) {
+                return res.status(422).send(err.message);
+            }
+        }
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+// 대댓글 좋아요 취소
+const unLikeRecomment = async (req, res) => {
+    try {
+        const relayId = req.params.relayId
+        const commentId = req.params.id
+        const like = await Recomment.findOneAndUpdate({
+            _id: commentId
+        }, {
+            $pull: { likes:req.user._id }
+        } , {
+            new: true
+        });
+        const [comments, recomments] = await Promise.all([
+            Comment.find({
+                relayId: relayId
+            }, {
+                text: 1, time: 1, likes: 1, recomment: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1, 
+            }),
+            Recomment.find({
+                relayId: relayId
+            }, {
+                parentCommentId: 1, text: 1, time: 1, likes: 1
+            }).populate('postUserId', {
+                name: 1, profileImage: 1
+            }),
+            Notice.findOneAndDelete({
+                $and: [{ 
+                    relay: like.relayId 
+                }, { 
+                    relayrecomment: commentId 
+                }, {
+                    noticinguser: req.user._id 
+                }, { 
+                    noticetype: 'precomlike' 
+                }, { 
+                    noticieduser: like.postUserId 
+                }]
+            }) 
+        ])
+        for(let comment of comments){
+            for(const recomment of recomments){
+                if(recomment.parentCommentId.toString() === comment._id.toString()){
+                    comment.recomment.push(recomment);
+                }
+            }
+        }
+        res.status(200).send(comments);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
 module.exports = {
     postRelayPlaylist,
     postRepresentSong,
@@ -291,4 +912,14 @@ module.exports = {
     getRelaySong,
     likeRelaySong,
     unlikeRelaySong,
+    likeRelayPlaylist,
+    unLikeRelayPlaylist,
+    addComment,
+    deleteComment,
+    addRecomment,
+    deleteRecomment,
+    likeComment,
+    unLikeComment,
+    likeRecomment,
+    unLikeRecomment
 }

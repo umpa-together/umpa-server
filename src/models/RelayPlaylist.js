@@ -22,7 +22,23 @@ const relayPlaylistSchema = new mongoose.Schema({
     image: {
         type: String,
         default: ''
-    }
+    },
+    hashtags: [{
+        type: String
+    }],
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    youtubeUrl: {
+        type: String,
+        default: ''
+    },
+    comments: [{
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'RelayPlaylistComment',
+    }],   
 });
 
 mongoose.model('RelayPlaylist', relayPlaylistSchema);

@@ -28,6 +28,8 @@ require('./models/AddedPlaylist');
 require('./models/Theme');
 require('./models/PlaylistRecomment');
 require('./models/DailyRecomment');
+require('./models/RelayComment');
+require('./models/RelayRecomment');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

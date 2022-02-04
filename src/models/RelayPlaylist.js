@@ -1,9 +1,17 @@
 const mongoose = require('mongoose');
 
 const relayPlaylistSchema = new mongoose.Schema({
-    title: {
+    title: [{
         type: String,
         required: true
+    }],
+    template: {
+        type: String,
+        required: true
+    },
+    isBackground: {
+        type: Boolean,
+        default: false
     },
     postUserId: [{
         type: mongoose.Schema.Types.ObjectId,
@@ -38,7 +46,7 @@ const relayPlaylistSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'RelayPlaylistComment',
-    }],   
+    }],
 });
 
 mongoose.model('RelayPlaylist', relayPlaylistSchema);

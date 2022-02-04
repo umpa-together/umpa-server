@@ -8,7 +8,7 @@ const s3 = new aws.S3({
     region: 'ap-northeast-2'
 })
   
-const upload = (destination) => {
+const upload = (destination, dev=true) => {
     return multer({
         storage: multerS3({
             s3: s3,
@@ -18,7 +18,7 @@ const upload = (destination) => {
                 cb(null, { fieldName: file.fieldname });
             },
             key: function(req, file, cb) {
-                cb(null, destination + Date.now() + '-' + file.originalname);
+                cb(null, `${dev ? 'dev/' : 'product/'}` + destination + Date.now() + '-' + file.originalname);
             }
         })
     })

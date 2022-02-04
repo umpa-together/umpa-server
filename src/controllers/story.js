@@ -45,7 +45,9 @@ const getMyStory = async (req, res) => {
         if (lastStory === null) {
             res.status(200).send([null, []]);
         } else {
-            const tomorrowTime = new Date(new Date().setDate(lastStory.time.getDate()+1))
+            let tomorrowTime = new Date()
+            tomorrowTime.setDate(lastStory.time.getDate()+1)
+            tomorrowTime.setMonth(lastStory.time.getMonth())            
             if(nowTime <= tomorrowTime) {
                 const { _id: id } = lastStory
                 const viewer = await StorySong.aggregate([
@@ -87,11 +89,14 @@ const getOtherStoryWithAll = async (req, res) => {
     try {
         let readUser = [];
         let unReadUser = [];
+        let date = new Date()
+        date.setDate(nowTime.getDate()-1)
+        date.setMonth(nowTime.getMonth())
         const storySongs = await StorySong.find({
             $and: [
                 {
                     time: {
-                        $gte: new Date(new Date().setDate(nowTime.getDate()-1))
+                        $gte: new Date(date)
                     }
                 },
                 {
@@ -128,11 +133,14 @@ const getOtherStoryWithFollowing = async (req, res) => {
     try {
         let readUser = [];
         let unReadUser = [];
+        let date = new Date()
+        date.setDate(nowTime.getDate()-1)
+        date.setMonth(nowTime.getMonth())
         const storySongs = await StorySong.find({
             $and: [
                 {
                     time: {
-                        $gte: new Date(new Date().setDate(nowTime.getDate()-1))
+                        $gte: new Date(date)
                     }
                 }, 
                 {

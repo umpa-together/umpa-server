@@ -7,15 +7,14 @@ const {
   getMyInformation,
   getOtherInformation,
   editProfile,
-  editProfileImage,
-  editBackgroundImage,
+  editImage,
   getFollow,
   follow,
   unFollow,
   getRepresentSongs,
   postRepresentSongs,
   getGenreLists,
-  postGenre
+  postGenre,
 } = require('../controllers/user')
 
 router.delete('/field', deleteField);
@@ -23,8 +22,7 @@ router.put('/genre', addGenreLists);
 router.get('/', getMyInformation)
 router.get('/other/:id', getOtherInformation)
 router.post('/editProfile', editProfile)
-router.post('/editProfileImage', upload('profileImage/').single('img'), editProfileImage)
-router.post('/editBackgroundImage', upload('backgroundImage/').single('img'), editBackgroundImage)
+router.post('/editImage', upload('profileImage/').fields([{name: 'profileImage'}, {name: 'backgroundImage'}]), editImage)
 router.get('/follow/:id', getFollow);
 router.post('/follow/:id', follow)
 router.delete('/follow/:id', unFollow)

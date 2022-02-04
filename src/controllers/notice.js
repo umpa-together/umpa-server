@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Notice = mongoose.model('Notice');
 const User = mongoose.model('User');
+const Announcement = mongoose.model('Announcement');
 const admin = require('firebase-admin');
 const serviceAccount = require('./umpa-4bdbc-firebase-adminsdk-z9vqj-20c1660b78.json');
 
@@ -141,11 +142,40 @@ const deleteNotice = async (req, res) => {
     }
 }
 
+// 공지사항 가져오기
+const getAnnouncement = async (req, res) => {
+    try {
+        const announcements = await Announcement.find({
+        }).sort({ 'time': -1 })
+        res.status(200).send(announcements)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 공지사항 작성 
+const postAnnouncement = async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const announcement = await Announcement({
+            title,
+            content,
+            time: new Date()
+        }).save()
+        res.status(201).send(announcement)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+
 module.exports = {
     changeTime,
     getNotice,
     getNextNotice,
     readNotice,
     setNotice,
-    deleteNotice   
+    deleteNotice,
+    getAnnouncement,
+    postAnnouncement
 }

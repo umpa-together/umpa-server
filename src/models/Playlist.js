@@ -47,6 +47,10 @@ const playlistSchema = new mongoose.Schema({
     accessedTime: {
         type: Date,
     },
+    youtubeUrl: {
+        type: String,
+        default: ''
+    },
 });
 
 mongoose.model('Playlist', playlistSchema);

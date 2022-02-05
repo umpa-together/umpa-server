@@ -259,31 +259,20 @@ const editProfile = async (req, res) => {
     }
 }
 
-// 프로필 이미지 변경
-const editProfileImage = async (req, res) => {
+// 프로필 이미지, 배경 변경 변경
+const editImage = async (req, res) => {
     try {
-        const img = req.file.location;
-        const user = await User.findOneAndUpdate({
+        let query = {}
+        if (req.files['profileImage']) {
+            query.profileImage = req.files['profileImage'][0].location
+        }
+        if (req.files['backgroundImage']) {
+            query.backgroundImage = req.files['backgroundImage'][0].location
+        }
+        await User.findOneAndUpdate({
             _id: req.user._id
         }, {
-            $set: { profileImage: img }
-        }, {
-            new: true,
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
-// 프로필 배경 변경
-const editBackgroundImage = async (req, res) => {
-    try { 
-        const img = req.file.location;
-        const user = await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $set: { backgroundImage: img }
+            $set: query
         }, {
             new: true,
         })
@@ -566,8 +555,7 @@ module.exports = {
     getMyInformation,
     getOtherInformation,
     editProfile,
-    editProfileImage,
-    editBackgroundImage,
+    editImage,
     getFollow,
     follow,
     unFollow,

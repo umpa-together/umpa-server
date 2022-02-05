@@ -30,6 +30,7 @@ require('./models/PlaylistRecomment');
 require('./models/DailyRecomment');
 require('./models/RelayComment');
 require('./models/RelayRecomment');
+require('./models/Announcement');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

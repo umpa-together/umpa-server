@@ -6,9 +6,13 @@ const {
     getNextNotice,
     readNotice,
     setNotice,
-    deleteNotice   
+    deleteNotice,
+    getAnnouncement,
+    postAnnouncement
 } = require('../controllers/notice')
 
+router.post('/announcements', postAnnouncement)
+router.get('/announcements', getAnnouncement)
 router.get('/time', changeTime)
 router.get('/', getNotice)
 router.get('/:page', getNextNotice)

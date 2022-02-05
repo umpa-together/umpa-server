@@ -141,7 +141,7 @@ const getAllContents = async (req, res) => {
                 playlist: playlists,
                 dj: dj,
                 daily: daily,
-                hashtag: hashtag,
+                hashtag: hashtag.filter((item) => item.playlistId.length + item.dailyId.length > 0),
                 song: songResult,
                 next: next
             }

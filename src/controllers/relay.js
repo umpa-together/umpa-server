@@ -5,20 +5,17 @@ const Comment = mongoose.model('RelayComment')
 const Recomment = mongoose.model('RelayRecomment')
 const Notice = mongoose.model('Notice');
 
-const titleLists = [
-    '크리스마스에 듣기 좋은',
-    '축제 시즌이면 생각나는',
-    '한 때는 내가 사랑했던',
-    '힘이 들 때 위로가 되는 곡',
-    '너 내 깐부.. 맞지?',
-]
-
 // 주제곡을 통한 플레이리스트 업로드
 const postRelayPlaylist = async (req, res) => {
     try {
-        Object.values(titleLists).forEach(async(item) => {
+        const { lists } = req.body
+        Object.values(lists).forEach(async(item) => {
+            const { title, template, opacityTop, opacityBottom } = item
             await new RelayPlaylist({
-                title: item,
+                title,
+                template,
+                opacityTop,
+                opacityBottom,
                 createdTime: new Date()
             }).save()
         })
@@ -102,7 +99,9 @@ const updateApprovedSong = async (req, res) => {
 const getCurrentRelay = async (req, res) => {
     try {
         const nowTime = new Date();
-        const relayPlaylists = await RelayPlaylist.find();
+        const relayPlaylists = await RelayPlaylist.find({}, {
+            title: 1, template: 1, opacityBottom: 1, opacityTop: 1, createdTime: 1, representSong: 1, image: 1
+        });
         let result = []
         Object.values(relayPlaylists).forEach((item) => {
             const { createdTime } = item
@@ -122,19 +121,44 @@ const getCurrentRelay = async (req, res) => {
 const getRelayLists = async (req, res) => {
     try {
         const nowTime = new Date();
-        const relayPlaylists = await RelayPlaylist.find({}, {
-            title: 1, postUserId: 1, image: 1, createdTime: 1
-        }).sort({'createdTime': -1});
+        const [relayPlaylists, relaysongs] = await Promise.all([
+            RelayPlaylist.find({}, {
+              title: 1, postUserId: 1, image: 1, createdTime: 1, hashtags:1,
+            }).sort({'createdTime': -1}), 
+            RelaySong.find({},{
+              like:1, unlike:1, playlistId:1 
+            })
+        ]);
         let current = []
         let complete = []
         Object.values(relayPlaylists).forEach((item) => {
-            const { createdTime } = item
+            const { title, image, postUserId, hashtags, createdTime, _id } = item;
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
+            let evaluateCount = [];
+            relaysongs.forEach((song) => {
+                const { like, unlike, playlistId } = song
+                if(_id.toString() === playlistId.toString()) {
+                    like.concat(unlike).forEach((person) => {
+                        if(!evaluateCount.includes(person.toString())) {
+                            evaluateCount.push(person.toString())
+                        }
+                    })
+                } 
+            })
+            const playlist = {
+                title, 
+                createdTime,
+                image,
+                postUserId,
+                evaluateCount: evaluateCount.length,
+                _id,
+                hashtags,
+            }   
             if (betweenTime <= 4) {
-                current.push(item)
+                current.push(playlist)
             } else {
-                complete.push(item)
+                complete.push(playlist)
             }
         })
         res.status(200).send(current.concat(complete))

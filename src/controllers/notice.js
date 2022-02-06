@@ -23,6 +23,8 @@ const changeTime = async (req, res) => {
                 { noticetype: 'bsonglike' },
                 { noticetype: 'culike' },
                 { noticetype: 'ccom' },
+                { noticetype: 'precom'},
+                { noticetype: 'precomlike'}
             ]
         })
         notice.map(async (item) => {
@@ -35,6 +37,7 @@ const changeTime = async (req, res) => {
                 }
             })
         })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }

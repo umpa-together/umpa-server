@@ -36,14 +36,6 @@ const playlistSchema = new mongoose.Schema({
     image: {
         type: String,
     },
-    nominate: {
-        type: Number,
-        default: 0
-    },
-    isWeekly: {
-        type: Boolean,
-        default: false
-    },
     accessedTime: {
         type: Date,
     },

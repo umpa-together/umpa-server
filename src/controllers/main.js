@@ -6,11 +6,13 @@ const AddedSong = mongoose.model('AddedSong');
 const Theme = mongoose.model('Theme');
 
 const themeLists = [
-    '음파에서 추천하는 꼭 들어야 하는 플리',
-    '시원한 여름날이 생각나는 플리',
-    '무념무상 나는 이거 들을거야',
-    '작업하면서 틀어놔!',
-    '어디서 들어본 듯한 노래들이 요기에'
+    '난 힙합이 너무 좋아, 중2병',
+    '감성 터지는 플리 찾고 계신가요?',
+    '힐링이 필요할때 듣는 노래',
+    '하루를 마무리할 때 듣기 좋은 노래',
+    '외힙 레전드 리스트를 찾습니다',
+    '몸이 먼저 반응하는 레전드 비트',
+    '아티스트 모음집'
 ]
 
 // 테마 데이터 등록하기
@@ -41,6 +43,7 @@ const accessedTime = async (req, res) => {
                 }
             })
         })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }

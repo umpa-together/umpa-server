@@ -30,6 +30,7 @@ const AddFeeds = async (req, res) => {
                 postUserId: item.postUserId
             })
         })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }

@@ -10,6 +10,7 @@ const s3 = new aws.S3({
   
 const upload = (destination, dev=true) => {
     return multer({
+        limits: { fieldSize: 25 * 1024 * 1024 },
         storage: multerS3({
             s3: s3,
             acl: 'public-read',

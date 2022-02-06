@@ -4,7 +4,6 @@ const Comment = mongoose.model('DailyComment');
 const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
-const Curation = mongoose.model('CurationPost');
 const Recomment = mongoose.model('DailyRecomment');
 const admin = require('firebase-admin');
 
@@ -33,6 +32,7 @@ const changeTime = async (req, res) => {
                 }
             })
         })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -41,6 +41,7 @@ const changeTime = async (req, res) => {
 // 큐레이션 데일리로
 const curationToDaily = async (req, res) => {
     try {
+        /*
         const curation = await Curation.find();
         Object.values(curation).forEach(async (item) => {
             const { postUserId, time, textcontent, likes, object, isSong } = item
@@ -64,6 +65,7 @@ const curationToDaily = async (req, res) => {
             }
         })
         res.send(curation);
+        */
     } catch (err) {
         return res.status(422).send(err.message);
     }

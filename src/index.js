@@ -53,7 +53,7 @@ const ChatMsg= mongoose.model('ChatMsg');
 const User = mongoose.model('User');
 const admin = require('firebase-admin');
 
-mongoose.connect(process.env.mongoUri, {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,

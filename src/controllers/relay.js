@@ -317,19 +317,23 @@ const getRelaySong = async (req, res) => {
                 postUserId: { $ne: req.user._id }
             }]
         }, {
+            playlistId: 1,
             song: 1,
             like: 1,
-            unlike: 1
+            unlike: 1,
+    
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
         const result = songs.map((item) => {
-            const { like, unlike, _id, song, postUserId } = item
+            const { like, unlike, _id, song, postUserId, playlistId} = item
             if(!like.includes(req.user._id) && !unlike.includes(req.user._id)) {
                 return {
                     _id: _id,
                     song: song,
-                    postUserId: postUserId
+                    postUserId: postUserId,
+                    playlistId
+
                 }
             }
         })

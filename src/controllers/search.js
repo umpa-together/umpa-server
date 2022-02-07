@@ -12,10 +12,10 @@ const request = require('request');
 const token = jwt.sign({}, privateKey, {
     algorithm: "ES256",
     expiresIn: "180d",
-    issuer: process.env.issuerId, //your 10-character Team ID, obtained from your developer account
+    issuer: process.env.APPLEMUSIC_ISSUER_ID, //your 10-character Team ID, obtained from your developer account
     header: {
       alg: "ES256",
-      kid: process.env.apiKeyId //your MusicKit Key ID
+      kid: process.env.APPLEMUSIC_API_KEY_ID //your MusicKit Key ID
     }
 });
 

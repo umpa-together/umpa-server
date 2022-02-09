@@ -44,30 +44,12 @@ const userSchema = new mongoose.Schema({
     noticetoken:{
         type: String,
     },
-    informationagree:{
-        type: Boolean,
-    },
     accessedTime: {
         type: Date,
     },
     genre: [{
         type: String
     }],
-    myPlaylists: {},
-    playlistGuide: {},
-    curationGuide:{},
-    boardGuide:{},
-    createGuide:{},
-    chats:{},
-    boardBookmark:{},
-    scrabContent:{},
-    songsView:{},
-    playlists:{},
-    curationposts:{},
-    dailys:{},
-    relaysongs:{},
-    nominate: {},
-    todaySong: {},
 });
 
 userSchema.pre('save', function(next){

@@ -27,8 +27,6 @@ const commentSchema = new mongoose.Schema({
         required: true,
         ref: 'DailyRecomment',
     }],
-    recomments: {},
-    parentcommentId: {},
 });
 
 mongoose.model('DailyComment', commentSchema);

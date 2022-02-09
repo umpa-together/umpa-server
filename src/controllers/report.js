@@ -12,13 +12,12 @@ const changeTime = async (req, res) => {
                 _id: id
             }, {
                 $set: {
+                    subjectId: subjectId,
                     time: new Date(time)
-                },
-                $set: {
-                    subjectId: subjectId
                 }
             })
         })
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }

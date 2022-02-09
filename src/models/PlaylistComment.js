@@ -29,6 +29,7 @@ const commentSchema = new mongoose.Schema({
     }],
     recomments: {},
     parentcommentId: {},
+    postUser: {}
 });
 
 mongoose.model('PlaylistComment', commentSchema);

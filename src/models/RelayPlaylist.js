@@ -9,7 +9,11 @@ const relayPlaylistSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    isBackground: {
+    opacityTop: {
+        type: Boolean,
+        default: false
+    },
+    opacityBottom: {
         type: Boolean,
         default: false
     },
@@ -47,6 +51,10 @@ const relayPlaylistSchema = new mongoose.Schema({
         required: true,
         ref: 'RelayPlaylistComment',
     }],
+    approved: {
+        type: Boolean,
+        default: false
+    }
 });
 
 mongoose.model('RelayPlaylist', relayPlaylistSchema);

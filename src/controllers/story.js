@@ -132,7 +132,7 @@ const getOtherStoryWithAll = async (req, res) => {
             $and: [
                 {
                     time: {
-                        $gte: new Date(date)
+                        $gte: new Date(new Date().setDate(nowTime.getDate()-1))
                     }
                 },
                 {
@@ -169,14 +169,11 @@ const getOtherStoryWithFollowing = async (req, res) => {
     try {
         let readUser = [];
         let unReadUser = [];
-        let date = new Date()
-        date.setDate(nowTime.getDate()-1)
-        date.setMonth(nowTime.getMonth())
         const storySongs = await StorySong.find({
             $and: [
                 {
                     time: {
-                        $gte: new Date(date)
+                        $gte: new Date(new Date().setDate(nowTime.getDate()-1))
                     }
                 }, 
                 {

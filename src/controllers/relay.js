@@ -149,14 +149,69 @@ const getCurrentRelay = async (req, res) => {
             title: 1, template: 1, opacityBottom: 1, opacityTop: 1, createdTime: 1, representSong: 1, image: 1
         });
         let result = []
-        Object.values(relayPlaylists).forEach((item) => {
-            const { createdTime } = item
+
+        const promise = relayPlaylists.map(async (item) => {
+            const { createdTime, _id } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
+
             if (0 <= betweenTime && betweenTime < 4) {
-                result.push(item)
+                let evaluateCount = [];
+                let swipeSongs = [];
+                const songs = await RelaySong.find({
+                    $and: [{
+                        playlistId: _id
+                    }, {
+                        postUserId: { $ne: req.user._id }
+                    }]
+                }, {
+                    playlistId: 1,
+                    song: 1,
+                    like: 1,
+                    unlike: 1,
+            
+                }).populate('postUserId', {
+                    name: 1, profileImage: 1
+                })
+                songs.forEach((el) => {
+                    const { like, unlike, _id, song, postUserId, playlistId} = el
+                    like.concat(unlike).forEach((person) => {
+                        if(!evaluateCount.includes(person.toString())) {
+                           evaluateCount.push(person.toString())
+                        }
+                    })
+                    if(!like.includes(req.user._id) && !unlike.includes(req.user._id)) {
+                        const songObject = {
+                            _id: _id,
+                            song: song,
+                            postUserId: postUserId,
+                            playlistId
+        
+                        }
+                        swipeSongs.push(songObject)
+                    }
+                })
+                const relayPlaylist = {
+                    title: item.title, 
+                    isBackground: item.isBackground,
+                    representSong: item.representSong,
+                    image: item.image,
+                    evaluateCount: evaluateCount.length,
+                    postUserId: item.postUserId,
+                    createdTime: item.createdTime,
+                    opacityTop: item.opacityTop,
+                    opacityBottom: item.opacityBottom,
+                    template: item.template,
+                    youtubeUrl: item.youtubeUrl,
+                    _id: item._id,
+                    relaySong: swipeSongs,
+                 }        
+                result.push(relayPlaylist);
             }
         })
+
+        await Promise.all(promise);
+
         res.status(200).send(result);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -362,19 +417,23 @@ const getRelaySong = async (req, res) => {
                 postUserId: { $ne: req.user._id }
             }]
         }, {
+            playlistId: 1,
             song: 1,
             like: 1,
-            unlike: 1
+            unlike: 1,
+    
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
         const result = songs.map((item) => {
-            const { like, unlike, _id, song, postUserId } = item
+            const { like, unlike, _id, song, postUserId, playlistId} = item
             if(!like.includes(req.user._id) && !unlike.includes(req.user._id)) {
                 return {
                     _id: _id,
                     song: song,
-                    postUserId: postUserId
+                    postUserId: postUserId,
+                    playlistId
+
                 }
             }
         })

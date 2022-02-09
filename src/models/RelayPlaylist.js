@@ -51,6 +51,10 @@ const relayPlaylistSchema = new mongoose.Schema({
         required: true,
         ref: 'RelayPlaylistComment',
     }],
+    approved: {
+        type: Boolean,
+        default: false
+    }
 });
 
 mongoose.model('RelayPlaylist', relayPlaylistSchema);

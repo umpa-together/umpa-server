@@ -384,6 +384,11 @@ const deleteComment = async (req, res) => {
     try {
         const commentId = req.params.commentId;
         const dailyId = req.params.id;
+        const targetRecomment = await Recomment.find({
+            parentCommentId: commentId
+        }, {
+            _id: 1
+        })
         await Promise.all([
             Comment.deleteMany({
                 _id: commentId
@@ -410,7 +415,7 @@ const deleteComment = async (req, res) => {
             Daily.findOneAndUpdate({
                 _id: dailyId
             }, {
-                $pull: { comments: commentId }
+                $pullAll: { comments: [commentId].concat(targetRecomment.map((recomment) => recomment._id)) }
             }, {
                 new: true,
                 projection: {
@@ -500,7 +505,7 @@ const addRecomment = async (req, res) => {
         }
         res.status(201).send([daily, comments]);
         const targetuser = parentcomment.postUserId
-        if(targetuser.toString() !== req.user._id.toString()){
+        if(targetuser._id.toString() !== req.user._id.toString()){
             try {
                 await new Notice({ 
                     noticinguser: req.user._id,  
@@ -727,7 +732,7 @@ const likeComment = async (req, res) => {
         }
         res.status(200).send(comments);
         const targetuser = like.postUserId
-        if(targetuser.toString() !== req.user._id.toString()){
+        if(targetuser._id.toString() !== req.user._id.toString()){
             try {
                 await new Notice({ 
                     noticinguser: req.user._id, 

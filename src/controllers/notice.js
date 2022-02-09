@@ -64,6 +64,14 @@ const getNotice = async (req, res) => {
             text: 1 
         }).populate('dailyrecomment', { 
             text: 1 
+        }).populate('relay', {
+            title: 1, image: 1
+        }).populate('relaycomment', {
+            text: 1
+        }).populate('relayrecomment', {
+            text: 1
+        }).populate('relaysong', {
+            song: 1
         }).sort({ 'time': -1 }).limit(20)
         res.status(200).send(notice);
     } catch (err) {
@@ -92,6 +100,14 @@ const getNextNotice = async (req, res) => {
             text: 1 
         }).populate('dailyrecomment', { 
             text: 1 
+        }).populate('relay', {
+            title: 1
+        }).populate('relaycomment', {
+            text: 1
+        }).populate('relayrecomment', {
+            text: 1
+        }).populate('relaysong', {
+            song: 1
         }).sort({ 'time': -1 }).skip(req.params.page * 20).limit(20)
         res.status(200).send(notice);
     } catch (err) {

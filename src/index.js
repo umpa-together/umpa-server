@@ -80,7 +80,7 @@ app.get('/', (req, res) => {
     res.send('Welcome to umpa');
 });
 
-//app.set("etag", false);
+app.set("etag", false);
 
 server.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

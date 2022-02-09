@@ -16,42 +16,26 @@ const changeTime = async (req, res) => {
         await Comment.updateMany({
         }, {
             $unset: {
+                recomments: 1,
+                parentcommentId: 1,
+                postUseR: 1,
+            },
+            $set: {
                 recomment: 1
-            },
-        })
-        //await Playlist.updateMany({
-        //}, {
-        //    $unset: {
-        //        nominate: 1,
-        //        isWeekly: 1,
-        //        postUser: 1
-        //    },
-        //    $set: {
-        //        youtubeUrl: ""
-        //    }
-        //})
-        /*
-        await Comment.updateMany({
-        }, {
-            $unset: {
-                postUser: 1,
-                parentcommentId: 1
-            },
-            $rename: {
-                "recomments": "recomment",
             }
         })
-        /*
         await Playlist.updateMany({
         }, {
             $unset: {
                 nominate: 1,
                 isWeekly: 1,
+                postUser: 1
             },
             $set: {
                 youtubeUrl: ""
             }
         })
+        /*
         await Daily.updateMany({
 
         }, {
@@ -70,13 +54,6 @@ const changeTime = async (req, res) => {
             $set: {
                 realName: '',
                 introduction: ''
-            }
-        })
-        await Comment.updateMany({
-
-        }, {
-            $rename: {
-                "recomments": "recomment",
             }
         })
         */
@@ -162,13 +139,8 @@ const commentData = async (req, res) => {
         }, {
             playlistId: 1, postUserId: 1, text: 1, time: 1, likes: 1, parentcommentId: 1
         })
-        recomments.map(async (item) => {
-            const { playlistId, _id: id, postUserId, text, time, likes, parentcommentId } = item
-            await Playlist.findOneAndUpdate({
-                _id: playlistId
-            }, {
-                $pull: { comments: id }
-            })
+        recomments.forEach(async (recomment) => {
+            const { playlistId, _id: id, postUserId, text, time, likes, parentcommentId } = recomment
             const newRecomment = await new Recomment({
                 playlistId: playlistId,
                 parentCommentId: parentcommentId,
@@ -181,13 +153,6 @@ const commentData = async (req, res) => {
                 _id: playlistId
             }, {
                 $push: { comments: newRecomment._id }
-            })
-            await Comment.findOneAndUpdate({
-                _id: mongoose.Types.ObjectId(parentcommentId) 
-            }, {
-                $push: {
-                    recomments: newRecomment._id
-                }
             })
         })
         await Comment.deleteMany({
@@ -255,8 +220,6 @@ const uploadImage = async (req, res) => {
     try {
         const img = req.files['img'][0].location;
         const { playlistId } = req.body;
-        console.log(img, playlistId)
-
         const playlist = await Playlist.findOneAndUpdate({
             _id: playlistId
         }, {
@@ -319,7 +282,7 @@ const editPlaylist = async (req, res) => {
         }, {
             new: true,
             projection: {
-                title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
             },
         }).populate('postUserId', {
             name: 1, profileImage: 1
@@ -384,7 +347,7 @@ const getSelectedPlaylist = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1
@@ -398,7 +361,7 @@ const getSelectedPlaylist = async (req, res) => {
             }, { 
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 }, 
             }).populate('postUserId', {
                 name: 1, profileImage: 1
@@ -453,7 +416,7 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -520,6 +483,11 @@ const deleteComment = async (req, res) => {
     try {
         const commentId = req.params.commentId;
         const playlistId = req.params.id;
+        const targetRecomment = await Recomment.find({
+            parentCommentId: commentId
+        }, {
+            _id: 1
+        })
         await Promise.all([
             Comment.deleteMany({
                 _id: commentId
@@ -546,11 +514,11 @@ const deleteComment = async (req, res) => {
             Playlist.findOneAndUpdate({
                 _id: playlistId
             }, {
-                $pull: { comments: commentId }
+                $pullAll: { comments: [commentId].concat(targetRecomment.map((recomment) => recomment._id)) }
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -621,7 +589,7 @@ const addRecomment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -700,7 +668,7 @@ const deleteRecomment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1, comments: 1
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 },
             }).populate('postUserId', {
                 name: 1, profileImage: 1, 
@@ -736,7 +704,7 @@ const likesPlaylist = async (req, res) => {
         const playlist = await Playlist.findOne({
             _id: playlistId
         }, {
-            title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+            title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
@@ -751,7 +719,7 @@ const likesPlaylist = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -802,7 +770,7 @@ const unlikesPlaylist = async (req, res) => {
             }, {
                 new :true,
                 projection: {
-                    title: 1, textcontent: 1, songs: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time:1,
+                    title: 1, textcontent: 1, time: 1, songs: 1, comments: 1, hashtag: 1, likes: 1, views: 1, image: 1, youtubeUrl: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1

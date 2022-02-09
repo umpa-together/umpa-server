@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Playlist = mongoose.model('Playlist');
-const User = mongoose.model('User');
 const Daily = mongoose.model('Daily');
-const AddedSong = mongoose.model('AddedSong');
 const Theme = mongoose.model('Theme');
 
 const themeLists = [
@@ -122,16 +120,22 @@ const getRecentPlaylist = async (req, res) => {
 }
 
 // 최근에 본 데일리 가져오기
-const getRecentDaily = async (req, res) => {
+const getRecommendDaily = async (req, res) => {
     try {
-        const dailes = await Daily.find({
-            "accessedTime": {
-                $exists: true
+        const dailies = await Daily.aggregate([
+            {
+                $sample: {
+                    size: 10
+                }
+            },
+            {
+                $project: {
+                    song: 1,
+                    postUserId: 1
+                }
             }
-        }, {
-            song: 1, postUserId: 1
-        }).sort({'accessedTime': -1}).limit(10)
-        res.status(200).send(dailes)
+        ])
+        res.status(200).send(dailies)
     } catch (err) {
         return res.status(422).send(err.message);   
     }
@@ -140,126 +144,57 @@ const getRecentDaily = async (req, res) => {
 // 메인 DJ 추천
 const getMainRecommendDJ = async (req, res) => {
     try {
-        const userScoreLists = []
-        const { songs } = req.user
-        const [myPlaylist, addedSongs] = await Promise.all([
-            Playlist.aggregate([
-                {
-                    $match: {
-                        postUserId: req.user._id
-                    }
-                }, {
-                    $project: {
-                        songs: 1
-                    }
+        const playlist = await Playlist.aggregate([
+            {
+                $group: {
+                    _id: "$postUserId",
+                    totalCount: { $sum: 1 }
                 }
-            ]),
-            AddedSong.aggregate([
-                {
-                    $match: {
-                        postUserId: req.user._id
-                    }
-                }, {
-                    $project: {
-                        song: 1
-                    }
+            },
+            {
+                $match: {
+                    $and: [{
+                        _id: { $ne: req.user._id }
+                    }, {
+                        _id: { $nin: req.user.following }
+                    }] 
                 }
-            ])
-        ])
-        const [songId, addedSongId] = await Promise.all([
-            songs.map(({ id }) => { return id }), // score 5
-            addedSongs.map(({ song }) => { return song.id }) // score 4
-        ])
-        let playlistsId = [] // score 3
-        myPlaylist.forEach(({ songs }) => {
-            songs.forEach(({ id }) => {
-                playlistsId.push(id)
-            })
-        })
-        const users = await User.find({ 
-            $and: [{
-                _id: { $ne: req.user._id }
-            }, {
-                _id: { $nin: req.user.following }
-            }] 
-        }, { 
-            songs: 1, profileImage: 1, name: 1, genre: 1
-        })
-        for (const user of users){
-            const { songs, _id: id, genre, name, profileImage } = user
-            let userScore = 0
-            const [userPlaylists, userAddedSong] = await Promise.all([
-                Playlist.aggregate([
-                    {
-                        $match: {
-                            postUserId: user._id
-                        }
-                    }, {
-                        $project: {
-                            songs: 1
-                        }
-                    }
-                ]),
-                AddedSong.aggregate([
-                    {
-                        $match: {
-                            postUserId: user._id
-                        }
-                    }, {
-                        $project: {
-                            song: 1
-                        }
-                    }
-                ])
-            ])
-            const [userSongId, userAddedSongId] = await Promise.all([
-                songs.map(({ id }) => { return id }), // score 5
-                userAddedSong.map(({ song }) => { return song.id }) // scroe 4
-            ])
-            let userPlaylistId = [] // score 3
-            for (const playlist of userPlaylists) {
-                const { songs } = playlist
-                for (const song of songs) {
-                    userPlaylistId.push(song.id)
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'postUser',
+                },
+            },
+            {
+                $project: {
+                    totalCount: 1,
+                    'postUser._id': 1,
+                    'postUser.name': 1,
+                    'postUser.profileImage': 1,
+                    'postUser.genre': 1,
+                }   
+            },
+            {
+                $sort: {
+                    totalCount: -1
                 }
             }
-            songId.forEach((id) => {
-                if(userSongId.includes(id)) userScore += 25
-                if(userAddedSongId.includes(id))    userScore += 20
-                if(userPlaylistId.includes(id)) userScore += 15
-            })
-            playlistsId.forEach((id) => {
-                if(userSongId.includes(id)) userScore += 20
-                if(userAddedSongId.includes(id))    userScore += 16
-                if(userPlaylistId.includes(id)) userScore += 12
-            })
-            addedSongId.forEach((id) => {
-                if(userSongId.includes(id)) userScore += 15
-                if(userAddedSongId.includes(id))    userScore += 12
-                if(userPlaylistId.includes(id)) userScore += 9
-            })
-            userScoreLists.push({ 
-                _id: id,
-                score: userScore, 
-                genre: genre,
-                name: name, 
-                profileImage: profileImage,
-                playlistCount: userPlaylists.length
-            })
-        }
-        userScoreLists.sort(function(a, b) {
-            if((a.score === 0 && b.score === 0) && (a.playlistCount > b.playlistCount)) return -1;
-            if((a.score === 0 && b.score === 0) && (a.playlistCount < b.playlistCount)) return 1;
-            if(a.score > b.score) return -1;
-            if(a.score < b.score) return 1;
-            return 0;
-        });
-        const result = userScoreLists.slice(0,10).map((user) => {
-            delete user.score
-            delete user.playlistCount
-            return user
+        ])
+        
+        const result = playlist.map((item) => {
+            return {
+                _id: item.postUser[0]._id,
+                name: item.postUser[0].name,
+                profileImage: item.postUser[0].profileImage,
+                genre: item.postUser[0].genre,
+            }
         })
-        res.status(200).send(result)
+        const fixUsers = result.slice(0, 5);
+        const randomUsers = result.slice(5, result.length).sort(() => Math.random() - 0.5).slice(0, 5)
+        res.status(200).send(fixUsers.concat(randomUsers).sort(() => Math.random() - 0.5))
     } catch (err) {
         return res.status(422).send(err.message); 
     }
@@ -311,7 +246,7 @@ module.exports = {
     getAllDailies,
     getNextAllDailies,
     getRecentPlaylist,
-    getRecentDaily,
+    getRecommendDaily,
     getMainRecommendDJ,
     getMainRecommendPlaylist,
 }

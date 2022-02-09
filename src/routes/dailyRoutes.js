@@ -26,7 +26,7 @@ router.get('/curation', curationToDaily);
 router.post('/', addDaily)
 router.post('/edit', editDaily)
 router.delete('/:id', deleteDaily)
-router.post('/imgUpload/:id', upload('daily/').fields([{name: 'img'}]), uploadImage);
+router.post('/imgUpload', upload('daily/').fields([{name: 'img'}, {name: 'dailyId'}]), uploadImage);
 router.get('/:id/:postUserId', getSelectedDaily)
 router.post('/comment/:id', addComment)
 router.delete('/comment/:id/:commentId', deleteComment)

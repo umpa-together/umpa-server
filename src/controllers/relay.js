@@ -4,12 +4,13 @@ const RelaySong = mongoose.model('RelaySong');
 const Comment = mongoose.model('RelayComment')
 const Recomment = mongoose.model('RelayRecomment')
 const Notice = mongoose.model('Notice');
+const admin = require('firebase-admin');
 
 // 주제곡을 통한 플레이리스트 업로드
 const postRelayPlaylist = async (req, res) => {
     try {
         const { lists } = req.body
-        Object.values(lists).forEach(async(item) => {
+        for (const item of lists) {
             const { title, template, opacityTop, opacityBottom } = item
             await new RelayPlaylist({
                 title,
@@ -18,7 +19,7 @@ const postRelayPlaylist = async (req, res) => {
                 opacityBottom,
                 createdTime: new Date()
             }).save()
-        })
+        }
         res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);
@@ -47,29 +48,50 @@ const postRepresentSong = async (req, res) => {
 const updateApprovedSong = async (req, res) => {
     try {
         const nowTime = new Date();
-        const relayPlaylists = await RelayPlaylist.find({}, {
-            createdTime: 1
+        const relayPlaylists = await RelayPlaylist.find({
+            approved: false
+        }, {
+            createdTime: 1, title: 1
         });
-        Object.values(relayPlaylists).forEach(async (item) => {
-            const { createdTime, _id } = item
+        for(const item of relayPlaylists) {
+            const { createdTime, _id: relayId, title } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
             if (betweenTime > 4) {
-                const songs = await RelaySong.aggregate([
-                    {
-                        $match: {
-                            playlistId: _id
+                const [songs] = await Promise.all([
+                    RelaySong.aggregate([
+                        {
+                            $match: {
+                                playlistId: relayId
+                            }
+                        }, 
+                        {
+                            $lookup: {
+                                from: 'users',
+                                localField: 'postUserId',
+                                foreignField: '_id',
+                                as: 'postUserId',
+                            }
+                        },
+                        {
+                            $project: {
+                                likeCount: { $size: "$like" },
+                                unlikeCount: { $size: "$unlike" },
+                                song: 1,
+                                "postUserId._id": 1,
+                                "postUserId.noticetoken": 1
+                            }
                         }
-                    }, 
-                    {
-                        $project: {
-                            likeCount: { $size: "$like" },
-                            unlikeCount: { $size: "$unlike" },
-                            song: 1,
+                    ]),
+                    RelayPlaylist.findOneAndUpdate({
+                        _id: relayId
+                    }, {
+                        $set: {
+                            approved: true
                         }
-                    }
+                    })
                 ])
-                Object.values(songs).forEach((song) => {
+                songs.forEach((song) => {
                     song.score = song.likeCount / (song.likeCount + song.unlikeCount)
                 })
                 songs.sort(function(a, b)  {
@@ -77,18 +99,42 @@ const updateApprovedSong = async (req, res) => {
                     if (a.score < b.score) return 1;
                     return 0;
                 });
-                songs.slice(0, 6).forEach(async (song) => {
-                    const { _id: id } = song
-                    await RelaySong.findOneAndUpdate({ 
-                        _id: id
-                    }, {
-                        $set: {
-                            approved: true
+                for (const song of songs) {
+                    const { _id: id, postUserId, song: { attributes: { name, artistName } } } = song
+                    await Promise.all([
+                        RelaySong.findOneAndUpdate({ 
+                            _id: id
+                        }, {
+                            $set: {
+                                approved: true
+                            }
+                        }), 
+                        new Notice({
+                            noticieduser: postUserId[0]._id,
+                            noticetype: 'relay',
+                            time: nowTime,
+                            relay: relayId,
+                            relaysong: id
+                        }).save()
+                    ])
+                    if(postUserId[0].noticetoken !== null) {
+                        const message = {
+                            notification: {
+                                title: title.join(' '),
+                                body: `${name} - ${artistName} 곡이 릴레이 플레이리스트에 선정되었습니다.`
+                            },
+                            token: postUserId[0].noticetoken
                         }
-                    })
-                })
+                        try {
+                            await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error, 'zz');});
+                        } catch (err) {
+                            console.log("HERE")
+                            return res.status(422).send(err.message);
+                        }
+                    }
+                }
             }
-        })
+        }
         res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);

@@ -145,13 +145,12 @@ const updateApprovedSong = async (req, res) => {
 const getCurrentRelay = async (req, res) => {
     try {
         const nowTime = new Date();
-        const relayPlaylists = await RelayPlaylist.find({}, {
-            title: 1, template: 1, opacityBottom: 1, opacityTop: 1, createdTime: 1, representSong: 1, image: 1
-        });
+        const relayPlaylists = await RelayPlaylist.find({});
         let result = []
 
         const promise = relayPlaylists.map(async (item) => {
-            const { createdTime, _id } = item
+            const { createdTime, _id, title, isBackground, representSong, 
+                image, postUserId, opacityTop, opacityBottom, template, youtubeUrl } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
 
@@ -169,7 +168,6 @@ const getCurrentRelay = async (req, res) => {
                     song: 1,
                     like: 1,
                     unlike: 1,
-            
                 }).populate('postUserId', {
                     name: 1, profileImage: 1
                 })
@@ -186,24 +184,23 @@ const getCurrentRelay = async (req, res) => {
                             song: song,
                             postUserId: postUserId,
                             playlistId
-        
                         }
                         swipeSongs.push(songObject)
                     }
                 })
                 const relayPlaylist = {
-                    title: item.title, 
-                    isBackground: item.isBackground,
-                    representSong: item.representSong,
-                    image: item.image,
+                    title, 
+                    isBackground,
+                    representSong,
+                    image,
                     evaluateCount: evaluateCount.length,
-                    postUserId: item.postUserId,
-                    createdTime: item.createdTime,
-                    opacityTop: item.opacityTop,
-                    opacityBottom: item.opacityBottom,
-                    template: item.template,
-                    youtubeUrl: item.youtubeUrl,
-                    _id: item._id,
+                    postUserId,
+                    createdTime,
+                    opacityTop,
+                    opacityBottom,
+                    template,
+                    youtubeUrl,
+                    _id: _id,
                     relaySong: swipeSongs,
                  }        
                 result.push(relayPlaylist);

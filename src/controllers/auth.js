@@ -20,6 +20,7 @@ const AddedPlaylist = mongoose.model('AddedPlaylist');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const request = require('request');
+const bcrypt = require('bcrypt');
 
 const signUp = async (req, res) => {
     const { email, password } = req.body;
@@ -412,7 +413,15 @@ const kakaoSignIn = async (req, res) => {
                 if(user == null){
                     res.status(200).send([false, bodytemp.kakao_account.email, bodytemp.id.toString()]);
                 } else {
-                    await user.comparePassword(bodytemp.id.toString());
+
+                    
+                    const renewalDate = new Date('2022-02-11')
+                    if( renewalDate > user.accessedTime) {
+                        user.password = bodytemp.id.toString();
+                        await user.save();
+                    }else {
+                       await user.comparePassword(bodytemp.id.toString());
+                    }
                     const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
                     res.status(200).send([token, bodytemp.kakao_account.email, bodytemp.id.toString()])
                 }

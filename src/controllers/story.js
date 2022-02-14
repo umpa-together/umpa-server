@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const StorySong = mongoose.model('StorySong');
+const Notice = mongoose.model('Notice');
 
 // 스토리 데이터 정제
 const storyData = async (req, res) => {
@@ -264,7 +265,9 @@ const likeStory = async (req, res) => {
     try {
         const storyId = req.params.id
         const story = await StorySong.findById(storyId, {
-            likes: 1
+            likes: 1, song: 1
+        }).populate('postUserId', {
+            noticetoken: 1
         })
         if (story) {
             if(!story.likes.includes(req.user._id)) {
@@ -277,6 +280,33 @@ const likeStory = async (req, res) => {
                 })
             }
             res.status(204).send()
+            const targetuser = story.postUserId
+            if(targetuser._id.toString() === req.user._id.toString()) {
+                try {
+                    await new Notice({ 
+                        noticinguser: req.user._id, 
+                        noticieduser: targetuser._id, 
+                        noticetype:'story',
+                        time: new Date(),
+                        storysong: storyId
+                    }).save();
+                } catch (err) {
+                    return res.status(422).send(err.message);
+                }
+            }
+            if(targetuser.noticetoken !== null && targetuser._id.toString() === req.user._id.toString()){
+                const message = {
+                    notification: {
+                        body: `${req.user.name}님이 ${story.song.attributes.name} - ${story.song.attributes.artistName} 스토리를 좋아합니다.`
+                    },
+                    token: targetuser.noticetoken
+                };
+                try {
+                    await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
+                } catch (err) {
+                    return res.status(422).send(err.message);
+                }
+            }
         } else {
             res.status(400).send()
         }
@@ -290,16 +320,29 @@ const unlikeStory = async (req, res) => {
     try {
         const storyId = req.params.id
         const story = await StorySong.findById(storyId, {
-            likes: 1
+            likes: 1, postUserId: 1
         })
         if (story) {
-            await StorySong.findOneAndUpdate({
-                _id: storyId
-            }, {
-                $pull: {
-                    likes: req.user._id
-                }
-            })
+            await Promise.all([
+                StorySong.findOneAndUpdate({
+                    _id: storyId
+                }, {
+                    $pull: {
+                        likes: req.user._id
+                    }
+                }),
+                Notice.findOneAndDelete({
+                    $and: [{
+                        storysong: storyId
+                    }, {
+                        noticinguser: req.user._id
+                    }, {
+                        noticetype: 'story'
+                    }, {
+                        noticieduser: story.postUserId
+                    }]
+                })
+            ])
             res.status(204).send()
         } else {
             res.status(400).send()

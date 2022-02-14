@@ -72,6 +72,8 @@ const getNotice = async (req, res) => {
             text: 1
         }).populate('relaysong', {
             song: 1
+        }).populate('storysong', {
+            song: 1
         }).sort({ 'time': -1 }).limit(20)
         res.status(200).send(notice);
     } catch (err) {
@@ -107,6 +109,8 @@ const getNextNotice = async (req, res) => {
         }).populate('relayrecomment', {
             text: 1
         }).populate('relaysong', {
+            song: 1
+        }).populate('storysong', {
             song: 1
         }).sort({ 'time': -1 }).skip(req.params.page * 20).limit(20)
         res.status(200).send(notice);

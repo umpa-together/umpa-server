@@ -128,7 +128,6 @@ const updateApprovedSong = async (req, res) => {
                         try {
                             await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error, 'zz');});
                         } catch (err) {
-                            console.log("HERE")
                             return res.status(422).send(err.message);
                         }
                     }
@@ -193,7 +192,7 @@ const getCurrentRelay = async (req, res) => {
                     isBackground,
                     representSong,
                     image,
-                    evaluateCount: evaluateCount.length,
+                    evaluateCount: evaluateCount,
                     postUserId,
                     createdTime,
                     opacityTop,
@@ -249,7 +248,7 @@ const getRelayLists = async (req, res) => {
                 createdTime,
                 image,
                 postUserId,
-                evaluateCount: evaluateCount.length,
+                evaluateCount: evaluateCount,
                 _id,
                 hashtags,
             }   
@@ -359,7 +358,7 @@ const getSelectedRelay = async (req, res) => {
             image: relayPlaylist.image,
             representSong: relayPlaylist.representSong,
             postUserId: relayPlaylist.postUserId,
-            evaluateCount: evaluateCount.length,
+            evaluateCount: evaluateCount,
             _id: relayPlaylist._id,
             likes: relayPlaylist.likes, 
             youtubeUrl: relayPlaylist.youtubeUrl,
@@ -418,7 +417,6 @@ const getRelaySong = async (req, res) => {
             song: 1,
             like: 1,
             unlike: 1,
-    
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
@@ -430,11 +428,10 @@ const getRelaySong = async (req, res) => {
                     song: song,
                     postUserId: postUserId,
                     playlistId
-
                 }
             }
         })
-        res.status(200).send(result[0] === undefined ? [] : result)
+        res.status(200).send(result.filter((item) => item !== undefined))
     } catch (err) {
         return res.status(422).send(err.message);
     }

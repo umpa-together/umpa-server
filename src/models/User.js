@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema({
     name: {
         type: String,
         unique: true,
-        default: '',
     },
     realName: {
         type: String,
@@ -50,6 +49,9 @@ const userSchema = new mongoose.Schema({
     genre: [{
         type: String
     }],
+    guide: {
+        type: Object
+    }
 });
 
 userSchema.pre('save', function(next){

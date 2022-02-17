@@ -7,6 +7,7 @@ const {
     updateApprovedSong,
     getCurrentRelay,
     getRelayLists,
+    getNextRelayLists,
     getSelectedRelay,
     postRelaySong,
     getRelaySong,
@@ -29,6 +30,7 @@ router.post('/:id', postRepresentSong);
 router.get('/approve', updateApprovedSong);
 router.get('/', getCurrentRelay);
 router.get('/lists', getRelayLists);
+router.get('/lists/:page', getNextRelayLists);
 router.get('/:id', getSelectedRelay);
 router.post('/song/:playlistId', postRelaySong);
 router.get('/song/:playlistId', getRelaySong);

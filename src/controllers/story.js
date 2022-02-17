@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const StorySong = mongoose.model('StorySong');
 const Notice = mongoose.model('Notice');
+const pushNotification = require('../middlewares/notification');
+const addNotice = require('../middlewares/notice');
 
 // 스토리 데이터 정제
 const storyData = async (req, res) => {
@@ -274,39 +276,20 @@ const likeStory = async (req, res) => {
                 await StorySong.findOneAndUpdate({
                     _id: storyId
                 }, {
-                    $push: {
+                    $addToSet: {
                         likes: req.user._id
                     }
                 })
             }
             res.status(204).send()
             const targetuser = story.postUserId
-            if(targetuser._id.toString() === req.user._id.toString()) {
-                try {
-                    await new Notice({ 
-                        noticinguser: req.user._id, 
-                        noticieduser: targetuser._id, 
-                        noticetype:'story',
-                        time: new Date(),
-                        storysong: storyId
-                    }).save();
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
-            if(targetuser.noticetoken !== null && targetuser._id.toString() === req.user._id.toString()){
-                const message = {
-                    notification: {
-                        body: `${req.user.name}님이 ${story.song.attributes.name} - ${story.song.attributes.artistName} 스토리를 좋아합니다.`
-                    },
-                    token: targetuser.noticetoken
-                };
-                try {
-                    await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
+            addNotice({
+                noticinguser: req.user._id,
+                noticeduser: targetuser._id,
+                noticetype: 'story',
+                storysong: storyId
+            })
+            pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 스토리(오늘의 곡)를 좋아합니다`)
         } else {
             res.status(400).send()
         }
@@ -339,7 +322,7 @@ const unlikeStory = async (req, res) => {
                     }, {
                         noticetype: 'story'
                     }, {
-                        noticieduser: story.postUserId
+                        noticeduser: story.postUserId
                     }]
                 })
             ])

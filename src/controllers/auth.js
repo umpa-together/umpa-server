@@ -27,7 +27,13 @@ const signUp = async (req, res) => {
     try{
         const user = await new User({ 
             email, 
-            password 
+            password,
+            guide: {
+                swipe: false,
+                feed: false,
+                playlist: false,
+                search: false
+            }
         }).save();
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
         res.status(201).send({ token });
@@ -124,7 +130,7 @@ const withdrawal = async (req, res) => {
                 $or: [{
                     noticinguser: mongoose.Types.ObjectId(id)
                 }, {
-                    noticieduser: mongoose.Types.ObjectId(id)
+                    noticeduser: mongoose.Types.ObjectId(id)
                 }]
             }),
             User.deleteOne({

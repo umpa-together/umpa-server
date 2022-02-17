@@ -8,7 +8,9 @@ const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const AddedPlaylist = mongoose.model('AddedPlaylist');
-const admin = require('firebase-admin');
+const commentConverter = require('../middlewares/comment');
+const pushNotification = require('../middlewares/notification');
+const addNotice = require('../middlewares/notice');
 
 // time fields string -> Date 변경
 const changeTime = async (req, res) => {
@@ -383,13 +385,7 @@ const getSelectedPlaylist = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([playlist, comments]);  
     } catch (err) {
         return res.status(422).send(err.message);
@@ -436,43 +432,17 @@ const addComment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ]);
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(201).send([playlist, comments]);
         const targetuser = playlist.postUserId;
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype: 'pcom', 
-                    time, 
-                    playlist: playlistId, 
-                    playlistcomment: newComment._id 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification : {
-                    title: playlist.title,
-                    body : req.user.name+'님이 ' + text + ' 댓글을 달았습니다.',
-                },
-                token : targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'pcom',
+            playlist: playlistId,
+            playlistcomment: newComment._id
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 플레이리스트에 댓글을 달았습니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -531,13 +501,7 @@ const deleteComment = async (req, res) => {
                 }]
             })
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([playlist, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -595,44 +559,18 @@ const addRecomment = async (req, res) => {
                 name: 1, profileImage: 1, 
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(201).send([playlist, comments]);
         const targetuser = parentcomment.postUserId
-        if(targetuser._id.toString() != req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id,  
-                    noticieduser: targetuser._id, 
-                    noticetype: 'precom', 
-                    time, 
-                    playlist: playlistId, 
-                    playlistcomment: commentId, 
-                    playlistrecomment: newComment._id 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification : {
-                    title: parentcomment.playlistId.title,
-                    body : req.user.name+'님이 ' + text + ' 대댓글을 달았습니다.',
-                },
-                token : targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'precom',
+            playlist: playlistId,
+            playlistcomment: commentId,
+            playlistrecomment: newComment._id
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 댓글을 달았습니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -683,13 +621,7 @@ const deleteRecomment = async (req, res) => {
                 }]
             })
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([playlist, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -699,7 +631,6 @@ const deleteRecomment = async (req, res) => {
 // 플리 좋아요
 const likesPlaylist = async (req, res) => {
     try {
-        const time = new Date()
         const playlistId = req.params.id
         const playlist = await Playlist.findOne({
             _id: playlistId
@@ -715,7 +646,7 @@ const likesPlaylist = async (req, res) => {
             const likesPlaylist = await Playlist.findOneAndUpdate({
                 _id: playlistId
             }, {
-                $push: { likes : req.user._id }
+                $addToSet: { likes : req.user._id }
             }, {
                 new: true,
                 projection: {
@@ -726,32 +657,13 @@ const likesPlaylist = async (req, res) => {
             })
             res.status(200).send(likesPlaylist);
             const targetuser = likesPlaylist.postUserId;
-            if(targetuser._id.toString() !== req.user._id.toString()){
-                try {
-                    await new Notice({ 
-                        noticinguser: req.user._id, 
-                        noticieduser: targetuser._id, 
-                        noticetype: 'plike', 
-                        time, 
-                        playlist: likesPlaylist._id 
-                    }).save();
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
-            if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-                const message = {
-                    notification : {
-                        body: req.user.name + ' 님이 ' + likesPlaylist.title + ' 플레이리스트를 좋아합니다.',
-                    },
-                    token: targetuser.noticetoken,
-                };
-                try {
-                    await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
+            addNotice({
+                noticinguser: req.user._id,
+                noticeduser: targetuser._id,
+                noticetype: 'plike',
+                playlist: likesPlaylist._id
+            })
+            pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 플레이리스트를 좋아합니다`)
         }   
     } catch (err) {
         return res.status(422).send(err.message);
@@ -794,13 +706,12 @@ const unlikesPlaylist = async (req, res) => {
 // 댓글 좋아요
 const likescomment = async (req, res) => {
     try {
-        const time = new Date();
         const playlistId = req.params.playlistId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
         }, {
-            $push: { likes : req.user._id }
+            $addToSet: { likes : req.user._id }
         }, {
             new: true
         }).populate('postUserId', {
@@ -822,42 +733,17 @@ const likescomment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
         const targetuser = like.postUserId
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype:'pcomlike', 
-                    time, 
-                    playlist: playlistId, 
-                    playlistcomment: commentId 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification: {
-                    body: req.user.name + '님이 ' + like.text + ' 댓글을 좋아합니다.',
-                },
-                token: targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'pcomlike',
+            playlist: playlistId,
+            playlistcomment: commentId
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 댓글을 좋아합니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -900,17 +786,11 @@ const unlikescomment = async (req, res) => {
                 }, { 
                     noticetype: 'pcomlike' 
                 }, { 
-                    noticieduser: like.postUserId 
+                    noticeduser: like.postUserId 
                 }]
             }) 
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -920,13 +800,12 @@ const unlikescomment = async (req, res) => {
 // 대댓글 좋아요
 const likesrecomment = async (req, res) => {
     try{
-        const time = new Date()
         const playlistId = req.params.playlistId
         const commentId = req.params.id
         const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
-            $push: { likes: req.user._id }
+            $addToSet: { likes: req.user._id }
         }, {
             new: true
         }).populate('postUserId', {
@@ -948,42 +827,17 @@ const likesrecomment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
         const targetuser = like.postUserId
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype: 'precomlike', 
-                    time, 
-                    playlist: like.playlistId, 
-                    playlistrecomment: commentId
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification: {
-                    body: req.user.name + '님이 ' + like.text + ' 대댓글을 좋아합니다.',
-                },
-                token: targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'precomlike',
+            playlist: like.playlistId,
+            playlistrecomment: commentId
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 댓글을 좋아합니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -1026,17 +880,11 @@ const unlikesrecomment = async (req, res) => {
                 }, { 
                     noticetype: 'precomlike' 
                 }, { 
-                    noticieduser: like.postUserId 
+                    noticeduser: like.postUserId 
                 }]
             }) 
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);

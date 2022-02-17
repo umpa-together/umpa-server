@@ -5,7 +5,7 @@ const noticeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     },
-    noticieduser: {
+    noticeduser: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User',
@@ -60,6 +60,10 @@ const noticeSchema = new mongoose.Schema({
     relaysong: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'RelaySong'
+    },
+    storysong: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'StorySong'
     }
 });
 

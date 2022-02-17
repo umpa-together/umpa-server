@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const StorySong = mongoose.model('StorySong');
+const Notice = mongoose.model('Notice');
+const pushNotification = require('../middlewares/notification');
+const addNotice = require('../middlewares/notice');
 
 // 스토리 데이터 정제
 const storyData = async (req, res) => {
@@ -264,19 +267,29 @@ const likeStory = async (req, res) => {
     try {
         const storyId = req.params.id
         const story = await StorySong.findById(storyId, {
-            likes: 1
+            likes: 1, song: 1
+        }).populate('postUserId', {
+            noticetoken: 1
         })
         if (story) {
             if(!story.likes.includes(req.user._id)) {
                 await StorySong.findOneAndUpdate({
                     _id: storyId
                 }, {
-                    $push: {
+                    $addToSet: {
                         likes: req.user._id
                     }
                 })
             }
             res.status(204).send()
+            const targetuser = story.postUserId
+            addNotice({
+                noticinguser: req.user._id,
+                noticeduser: targetuser._id,
+                noticetype: 'story',
+                storysong: storyId
+            })
+            pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 스토리(오늘의 곡)를 좋아합니다`)
         } else {
             res.status(400).send()
         }
@@ -290,16 +303,29 @@ const unlikeStory = async (req, res) => {
     try {
         const storyId = req.params.id
         const story = await StorySong.findById(storyId, {
-            likes: 1
+            likes: 1, postUserId: 1
         })
         if (story) {
-            await StorySong.findOneAndUpdate({
-                _id: storyId
-            }, {
-                $pull: {
-                    likes: req.user._id
-                }
-            })
+            await Promise.all([
+                StorySong.findOneAndUpdate({
+                    _id: storyId
+                }, {
+                    $pull: {
+                        likes: req.user._id
+                    }
+                }),
+                Notice.findOneAndDelete({
+                    $and: [{
+                        storysong: storyId
+                    }, {
+                        noticinguser: req.user._id
+                    }, {
+                        noticetype: 'story'
+                    }, {
+                        noticeduser: story.postUserId
+                    }]
+                })
+            ])
             res.status(204).send()
         } else {
             res.status(400).send()

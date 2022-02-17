@@ -5,7 +5,9 @@ const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const Recomment = mongoose.model('DailyRecomment');
-const admin = require('firebase-admin');
+const commentConverter = require('../middlewares/comment');
+const pushNotification = require('../middlewares/notification');
+const addNotice = require('../middlewares/notice');
 
 // time fields string -> Date 변경
 const changeTime = async (req, res) => {
@@ -56,7 +58,7 @@ const curationToDaily = async (req, res) => {
                 Object.values(likes).forEach(async (user) => {
                     await new Notice({
                         noticinguser: user, 
-                        noticieduser: postUserId, 
+                        noticeduser: postUserId, 
                         noticetype: 'dlike', 
                         time: new Date(time), 
                         daily: daily._id 
@@ -284,13 +286,7 @@ const getSelectedDaily = async (req, res) => {
                 name: 1, profileImage: 1
             })
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([daily, comments]); 
     } catch (err) {
         return res.status(422).send(err.message);
@@ -337,43 +333,17 @@ const addComment = async (req, res) => {
                 name: 1, profileImage: 1
             })
         ]);
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(201).send([daily, comments]);
         const targetuser = daily.postUserId;
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype: 'dcom', 
-                    time, 
-                    daily: dailyId, 
-                    dailycomment: newComment._id 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification : {
-                    title: daily.textcontent,
-                    body: req.user.name + '님이 ' + text + ' 댓글을 달았습니다.',
-                },
-                token : targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'dcom',
+            daily: dailyId,
+            dailycomment: newComment._id
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 데일리에 댓글을 달았습니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -432,13 +402,7 @@ const deleteComment = async (req, res) => {
                 }]
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([daily, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -496,44 +460,18 @@ const addRecomment = async (req, res) => {
                 name: 1, profileImage: 1, noticetoken: 1
             })
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(201).send([daily, comments]);
         const targetuser = parentcomment.postUserId
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id,  
-                    noticieduser: targetuser._id, 
-                    noticetype: 'drecom', 
-                    time, 
-                    daily: dailyId, 
-                    dailycomment: commentId, 
-                    dailyrecomment: comment._id 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() != req.user._id.toString()){
-            var message = {
-                notification : {
-                    title: parentcomment.dailyId.textcontent,
-                    body: req.user.name + '님이 ' + text + ' 대댓글을 달았습니다.',
-                },
-                token: targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'drecom',
+            daily: dailyId,
+            dailycomment: commentId,
+            dailyrecomment: comment._id
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 댓글을 달았습니다`)
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -584,13 +522,7 @@ const deleteRecomment = async (req, res) => {
                 }]
             })
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send([daily, comments]);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -600,7 +532,6 @@ const deleteRecomment = async (req, res) => {
 // 데일리 좋아요
 const likeDaily = async (req, res) => {
     try{
-        const time = new Date()
         const dailyId = req.params.id
         const daily = await Daily.findOne({
             _id: dailyId
@@ -616,7 +547,7 @@ const likeDaily = async (req, res) => {
             const likesDaily = await Daily.findOneAndUpdate({
                 _id: dailyId
             }, {
-                $push: { likes: req.user._id }
+                $addToSet: { likes: req.user._id }
             }, {
                 new: true,
                 projection: {
@@ -627,32 +558,13 @@ const likeDaily = async (req, res) => {
             })
             res.status(200).send(likesDaily)
             const targetuser = likesDaily.postUserId
-            if(targetuser._id.toString() !== req.user._id.toString()){
-                try {
-                    await new Notice({ 
-                        noticinguser: req.user._id, 
-                        noticieduser: targetuser._id, 
-                        noticetype: 'dlike', 
-                        time, 
-                        daily: likesDaily._id 
-                    }).save();
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
-            if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-                const message = {
-                    notification: {
-                        body: req.user.name + ' 님이 ' + likesDaily.textcontent + ' 데일리를 좋아합니다.',
-                    },
-                    token: targetuser.noticetoken,
-                };
-                try {
-                    await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
+            addNotice({
+                noticinguser: req.user._id,
+                noticeduser: targetuser._id,
+                noticetype: 'dlike',
+                daily: likesDaily._id
+            })
+            pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 데일리를 좋아합니다`)
         }
     } catch (err) {
         return res.status(422).send(err.message);
@@ -695,13 +607,12 @@ const unLikeDaily = async (req, res) => {
 // 댓글 좋아요
 const likeComment = async (req, res) => {
     try{
-        const time = new Date();
         const dailyId = req.params.dailyId
         const commentId = req.params.id
         const like = await Comment.findOneAndUpdate({
             _id: commentId
         }, {
-            $push: { likes: req.user._id }
+            $addToSet: { likes: req.user._id }
         }, {
             new: true
         }).populate('postUserId', {
@@ -723,42 +634,17 @@ const likeComment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
         const targetuser = like.postUserId
-        if(targetuser._id.toString() !== req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype: 'dcomlike', 
-                    time, 
-                    daily: dailyId, 
-                    dailycomment: commentId 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification: {
-                    body: req.user.name + '님이 ' + like.text + ' 댓글을 좋아합니다.',
-                },
-                token: targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'dcomlike',
+            daily: dailyId,
+            dailycomment: commentId
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 댓글을 좋아합니다`)
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -801,17 +687,11 @@ const unLikeComment = async (req, res) => {
                 }, { 
                     noticetype: 'dcomlike'
                 }, { 
-                    noticieduser:like.postUserId 
+                    noticeduser:like.postUserId 
                 }]
             }) 
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
     } catch (err) {
         return res.status(422).send(err.message);
@@ -821,13 +701,12 @@ const unLikeComment = async (req, res) => {
 // 대댓글 좋아요
 const likeRecomment = async (req, res) => {
     try{
-        const time = new Date();
         const dailyId = req.params.dailyId
         const commentId = req.params.id
         const like = await Recomment.findOneAndUpdate({
             _id: commentId
         }, {
-            $push: { likes: req.user._id }
+            $addToSet: { likes: req.user._id }
         }, {
             new: true
         }).populate('postUserId', {
@@ -849,42 +728,17 @@ const likeRecomment = async (req, res) => {
                 name: 1, profileImage: 1
             }),
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
         const targetuser = like.postUserId
-        if(targetuser._id.toString() != req.user._id.toString()){
-            try {
-                await new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: targetuser._id, 
-                    noticetype: 'drecomlike', 
-                    time, 
-                    daily:like.dailyId, 
-                    dailyrecomment: commentId 
-                }).save();
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
-        if(targetuser.noticetoken !== null && targetuser._id.toString() !== req.user._id.toString()){
-            const message = {
-                notification: {
-                    body: req.user.name + '님이 ' + like.text + ' 대댓글을 좋아합니다.',
-                },
-                token: targetuser.noticetoken
-            };
-            try {
-                await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-            } catch (err) {
-                return res.status(422).send(err.message);
-            }
-        }
+        addNotice({
+            noticinguser: req.user._id,
+            noticeduser: targetuser._id,
+            noticetype: 'drecomlike',
+            daily: like.dailyId,
+            dailyrecomment: commentId
+        })
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 댓글을 좋아합니다`)
     }catch(err){
         return res.status(422).send(err.message);
     }
@@ -927,17 +781,11 @@ const unLikeRecomment = async (req, res) => {
                 }, { 
                     noticetype: 'drecomlike' 
                 }, { 
-                    noticieduser: like.postUserId 
+                    noticeduser: like.postUserId 
                 }]
             }) 
         ])
-        for(let comment of comments){
-            for(const recomment of recomments){
-                if(recomment.parentCommentId.toString() === comment._id.toString()){
-                    comment.recomment.push(recomment);
-                }
-            }
-        }
+        commentConverter(comments, recomments);
         res.status(200).send(comments);
     }catch(err){
         return res.status(422).send(err.message);

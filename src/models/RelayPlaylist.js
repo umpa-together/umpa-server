@@ -17,7 +17,15 @@ const relayPlaylistSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    opacityNumber: {
+        type: Number,
+        default: 0
+    },
     postUserId: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    evaluateUserId: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],

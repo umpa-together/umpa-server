@@ -2,12 +2,6 @@ const mongoose = require('mongoose');
 const Notice = mongoose.model('Notice');
 const User = mongoose.model('User');
 const Announcement = mongoose.model('Announcement');
-const admin = require('firebase-admin');
-const serviceAccount = require('./umpa-4bdbc-firebase-adminsdk-z9vqj-20c1660b78.json');
-
-admin.initializeApp({
-    credential : admin.credential.cert(serviceAccount)
-});
 
 // time fields string -> Date 변경 / 게시판, 큐레이션 관련된 알림 삭제
 const changeTime = async (req, res) => {
@@ -26,6 +20,13 @@ const changeTime = async (req, res) => {
                 { noticetype: 'precom'},
                 { noticetype: 'precomlike'}
             ]
+        })
+        await Notice.updateMany({
+
+        }, {
+            $rename: {
+                "noticieduser": 'noticeduser'
+            }
         })
         notice.map(async (item) => {
             const { _id: id, time } = item
@@ -47,7 +48,7 @@ const changeTime = async (req, res) => {
 const getNotice = async (req, res) => {
     try {
         const notice = await Notice.find({ 
-            noticieduser: req.user._id 
+            noticeduser: req.user._id 
         }, {
             noticetype: 1, time: 1
         }).populate('noticinguser', { 
@@ -72,6 +73,8 @@ const getNotice = async (req, res) => {
             text: 1
         }).populate('relaysong', {
             song: 1
+        }).populate('storysong', {
+            song: 1
         }).sort({ 'time': -1 }).limit(20)
         res.status(200).send(notice);
     } catch (err) {
@@ -83,7 +86,7 @@ const getNotice = async (req, res) => {
 const getNextNotice = async (req, res) => {
     try{
         const notice = await Notice.find({ 
-            noticieduser: req.user._id 
+            noticeduser: req.user._id 
         }, {
             noticetype: 1, time: 1
         }).populate('noticinguser', { 
@@ -107,6 +110,8 @@ const getNextNotice = async (req, res) => {
         }).populate('relayrecomment', {
             text: 1
         }).populate('relaysong', {
+            song: 1
+        }).populate('storysong', {
             song: 1
         }).sort({ 'time': -1 }).skip(req.params.page * 20).limit(20)
         res.status(200).send(notice);

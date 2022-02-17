@@ -6,7 +6,8 @@ const Playlist = mongoose.model('Playlist');
 const Daily = mongoose.model('Daily');
 const RelayPlaylist = mongoose.model('RelayPlaylist');
 const RelaySong = mongoose.model('RelaySong');
-const admin = require('firebase-admin');
+const pushNotification = require('../middlewares/notification');
+const addNotice = require('../middlewares/notice');
 
 const genreLists = [
     '국내 발라드',
@@ -70,6 +71,14 @@ const deleteField = async (req, res) => {
                 dailys:1,
                 relaysongs:1,
                 todaySong: 1
+            },
+            $set: {
+                guide: {
+                    swipe: false,
+                    feed: false,
+                    playlist: false,
+                    search: false
+                }
             }
         })
         res.status(200).send(users)
@@ -98,6 +107,7 @@ const getMyInformation = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
+                guide: 1
             },
         })
         let relayPlaylist = []
@@ -224,7 +234,7 @@ const editProfile = async (req, res) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {
-                $push: {
+                $addToSet: {
                     user: req.user._id
                 }
             })
@@ -251,6 +261,7 @@ const editProfile = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
+                guide: 1,
             },
         })
         res.status(200).send(user);
@@ -303,71 +314,13 @@ const getFollow =  async (req, res) => {
 // 팔로우하기
 const follow = async (req, res) => {
     try {
-        if(!JSON.stringify(req.user.following).includes(req.params.id)) {
-            const user = await User.findOneAndUpdate({
-                _id: req.params.id
-            }, {
-                $push : { follower : req.user._id }
-            }, {
-                upsert: true, 
-                projection: {
-                    name: 1, 
-                    realName: 1, 
-                    introduction: 1, 
-                    songs: 1, 
-                    profileImage: 1, 
-                    backgroundImage: 1,
-                    todaySong: 1, 
-                    noticetoken: 1,
-                    genre: 1, 
-                    follower: 1,
-                    following: 1,
-                }
-            })
-            const [me] = await Promise.all([
-                User.findOneAndUpdate({
-                    _id: req.user._id
-                }, {
-                    $push : { following : req.params.id }
-                }, {
-                    new: true,
-                    projection: {
-                        name: 1, 
-                        realName: 1, 
-                        introduction: 1, 
-                        songs: 1, 
-                        profileImage: 1,
-                        backgroundImage: 1,
-                        genre: 1, 
-                        follower: 1,
-                        following: 1,
-                    }
-                }),
-                new Notice({ 
-                    noticinguser: req.user._id, 
-                    noticieduser: user._id, 
-                    noticetype: 'follow', 
-                    time: new Date()
-                }).save()
-            ])
-            res.status(200).send([me, user]);
-            if(user.noticetoken !== null && user._id.toString() !== req.user._id.toString()){
-                let message = {
-                    notification: {
-                        body: req.user.name + '님이 당신을 팔로우 합니다.',
-                    },
-                    token: user.noticetoken
-                };
-                try {
-                    await admin.messaging().send(message).then((response)=> {}).catch((error)=>{console.log(error);});
-                } catch (err) {
-                    return res.status(422).send(err.message);
-                }
-            }
-        } else {
-            const user = await User.findOne({
-                _id : req.params.id
-            }, {
+        const user = await User.findOneAndUpdate({
+            _id: req.params.id
+        }, {
+            $addToSet : { follower : req.user._id }
+        }, {
+            new: true,
+            projection: {
                 name: 1, 
                 realName: 1, 
                 introduction: 1, 
@@ -379,10 +332,16 @@ const follow = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
-            })
-            const me = await User.findOne({
-                _id: req.user._id
-            }, {
+                guide: 1
+            }
+        })
+        const me = await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $addToSet : { following : req.params.id }
+        }, {
+            new: true,
+            projection: {
                 name: 1, 
                 realName: 1, 
                 introduction: 1, 
@@ -392,8 +351,17 @@ const follow = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
+                guide: 1
+            }
+        })
+        res.status(200).send([me, user]);
+        if(!JSON.stringify(req.user.following).includes(req.params.id)) {
+            addNotice({
+                noticinguser: req.user._id,
+                noticeduser: user._id,
+                noticetype: 'follow',
             })
-            res.status(200).send([me, user]);
+            pushNotification(user, req.user._id, `${req.user.name}님이 회원님을 팔로우하기 시작했습니다`)
         }
     } catch (err) {
         return res.status(422).send(err.message);
@@ -421,6 +389,7 @@ const unFollow = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
+                guide: 1
             }
         })
         const [me] = await Promise.all([
@@ -440,6 +409,7 @@ const unFollow = async (req, res) => {
                     genre: 1, 
                     follower: 1,
                     following: 1,
+                    guide: 1
                 }
             }), 
             Notice.findOneAndDelete({
@@ -448,7 +418,7 @@ const unFollow = async (req, res) => {
                 }, { 
                     noticinguser: req.user._id 
                 }, { 
-                    noticieduser: req.params.id 
+                    noticeduser: req.params.id 
                 }]
             }) 
         ]);
@@ -520,7 +490,7 @@ const postGenre = async (req, res) => {
             await Genre.findOneAndUpdate({
                 genre: genre
             }, {
-                $push: {
+                $addToSet: {
                     user: req.user._id
                 }
             })
@@ -549,6 +519,36 @@ const postGenre = async (req, res) => {
     }
 }
 
+const checkGuide = async (req, res) => {
+    try {
+        const updateGuide = `guide.${req.params.type}`
+        const user = await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $set: {
+                [updateGuide]: true
+            }
+        }, {
+            new: true,
+            projection: {
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1,
+                backgroundImage: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
+                guide: 1
+            },
+        })
+        res.status(200).send(user)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
 module.exports = {
     addGenreLists,
     deleteField,
@@ -563,4 +563,5 @@ module.exports = {
     postRepresentSongs,
     getGenreLists,
     postGenre,
+    checkGuide
 }

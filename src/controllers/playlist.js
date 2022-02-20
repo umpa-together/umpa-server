@@ -20,11 +20,8 @@ const changeTime = async (req, res) => {
             $unset: {
                 recomments: 1,
                 parentcommentId: 1,
-                postUseR: 1,
+                postUser: 1,
             },
-            $set: {
-                recomment: 1
-            }
         })
         await Playlist.updateMany({
         }, {
@@ -37,7 +34,6 @@ const changeTime = async (req, res) => {
                 youtubeUrl: ""
             }
         })
-        /*
         await Daily.updateMany({
 
         }, {
@@ -58,7 +54,6 @@ const changeTime = async (req, res) => {
                 introduction: ''
             }
         })
-        */
        /*
     const playlists = await Playlist.find()
     const comments = await Comment.find()

@@ -51,7 +51,23 @@ const userSchema = new mongoose.Schema({
     }],
     guide: {
         type: Object
-    }
+    },
+    myPlaylists: {},
+    playlistGuide: {},
+    curationGuide:{},
+    boardGuide:{},
+    createGuide:{},
+    chats:{},
+    boardBookmark:{},
+    scrabContent:{},
+    songsView:{},
+    playlists:{},
+    curationposts:{},
+    dailys:{},
+    relaysongs:{},
+    todaySong: {},
+    informationagree: {},
+    nominate: {},
 });
 
 userSchema.pre('save', function(next){

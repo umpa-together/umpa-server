@@ -8,6 +8,7 @@ const Recomment = mongoose.model('DailyRecomment');
 const commentConverter = require('../middlewares/comment');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
+const Curation = mongoose.model('CurationPost');
 
 // time fields string -> Date 변경
 const changeTime = async (req, res) => {
@@ -43,7 +44,6 @@ const changeTime = async (req, res) => {
 // 큐레이션 데일리로
 const curationToDaily = async (req, res) => {
     try {
-        /*
         const curation = await Curation.find();
         Object.values(curation).forEach(async (item) => {
             const { postUserId, time, textcontent, likes, object, isSong } = item
@@ -67,7 +67,6 @@ const curationToDaily = async (req, res) => {
             }
         })
         res.send(curation);
-        */
     } catch (err) {
         return res.status(422).send(err.message);
     }
@@ -147,11 +146,11 @@ const uploadImage = async (req, res) => {
 
 // 데일리 수정하기
 const editDaily = async (req, res) => {
-    const { textcontent, song, hashtag, DailyId } = req.body;
+    const { textcontent, song, hashtag, dailyId } = req.body;
     const time = new Date()
     try {
         const daily = await Daily.findOne({
-            _id: DailyId
+            _id: dailyId
         }, {
             hashtag: 1
         });
@@ -159,7 +158,7 @@ const editDaily = async (req, res) => {
             await Hashtag.findOneAndUpdate({
                 hashtag: hashtag 
             }, {
-                $pull: { dailyId: DailyId }
+                $pull: { dailyId: dailyId }
             }, {
                 new: true
             })
@@ -171,7 +170,7 @@ const editDaily = async (req, res) => {
             if(hashtagr == null){
                 await new Hashtag({
                     hashtag: newHashtag, 
-                    dailyId: DailyId, 
+                    dailyId: dailyId, 
                     time
                 }).save();
             } else {
@@ -179,12 +178,12 @@ const editDaily = async (req, res) => {
                     hashtag: newHashtag 
                 }, {
                     $set: { time }, 
-                    $push: { dailyId : DailyId }
+                    $push: { dailyId : dailyId }
                 });   
             }
         })
         const updateDaily = await Daily.findOneAndUpdate({
-            _id: DailyId
+            _id: dailyId
         }, {
             $set: { 
                 textcontent, song: song, hashtag

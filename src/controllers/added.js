@@ -10,7 +10,7 @@ const changeData = async (req, res) => {
         users.map(async (user) => {
             const { myPlaylists, _id: id } = user
             if (myPlaylists) {
-                myPlaylists.map(async (song) => {
+                for(const song of myPlaylists) {
                     const time = song.time
                     delete song.time
                     await new AddedSong({
@@ -18,7 +18,7 @@ const changeData = async (req, res) => {
                         song: song,
                         time: new Date(time)
                     }).save();
-                })
+                }
             }
         })
         res.status(204).send();

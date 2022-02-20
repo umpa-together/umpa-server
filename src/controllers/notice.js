@@ -6,6 +6,7 @@ const Announcement = mongoose.model('Announcement');
 // time fields string -> Date 변경 / 게시판, 큐레이션 관련된 알림 삭제
 const changeTime = async (req, res) => {
     try {
+        /*
         const notice = await Notice.find()
         await Notice.deleteMany({
             $or: [
@@ -21,13 +22,15 @@ const changeTime = async (req, res) => {
                 { noticetype: 'precomlike'}
             ]
         })
+        */
         await Notice.updateMany({
 
         }, {
             $rename: {
-                "noticieduser": 'noticeduser'
+                "noticieduser": "noticeduser"
             }
         })
+        /*
         notice.map(async (item) => {
             const { _id: id, time } = item
             await Notice.findOneAndUpdate({
@@ -38,6 +41,7 @@ const changeTime = async (req, res) => {
                 }
             })
         })
+        */
         res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);

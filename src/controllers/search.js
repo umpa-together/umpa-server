@@ -110,7 +110,8 @@ const getAllContents = async (req, res) => {
                 User.find({
                     $or: [{
                         name: {
-                            $regex: `${term}`
+                            $regex: `${term}`,
+                            $options: 'i'
                         }
                     }, {
                         realName: {

@@ -44,7 +44,7 @@ const getFeedWithAll = async (req, res) => {
         }).populate({ 
             path: 'playlist', 
             select: {
-                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1
+                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -55,7 +55,7 @@ const getFeedWithAll = async (req, res) => {
         }).populate({
             path:'daily', 
             select: { 
-                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1
+                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -78,7 +78,7 @@ const getNextFeedWithAll = async (req, res) => {
         }).populate({ 
             path: 'playlist', 
             select: {
-                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1
+                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -89,7 +89,7 @@ const getNextFeedWithAll = async (req, res) => {
         }).populate({
             path:'daily', 
             select: { 
-                textcontent: 1, comments: 1, likes: 1, image: 1 , song: 1
+                textcontent: 1, comments: 1, likes: 1, image: 1 , song: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -117,7 +117,7 @@ const getFeedWithFollowing = async (req, res) => {
         }).populate({ 
             path: 'playlist', 
             select: {
-                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1
+                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -128,7 +128,7 @@ const getFeedWithFollowing = async (req, res) => {
         }).populate({
             path:'daily', 
             select: { 
-                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1
+                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -156,7 +156,7 @@ const getNextFeedWithFollowing = async (req, res) => {
         }).populate({ 
             path: 'playlist', 
             select: {
-                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1
+                title: 1, songs: 1, comments: 1, likes: 1, image: 1, textcontent: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',
@@ -167,7 +167,7 @@ const getNextFeedWithFollowing = async (req, res) => {
         }).populate({
             path:'daily', 
             select: { 
-                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1
+                textcontent: 1, comments: 1, likes: 1, image: 1, song: 1, hashtag: 1
             },
             populate: {
                 path: 'postUserId',

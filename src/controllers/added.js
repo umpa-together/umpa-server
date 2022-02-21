@@ -83,7 +83,14 @@ const postAddedPlaylist = async (req, res) => {
             playlistId: playlistId,
             time: new Date()
         }).save();
-        res.status(201).send();
+        const playlists = await AddedPlaylist.find({
+            postUserId: req.user._id
+        }, {
+            _id: 1
+        }).populate('playlistId', {
+            title: 1, songs: 1, image: 1, time : 1
+        }).sort({ time: -1 })
+        res.status(201).send(playlists);
     } catch (err) {
         return res.status(422).send(err.message);   
     }

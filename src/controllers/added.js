@@ -78,12 +78,19 @@ const deleteAddedSong = async (req, res) => {
 const postAddedPlaylist = async (req, res) => {
     try {
         const playlistId = req.params.id;
-        await new AddedPlaylist({
+        const newAdded = await new AddedPlaylist({
             postUserId: req.user._id,
             playlistId: playlistId,
             time: new Date()
         }).save();
-        res.status(201).send();
+        await newAdded.populate('playlistId', {
+            title: 1, songs: 1, image: 1, time : 1
+        }).execPopulate();
+        const result = {
+            _id: newAdded._id,
+            playlistId: newAdded.playlistId
+        }
+        res.status(201).send(result);
     } catch (err) {
         return res.status(422).send(err.message);   
     }
@@ -112,14 +119,7 @@ const deleteAddedPlaylist = async (req, res) => {
         await AddedPlaylist.findOneAndDelete({
             _id: playlistId
         })
-        const playlists = await AddedPlaylist.find({
-            postUserId: req.user._id
-        }, {
-            _id: 1
-        }).populate('playlistId', {
-            title: 1, songs: 1, image: 1, time : 1
-        }).sort({ time: -1 })
-        res.status(200).send(playlists)
+        res.status(204).send()
     } catch (err) {
         return res.status(422).send(err.message);    
     }

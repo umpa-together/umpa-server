@@ -71,14 +71,6 @@ const deleteField = async (req, res) => {
                 dailys:1,
                 relaysongs:1,
                 todaySong: 1
-            },
-            $set: {
-                guide: {
-                    swipe: false,
-                    feed: false,
-                    playlist: false,
-                    search: false
-                }
             }
         })
         res.status(200).send(users)
@@ -519,36 +511,6 @@ const postGenre = async (req, res) => {
     }
 }
 
-const checkGuide = async (req, res) => {
-    try {
-        const updateGuide = `guide.${req.params.type}`
-        const user = await User.findOneAndUpdate({
-            _id: req.user._id
-        }, {
-            $set: {
-                [updateGuide]: true
-            }
-        }, {
-            new: true,
-            projection: {
-                name: 1, 
-                realName: 1, 
-                introduction: 1, 
-                songs: 1, 
-                profileImage: 1,
-                backgroundImage: 1,
-                genre: 1, 
-                follower: 1,
-                following: 1,
-                guide: 1
-            },
-        })
-        res.status(200).send(user)
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
 module.exports = {
     addGenreLists,
     deleteField,
@@ -563,5 +525,4 @@ module.exports = {
     postRepresentSongs,
     getGenreLists,
     postGenre,
-    checkGuide
 }

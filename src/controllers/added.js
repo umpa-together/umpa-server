@@ -2,8 +2,6 @@ const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const AddedSong = mongoose.model('AddedSong');
 const AddedPlaylist = mongoose.model('AddedPlaylist');
-const pushNotification = require('../middlewares/notification');
-const Playlist = mongoose.model('Playlist');
 
 // user.myPlaylists에 있는 데이터 addedSong으로 바꾸기
 const changeData = async (req, res) => {
@@ -80,18 +78,11 @@ const deleteAddedSong = async (req, res) => {
 const postAddedPlaylist = async (req, res) => {
     try {
         const playlistId = req.params.id;
-        const [newAdded, playlist] = await Promise.all([
-            new AddedPlaylist({
-                postUserId: req.user._id,
-                playlistId: playlistId,
-                time: new Date()
-            }).save(),
-            Playlist.findById(playlistId, {
-                _id: 1,
-            }).populate('postUserId', {
-                noticetoken: 1, _id: 1
-            })
-        ])
+        const newAdded = await new AddedPlaylist({
+            postUserId: req.user._id,
+            playlistId: playlistId,
+            time: new Date()
+        }).save()
         await newAdded.populate('playlistId', {
             title: 1, songs: 1, image: 1, time : 1
         }).execPopulate();
@@ -99,7 +90,6 @@ const postAddedPlaylist = async (req, res) => {
             _id: newAdded._id,
             playlistId: newAdded.playlistId
         }
-        pushNotification(playlist.postUserId, req.user._id, `${req.user.name}님이 회원님의 플레이리스트를 저장했습니다`)
         res.status(201).send(result);
     } catch (err) {
         return res.status(422).send(err.message);   

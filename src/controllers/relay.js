@@ -121,7 +121,7 @@ const updateApprovedSong = async (req, res) => {
                             relaysong: id
                         }).save()
                     ])
-                    pushNotification(postUserId[0], req.user._id, '회원님의 추천곡이 릴레이플리에 선정되었습니다!')
+                    pushNotification(postUserId[0], '', '회원님의 추천곡이 릴레이플리에 선정되었습니다!')
                 }
             }
         }

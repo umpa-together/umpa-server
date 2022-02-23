@@ -123,14 +123,14 @@ const getMyInformation = async (req, res) => {
                 }]
             }, {
                 playlistId: 1, song: 1
-            })
+            }).sort({ time: -1 })
         ])
         for (const item of relaySong) {
             const { song, playlistId } = item
             const playlist = await RelayPlaylist.findOne({
                 _id: playlistId
             }, {
-                title: 1, createdTime: 1, image: 1,
+                title: 1, createdTime: 1, image: 1, likes: 1
             })
             relayPlaylist.push({
                 playlist,
@@ -185,14 +185,14 @@ const getOtherInformation = async (req, res) => {
                 }]
             }, {
                 playlistId: 1, song: 1
-            })
+            }).sort({ time: -1 })
         ])
         for (const item of relaySong) {
             const { song, playlistId } = item
             const playlist = await RelayPlaylist.findOne({
                 _id: playlistId
             }, {
-                title: 1, createdTime: 1, image: 1,
+                title: 1, createdTime: 1, image: 1, likes: 1
             })
             relayPlaylist.push({
                 playlist,

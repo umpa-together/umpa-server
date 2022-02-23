@@ -6,6 +6,7 @@ const Playlist = mongoose.model('Playlist');
 const Daily = mongoose.model('Daily');
 const RelayPlaylist = mongoose.model('RelayPlaylist');
 const RelaySong = mongoose.model('RelaySong');
+const Guide = mongoose.model('Guide');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
 
@@ -511,6 +512,20 @@ const postGenre = async (req, res) => {
     }
 }
 
+const getGuide = async (req, res) => {
+    try {
+        const type = req.params.type
+        const guide = await Guide.find({
+            type
+        }, {
+            image: 1
+        })
+        res.status(200).send(guide)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
 module.exports = {
     addGenreLists,
     deleteField,
@@ -525,4 +540,5 @@ module.exports = {
     postRepresentSongs,
     getGenreLists,
     postGenre,
+    getGuide
 }

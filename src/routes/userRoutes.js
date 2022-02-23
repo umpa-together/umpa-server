@@ -15,6 +15,7 @@ const {
   postRepresentSongs,
   getGenreLists,
   postGenre,
+  getGuide
 } = require('../controllers/user')
 
 router.delete('/field', deleteField);
@@ -28,6 +29,7 @@ router.post('/follow/:id', follow)
 router.delete('/follow/:id', unFollow)
 router.get('/songs/:userId', getRepresentSongs)
 router.post('/songs', postRepresentSongs)
+router.get('/guide/:type', getGuide)
 router.get('/genre', getGenreLists)
 router.post('/genre', postGenre)
 

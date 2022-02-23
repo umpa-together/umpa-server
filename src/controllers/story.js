@@ -196,7 +196,7 @@ const getOtherStoryWithFollowing = async (req, res) => {
             ]
             
         }, {
-            view: 1, song: 1
+            view: 1, song: 1, likes: 1
         }).populate('postUserId', {
             name: 1,
             profileImage: 1

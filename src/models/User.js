@@ -49,9 +49,6 @@ const userSchema = new mongoose.Schema({
     genre: [{
         type: String
     }],
-    guide: {
-        type: Object
-    },
     myPlaylists: {},
     playlistGuide: {},
     curationGuide:{},

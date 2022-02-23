@@ -28,12 +28,6 @@ const signUp = async (req, res) => {
         const user = await new User({ 
             email, 
             password,
-            guide: {
-                swipe: false,
-                feed: false,
-                playlist: false,
-                search: false
-            }
         }).save();
         const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
         res.status(201).send({ token });
@@ -374,14 +368,15 @@ const withdrawal = async (req, res) => {
 } 
 
 const googleSignIn = async (req, res) => {
-    const user = await User.findOne({ email: req.params.email });
+    const { email, id } = req.body
+    const user = await User.findOne({ email });
     if(user == null){
-        res.status(200).send([false, req.params.email, req.params.id]);
+        res.status(200).send([false, email, id]);
     }else{
         try{
-            await user.comparePassword(req.params.id);
+            await user.comparePassword(id);
             const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-            res.status(200).send([token, req.params.email, req.params.id]);
+            res.status(200).send([token, email, id]);
         } catch (err) {
             return res.status(422).send(err.message);
         }
@@ -389,14 +384,15 @@ const googleSignIn = async (req, res) => {
 }
 
 const appleSignIn = async (req, res) => {
-    const user = await User.findOne({ email: req.params.email });
+    const { email, id } = req.body
+    const user = await User.findOne({ email });
     if(user == null){
-        res.status(200).send([false, req.params.email, req.params.id]);
+        res.status(200).send([false, email, id]);
     }else{
         try{
-            await user.comparePassword(req.params.id.toString());
+            await user.comparePassword(id.toString());
             const token = jwt.sign({ userId: user._id }, process.env.TOKEN_SECRET);
-            res.status(200).send([token, req.params.email, req.params.id]);
+            res.status(200).send([token, email, id]);
         } catch (err) {
             return res.status(422).send(err.message);
         }
@@ -404,11 +400,12 @@ const appleSignIn = async (req, res) => {
 }
 
 const kakaoSignIn = async (req, res) => {
+    const { token } = req.body
     let kakaoOption = {
         url: "https://kapi.kakao.com/v2/user/me",
         method: 'GET',
         headers: {
-            'Authorization' : 'Bearer ' + req.params.token
+            'Authorization' : 'Bearer ' + token
         },
     }
     try{
@@ -441,11 +438,12 @@ const kakaoSignIn = async (req, res) => {
 }
 
 const naverSignIn = async (req, res) => {
+    const { token } = req.body
     let naverOption = {
         url: "https://openapi.naver.com/v1/nid/me",
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + req.params.token
+            'Authorization': 'Bearer ' + token
         },
     }
     try {

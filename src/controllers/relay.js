@@ -61,7 +61,7 @@ const updateApprovedSong = async (req, res) => {
             const { createdTime, _id: relayId } = item
             const postTime = new Date(createdTime);
             const betweenTime = Math.floor((nowTime.getTime() - postTime.getTime()) / 1000 / 60 / 60 / 24);
-            if (betweenTime > 4) {
+            if (betweenTime >= 4) {
                 const [songs] = await Promise.all([
                     RelaySong.aggregate([
                         {
@@ -302,7 +302,7 @@ const getSelectedRelay = async (req, res) => {
         commentConverter(comments, recomments);
 
         songs.forEach((song) => {
-            const { likeCount, unlikeCount, like, unlike } = song
+            const { likeCount, unlikeCount } = song
             song.score = likeCount / (likeCount + unlikeCount)
             song.postUser = song.postUserId[0]
         })
@@ -313,7 +313,7 @@ const getSelectedRelay = async (req, res) => {
             return 0;
         });
 
-        const resultSongs = songs.slice(0, 6).map((song) => {
+        const resultSongs = songs.slice(0, 8).map((song) => {
             delete song.likeCount
             delete song.unlikeCount
             delete song.score

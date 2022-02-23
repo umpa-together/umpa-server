@@ -82,7 +82,7 @@ const postAddedPlaylist = async (req, res) => {
             postUserId: req.user._id,
             playlistId: playlistId,
             time: new Date()
-        }).save();
+        }).save()
         await newAdded.populate('playlistId', {
             title: 1, songs: 1, image: 1, time : 1
         }).execPopulate();
@@ -104,7 +104,7 @@ const getAddedPlaylist = async (req, res) => {
         }, {
             _id: 1
         }).populate('playlistId', {
-            title: 1, songs: 1, image: 1, time : 1
+            title: 1, songs: 1, image: 1, time : 1, postUserId: 1
         }).sort({ time: -1 })
         res.status(200).send(playlists)
     } catch (err) {

@@ -526,6 +526,22 @@ const getGuide = async (req, res) => {
     }
 }
 
+const blockUser = async (req, res) => {
+    const { subjectId } = req.body;
+    try {
+        await User.findOneAndUpdate({
+            _id: req.user._id
+            
+        },{
+            $addToSet: { block : subjectId }
+        });
+        res.status(204).send()
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }   
+
+}
+
 module.exports = {
     addGenreLists,
     deleteField,
@@ -540,5 +556,6 @@ module.exports = {
     postRepresentSongs,
     getGenreLists,
     postGenre,
-    getGuide
+    getGuide,
+    blockUser,
 }

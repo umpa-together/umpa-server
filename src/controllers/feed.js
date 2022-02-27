@@ -39,7 +39,9 @@ const AddFeeds = async (req, res) => {
 // 피드 데이터(플리, 데일리) 가져오기(모든 사람들)
 const getFeedWithAll = async (req, res) => {
     try {
-        const feeds = await Feed.find({}, {
+        const feeds = await Feed.find({ 
+            postUserId: { $nin: req.user.block }
+        }, {
             playlist: 1, daily: 1, type: 1
         }).populate({ 
             path: 'playlist', 
@@ -73,7 +75,9 @@ const getFeedWithAll = async (req, res) => {
 // 다음 피드 데이터(플리, 데일리) 가져오기(모든 사람들)
 const getNextFeedWithAll = async (req, res) => {
     try {
-        const feeds = await Feed.find({}, {
+        const feeds = await Feed.find({ 
+            postUserId: { $nin: req.user.block }
+        }, {
             playlist: 1, daily: 1, type: 1
         }).populate({ 
             path: 'playlist', 
@@ -108,10 +112,16 @@ const getNextFeedWithAll = async (req, res) => {
 const getFeedWithFollowing = async (req, res) => {
     try {
         const feeds = await Feed.find({ 
-            $or: [
-                { postUserId: { $in: req.user.following } }, 
-                { postUserId: req.user._id } 
+            $and: [
+                { 
+                  $or: [
+                    { postUserId: { $in: req.user.following } }, 
+                    { postUserId: req.user._id } 
+                  ]
+                },
+                { postUserId: { $nin: req.user.block }}
             ]
+ 
         }, {
             playlist: 1, daily: 1, type: 1
         }).populate({ 
@@ -147,9 +157,14 @@ const getFeedWithFollowing = async (req, res) => {
 const getNextFeedWithFollowing = async (req, res) => { 
     try {
         const feeds = await Feed.find({ 
-            $or: [
-                { postUserId: { $in: req.user.following } }, 
-                { postUserId: req.user._id } 
+            $and: [
+                { 
+                  $or: [
+                    { postUserId: { $in: req.user.following } }, 
+                    { postUserId: req.user._id } 
+                  ]
+                },
+                { postUserId: { $nin: req.user.block }}
             ]
         }, {
             playlist: 1, daily: 1, type: 1

@@ -72,6 +72,9 @@ const deleteField = async (req, res) => {
                 dailys:1,
                 relaysongs:1,
                 todaySong: 1
+            },
+            $set: {
+                block: []
             }
         })
         res.status(200).send(users)
@@ -100,7 +103,8 @@ const getMyInformation = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
-                guide: 1
+                guide: 1,
+                block: 1
             },
         })
         let relayPlaylist = []
@@ -255,6 +259,7 @@ const editProfile = async (req, res) => {
                 follower: 1,
                 following: 1,
                 guide: 1,
+                block: 1
             },
         })
         res.status(200).send(user);
@@ -344,7 +349,8 @@ const follow = async (req, res) => {
                 genre: 1, 
                 follower: 1,
                 following: 1,
-                guide: 1
+                guide: 1,
+                block: 1
             }
         })
         res.status(200).send([me, user]);
@@ -402,7 +408,8 @@ const unFollow = async (req, res) => {
                     genre: 1, 
                     follower: 1,
                     following: 1,
-                    guide: 1
+                    guide: 1,
+                    block: 1
                 }
             }), 
             Notice.findOneAndDelete({
@@ -527,19 +534,61 @@ const getGuide = async (req, res) => {
 }
 
 const blockUser = async (req, res) => {
-    const { subjectId } = req.body;
+    const id = req.params.id
     try {
-        await User.findOneAndUpdate({
+        const user = await User.findOneAndUpdate({
             _id: req.user._id
-            
-        },{
-            $addToSet: { block : subjectId }
+        }, {
+            $addToSet: { block: id }
+        }, {
+            new: true,
+            projection: {
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1,
+                backgroundImage: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
+                guide: 1,
+                block: 1
+            },
         });
-        res.status(204).send()
+        res.status(200).send(user)
     } catch (err) {
         return res.status(422).send(err.message);
     }   
+}
 
+const unblockUser = async (req, res) => {
+    const id = req.params.id
+    try {
+        const user = await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $pull: { block: id }
+        }, {
+            new: true,
+            projection: {
+                name: 1, 
+                realName: 1, 
+                introduction: 1, 
+                songs: 1, 
+                profileImage: 1,
+                backgroundImage: 1,
+                genre: 1, 
+                follower: 1,
+                following: 1,
+                guide: 1,
+                block: 1
+            },
+        });
+        res.status(200).send(user)
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }   
 }
 
 module.exports = {
@@ -558,4 +607,5 @@ module.exports = {
     postGenre,
     getGuide,
     blockUser,
+    unblockUser
 }

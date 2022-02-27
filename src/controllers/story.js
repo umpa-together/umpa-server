@@ -139,13 +139,17 @@ const getOtherStoryWithAll = async (req, res) => {
                     }
                 },
                 {
-                    postUserId: {
-                        $ne: req.user._id
-                    }
+                    $and: [{
+                        postUserId: {
+                            $ne: req.user._id
+                        }
+                    }, {
+                        postUserId: { 
+                            $nin: req.user.block 
+                        }
+                    }]
                 }
-
             ]
-            
         }, {
             view: 1, song: 1, likes: 1
         }).populate('postUserId', {
@@ -189,9 +193,15 @@ const getOtherStoryWithFollowing = async (req, res) => {
                     }
                 }, 
                 {
-                    postUserId: { 
-                        $in: req.user.following
-                    }
+                    $and: [{
+                        postUserId: { 
+                            $in: req.user.following
+                        }
+                    }, {
+                        postUserId: { 
+                            $nin: req.user.block 
+                        }
+                    }]
                 }
             ]
             

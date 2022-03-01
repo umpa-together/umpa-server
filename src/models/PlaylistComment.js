@@ -6,14 +6,6 @@ const commentSchema = new mongoose.Schema({
         required: true,
         ref: 'Playlist'
     },
-    parentcommentId : {
-        type: String,
-        default: '',
-    },
-    postUser : {
-       type: String,
-       required: true
-    },
     postUserId : {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -24,14 +16,16 @@ const commentSchema = new mongoose.Schema({
         required: true
     },
     time: {
-        type: String
+        type: Date
     },
-    likes: [String],
-    recomments: [{
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    recomment: [{
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'PlaylistComment',
-
+        ref: 'PlaylistRecomment',
     }],
 });
 

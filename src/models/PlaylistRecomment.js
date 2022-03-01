@@ -1,12 +1,17 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema({
-    dailyId : {
+const recommentSchema = new mongoose.Schema({
+    playlistId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Daily'
+        ref: 'Playlist'
     },
-    postUserId : {
+    parentCommentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'PlaylistComment'
+    },
+    postUserId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'User'
@@ -22,11 +27,6 @@ const commentSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    recomment: [{
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'DailyRecomment',
-    }],
 });
 
-mongoose.model('DailyComment', commentSchema);
+mongoose.model('PlaylistRecomment', recommentSchema);

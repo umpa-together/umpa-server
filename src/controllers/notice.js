@@ -1,137 +1,163 @@
 const mongoose = require('mongoose');
 const Notice = mongoose.model('Notice');
 const User = mongoose.model('User');
-const admin = require('firebase-admin');
-const serviceAccount = require('./umpa-4bdbc-firebase-adminsdk-z9vqj-20c1660b78.json');
-require('date-utils');
+const Announcement = mongoose.model('Announcement');
 
-admin.initializeApp({
-    credential : admin.credential.cert(serviceAccount)
-});
-
+// 알림 데이터 받아오기
 const getNotice = async (req, res) => {
-    const nowTime = new Date();
     try {
-        const notice = await Notice.find({ noticieduser: req.user._id })
-        .sort({'time': -1}).limit(20)
-        .populate('noticinguser', { profileImage: 1, name: 1 })
-        .populate('playlist', { title: 1, image: 1, postUserId: 1 })
-        .populate('playlistcomment', { text: 1 })
-        .populate('playlistrecomment', { text: 1 })
-        .populate('daily', { textcontent: 1, image: 1, postUserId: 1 })
-        .populate('dailycomment', { text: 1 })
-        .populate('dailyrecomment', { text: 1 })
-        .populate('board', { name: 1,  })
-        .populate('boardcontent', { content: 1 })
-        .populate('boardcomment', { comment: 1 })
-        .populate('boardrecomment', { comment: 1 })
-        .populate('boardsong', { song: 1 });
-
-        for(let key in notice){
-            const noticeTime = new Date(notice[key].time);
-            const betweenTime = Math.floor((nowTime.getTime() - noticeTime.getTime()) / 1000 / 60);
-            if (betweenTime < 1){
-                notice[key]['time'] = '방금전';
-            }else if (betweenTime < 60) {
-                notice[key]['time'] = `${betweenTime}분전`;
-            }else{
-                const betweenTimeHour = Math.floor(betweenTime / 60);
-                if (betweenTimeHour < 24) {
-                    notice[key]['time'] = `${betweenTimeHour}시간전`;
-                }else{
-                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
-                    if (betweenTimeDay < 30) {
-                        notice[key]['time'] =  `${betweenTimeDay}일전`;
-                    } else {
-                        const betweenMonthDay = Math.floor(betweenTime / 60 / 24 / 24);
-                        notice[key]['time'] = `${betweenMonthDay}달전`;
-                    }
-                }
-            }
-        }
-        res.send(notice);
+        const notice = await Notice.find({ 
+            noticeduser: req.user._id 
+        }, {
+            noticetype: 1, time: 1
+        }).populate('noticinguser', { 
+            profileImage: 1, name: 1 
+        }).populate('playlist', { 
+            title: 1, image: 1, postUserId: 1, songs:1
+        }).populate('playlistcomment', { 
+            text: 1 
+        }).populate('playlistrecomment', { 
+            text: 1 
+        }).populate('daily', { 
+            textcontent: 1, image: 1, postUserId: 1 
+        }).populate('dailycomment', { 
+            text: 1 
+        }).populate('dailyrecomment', { 
+            text: 1 
+        }).populate('relay', {
+            title: 1, image: 1
+        }).populate('relaycomment', {
+            text: 1
+        }).populate('relayrecomment', {
+            text: 1
+        }).populate('relaysong', {
+            song: 1
+        }).populate('storysong', {
+            song: 1
+        }).sort({ 'time': -1 }).limit(20)
+        res.status(200).send(notice);
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
+// 알림 데이터 페이징 받아오기
 const getNextNotice = async (req, res) => {
-    const nowTime = new Date();
     try{
-        const notice = await Notice.find({ noticieduser: req.user._id })
-        .sort({'time': -1}).skip(req.params.page * 20).limit(20)
-        .populate('noticinguser', { profileImage: 1, name: 1 })
-        .populate('playlist', { title: 1, image: 1, postUserId: 1 })
-        .populate('playlistcomment', { text: 1 })
-        .populate('playlistrecomment', { text: 1 })
-        .populate('daily', { textcontent: 1, image: 1, postUserId: 1 })
-        .populate('dailycomment', { text: 1 })
-        .populate('dailyrecomment', { text: 1 })
-        .populate('board', { name: 1,  })
-        .populate('boardcontent', { content: 1 })
-        .populate('boardcomment', { comment: 1 })
-        .populate('boardrecomment', { comment: 1 })
-        .populate('boardsong', { song: 1 });
-
-        for(let key in notice){
-            const noticeTime = new Date(notice[key].time);
-            const betweenTime = Math.floor((nowTime.getTime() - noticeTime.getTime()) / 1000 / 60);
-            if (betweenTime < 1){
-                notice[key]['time'] = '방금전';
-            }else if (betweenTime < 60) {
-                notice[key]['time'] = `${betweenTime}분전`;
-            }else{
-                const betweenTimeHour = Math.floor(betweenTime / 60);
-                if (betweenTimeHour < 24) {
-                    notice[key]['time'] = `${betweenTimeHour}시간전`;
-                }else{
-                    const betweenTimeDay = Math.floor(betweenTime / 60 / 24);
-                    if (betweenTimeDay < 30) {
-                        notice[key]['time'] =  `${betweenTimeDay}일전`;
-                    } else {
-                        const betweenMonthDay = Math.floor(betweenTime / 60 / 24 / 24);
-                        notice[key]['time'] = `${betweenMonthDay}달전`;
-                    }
-                }
-            }
-        }
-        res.send(notice);
+        const notice = await Notice.find({ 
+            noticeduser: req.user._id 
+        }, {
+            noticetype: 1, time: 1
+        }).populate('noticinguser', { 
+            profileImage: 1, name: 1 
+        }).populate('playlist', { 
+            title: 1, image: 1, postUserId: 1, songs:1
+        }).populate('playlistcomment', { 
+            text: 1 
+        }).populate('playlistrecomment', { 
+            text: 1 
+        }).populate('daily', { 
+            textcontent: 1, image: 1, postUserId: 1 
+        }).populate('dailycomment', { 
+            text: 1 
+        }).populate('dailyrecomment', { 
+            text: 1 
+        }).populate('relay', {
+            title: 1
+        }).populate('relaycomment', {
+            text: 1
+        }).populate('relayrecomment', {
+            text: 1
+        }).populate('relaysong', {
+            song: 1
+        }).populate('storysong', {
+            song: 1
+        }).sort({ 'time': -1 }).skip(req.params.page * 20).limit(20)
+        res.status(200).send(notice);
     } catch (err) {
         return res.status(422).send(err.message);
     }   
 }
 
+// 알림 읽기
 const readNotice = async (req, res) => {
     try{
-        const notice = await Notice.findOneAndUpdate({ _id: req.params.id }, { isRead: true })
-        res.send(notice)
+        await Notice.findOneAndUpdate({ 
+            _id: req.params.id 
+        }, { 
+            isRead: true 
+        })
+        res.status(204).send();
     }catch(err){
         return res.status(422).send(err.message);
     }
 }
 
+// 알림 토큰 설정
 const setNotice = async (req, res) => {
     try {
-        const response = await User.findOneAndUpdate({_id:req.user._id}, {$set: {noticetoken: req.params.noticetoken}}, {new: true});
-        res.send(response);
+        await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $set: { noticetoken: req.params.noticetoken }
+        }, {
+            new: true
+        });
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
 
+// 알림 토큰 해제
 const deleteNotice = async (req, res) => {
     try {
-        const response = await User.findOneAndUpdate({_id:req.user._id}, {$set: {noticetoken: null}}, {new: true});
-        res.send(response);
+        await User.findOneAndUpdate({
+            _id: req.user._id
+        }, {
+            $set: { noticetoken: null }
+        }, {
+            new: true
+        });
+        res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message);
     }
 }
+
+// 공지사항 가져오기
+const getAnnouncement = async (req, res) => {
+    try {
+        const announcements = await Announcement.find({
+        }).sort({ 'time': -1 })
+        res.status(200).send(announcements)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
+// 공지사항 작성 
+const postAnnouncement = async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const announcement = await Announcement({
+            title,
+            content,
+            time: new Date()
+        }).save()
+        res.status(201).send(announcement)
+    } catch (err) {
+        return res.status(422).send(err.message); 
+    }
+}
+
 
 module.exports = {
     getNotice,
     getNextNotice,
     readNotice,
     setNotice,
-    deleteNotice   
+    deleteNotice,
+    getAnnouncement,
+    postAnnouncement
 }

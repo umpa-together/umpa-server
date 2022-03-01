@@ -17,7 +17,7 @@ const hashtagSchema = new mongoose.Schema({
         ref: 'Daily',
     }],
     time: {
-        type: String,
+        type: Date,
     },
 });
 

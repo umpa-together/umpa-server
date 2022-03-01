@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const {
-    AddFeeds,
-    getFeed,
-    getNextFeed
+    getFeedWithAll,
+    getNextFeedWithAll,
+    getFeedWithFollowing,
+    getNextFeedWithFollowing
 } = require('../controllers/feed')
 
-router.get('/addFeeds', AddFeeds)
-router.get('/feeds', getFeed)
-router.get('/feeds/:page', getNextFeed)
+router.get('/following', getFeedWithFollowing)
+router.get('/following/:page', getNextFeedWithFollowing)
+router.get('/', getFeedWithAll)
+router.get('/:page', getNextFeedWithAll)
 
 module.exports = router;

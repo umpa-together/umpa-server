@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const {
-    getHashtag,
     getAllContents,
+    getNextSongResult,
+    getSelectedContents,
     getAllContentsWithHashatg,
-    getHashtagHint,
-    getDJHint,
-    getCurrentHashtag
+    getRecentKeywords
 } = require('../controllers/search')
 
-router.get('/hashtag/:object', getHashtag)
-router.get('/all/:id', getAllContents)
-router.get('/hashtagAll/:term', getAllContentsWithHashatg)
-router.get('/hashtagHint/:term', getHashtagHint)
-router.get('/djHint/:term', getDJHint)
-router.get('/currentHashtag', getCurrentHashtag)
+router.get('/keyword', getRecentKeywords);
+router.get('/next/:next', getNextSongResult);
+router.get('/:term', getAllContents);
+router.get('/song/:id', getSelectedContents);
+router.get('/hashtag/:id', getAllContentsWithHashatg);
 
 module.exports = router;

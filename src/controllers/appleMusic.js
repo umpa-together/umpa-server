@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const RecentKeyword = mongoose.model('RecentKeyword');
 const request = require('request');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
@@ -6,10 +8,10 @@ const privateKey = fs.readFileSync("./AuthKey_Z5A9D27GU8.p8");
 const token = jwt.sign({}, privateKey, {
     algorithm: "ES256",
     expiresIn: "180d",
-    issuer: process.env.issuerId, //your 10-character Team ID, obtained from your developer account
+    issuer: process.env.APPLEMUSIC_ISSUER_ID, //your 10-character Team ID, obtained from your developer account
     header: {
       alg: "ES256",
-      kid: process.env.apiKeyId //your MusicKit Key ID
+      kid: process.env.APPLEMUSIC_API_KEY_ID //your MusicKit Key ID
     }
 });
 
@@ -27,9 +29,40 @@ const searchSong = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.songs.next;
-            const result = await JSON.parse(body).results.songs.data;
-            res.send([result, next]);
+            const song = await JSON.parse(body).results.songs;
+            const keyword = await RecentKeyword.findOne({
+                $and: [{
+                    keyword: req.params.songname,
+                }, {
+                    postUserId: req.user._id
+                }]
+            })
+            if(keyword) {
+                await RecentKeyword.findOneAndUpdate({
+                    keyword: req.params.songname
+                }, {
+                    $set: {
+                        time: new Date()
+                    }
+                }, {
+                    new: true
+                })
+            } else {
+                await new RecentKeyword({
+                    keyword: req.params.songname,
+                    postUserId: req.user._id,
+                    time: new Date()
+                }).save()
+            }
+            if (song !== undefined) {
+                const [next, result] = await Promise.all([
+                    JSON.parse(body).results.songs.next,
+                    JSON.parse(body).results.songs.data
+                ])
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.status(200).send([[], null]);
+            }
         });
     } catch (err) {
         return res.status(422).send(err.message);
@@ -50,9 +83,16 @@ const searchArtist = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.artists;
-            const result = await JSON.parse(body).results.artists.data;
-            res.send([result,next]);
+            const artist = await JSON.parse(body).results.artists;
+            if (artist !== undefined) {
+                const [next,result] = await Promise.all([
+                    JSON.parse(body).results.artists.next,
+                    JSON.parse(body).results.artists.data
+                ])
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.status(200).send([[], null]);
+            }
         });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -73,9 +113,16 @@ const searchAlbum = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            const next = await JSON.parse(body).results.albums;
-            const result = await JSON.parse(body).results.albums.data
-            res.send([result,next]);
+            const albums = await JSON.parse(body).results.albums;
+            if (albums !== undefined) {
+                const [next, result] = await Promise.all([
+                    JSON.parse(body).results.albums.next,
+                    JSON.parse(body).results.albums.data
+                ])
+                res.status(200).send([result, next !== undefined ? next.substr(22) : null]);
+            } else {
+                res.status(200).send([[], null]);
+            }
         });
     }catch (err) {
         return res.status(422).send(err.message);
@@ -83,10 +130,11 @@ const searchAlbum = async (req, res) => {
 }
 
 const searchNext = async (req, res) => {
-    const tmp = req.params.next;
+    const kind = req.params.next;
+    let next = '';
     try { 
         let appleOption = {
-            url: 'https://api.music.apple.com/v1/catalog/kr/search?' + tmp,
+            url: 'https://api.music.apple.com/v1/catalog/kr/search?' + kind,
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -96,15 +144,23 @@ const searchNext = async (req, res) => {
             }
         }
         request(appleOption, async (err, response, body) => {
-            if(tmp[tmp.length-2] == 'g'){
-                const next = await JSON.parse(body).results.songs.next;
-                body = await JSON.parse(body).results.songs.data;
-                res.send([body, next]);
-            }else{
-                const next = await JSON.parse(body).results.artists.next;
-                body = await JSON.parse(body).results.artists.data;
-                res.send([body, next]);
+            if (kind[kind.length-2] == 'g'){
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.songs.next,
+                    JSON.parse(body).results.songs.data
+                ])
+            } else if (kind[kind.length-2] == 't') {
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.artists.next,
+                    JSON.parse(body).results.artists.data
+                ])
+            } else {
+                [next, body] = await Promise.all([
+                    JSON.parse(body).results.albums.next,
+                    JSON.parse(body).results.albums.data
+                ])
             }
+            res.status(200).send([body, next !== undefined ? next.substr(22) : null]);
         });
     } catch (err) {
         return res.status(422).send(err.message);
@@ -126,7 +182,7 @@ const searchHint = async (req, res) => {
         }
         request(appleOption, async (err, response, body) => {
             body = await JSON.parse(body).results.terms;
-            res.send(body);
+            res.status(200).send(body);
         })
     } catch (err) {
         return res.status(422).send(err.message);

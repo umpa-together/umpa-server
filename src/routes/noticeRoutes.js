@@ -5,13 +5,17 @@ const {
     getNextNotice,
     readNotice,
     setNotice,
-    deleteNotice   
+    deleteNotice,
+    getAnnouncement,
+    postAnnouncement
 } = require('../controllers/notice')
 
+router.post('/announcements', postAnnouncement)
+router.get('/announcements', getAnnouncement)
 router.get('/', getNotice)
 router.get('/:page', getNextNotice)
 router.put('/:id', readNotice)
-router.put('/setnotice/:noticetoken', setNotice)
+router.put('/token/:noticetoken', setNotice)
 router.delete('/', deleteNotice)
 
 module.exports = router;

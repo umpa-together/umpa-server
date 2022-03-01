@@ -13,12 +13,11 @@ const userSchema = new mongoose.Schema({
     },
     name: {
         type: String,
-        required:true,
         unique: true,
     },
     realName: {
         type: String,
-        unique: true,
+        default: '',
     },
     introduction: {
         type: String,
@@ -32,39 +31,28 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    boardBookmark: [],
-    scrabContent: [],
-    songs: [],
+    block : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    songs: [{
+        type: Object
+    }],
     profileImage: {
+        type: String,
+    },
+    backgroundImage: {
         type: String,
     },
     noticetoken:{
         type: String,
     },
-    todaySong: {
-        type: Object
-    },
-    playlists:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Playlist'
-    }],
-    dailys: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Daily'
-    }],
-    nominate: {
-        type: Number,
-        default: 0
-    },
-    informationagree:{
-        type: Boolean,
-    },
-    myPlaylists: [{
-        type: Object
-    }],
     accessedTime: {
         type: Date,
-    }
+    },
+    genre: [{
+        type: String
+    }]
 });
 
 userSchema.pre('save', function(next){

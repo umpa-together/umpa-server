@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const commentSchema = new mongoose.Schema({
-    dailyId : {
+    relayId : {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Daily'
+        ref: 'RelayPlaylist'
     },
     postUserId : {
         type: mongoose.Schema.Types.ObjectId,
@@ -25,8 +25,8 @@ const commentSchema = new mongoose.Schema({
     recomment: [{
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'DailyRecomment',
+        ref: 'RelayRecomment',
     }],
 });
 
-mongoose.model('DailyComment', commentSchema);
+mongoose.model('RelayComment', commentSchema);

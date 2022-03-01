@@ -11,16 +11,21 @@ const dailySchema = new mongoose.Schema({
         required: true
     },
     time: {
-        type: String,
+        type: Date,
     },
-    song : {},
+    song : {
+        type: Object
+    },
     comments: [{
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'DailyComment',
     }],
     hashtag : [String],
-    likes : [String],
+    likes : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     views : {
         type: Number,
         default :0,
@@ -33,6 +38,9 @@ const dailySchema = new mongoose.Schema({
     nominate: {
         type: Number,
         default: 0
+    },
+    accessedTime: {
+        type: Date,
     },
 });
 

@@ -1,10 +1,6 @@
 const mongoose = require('mongoose');
 
 const playlistSchema = new mongoose.Schema({
-    postUser : {
-        type: String,
-        required: true
-    },
     postUserId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
@@ -15,8 +11,12 @@ const playlistSchema = new mongoose.Schema({
         default: '',
         required: true
     },
+    textcontent: {
+        type: String,
+        default: '',
+    },
     time: {
-        type : String,
+        type : Date,
     },
     songs : [],
     comments: [{
@@ -25,7 +25,10 @@ const playlistSchema = new mongoose.Schema({
         ref: 'PlaylistComment',
     }],    
     hashtag : [String],
-    likes : [String],
+    likes : [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     views : {
         type: Number,
         default :0,
@@ -33,22 +36,13 @@ const playlistSchema = new mongoose.Schema({
     image: {
         type: String,
     },
-    nominate: {
-        type: Number,
-        default: 0
-    },
-    isWeekly: {
-        type: Boolean,
-        default: false
-    },
     accessedTime: {
         type: Date,
     },
-    userSongs: [{
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'PlaylistUserSong',
-    }]
+    youtubeUrl: {
+        type: String,
+        default: ''
+    },
 });
 
 mongoose.model('Playlist', playlistSchema);

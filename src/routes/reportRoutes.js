@@ -4,6 +4,6 @@ const {
     createReport
 } = require('../controllers/report')
 
-router.post('/report', createReport)
+router.post('/', createReport)
 
 module.exports = router;

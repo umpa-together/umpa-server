@@ -1,75 +1,70 @@
 const mongoose = require('mongoose');
 
 const noticeSchema = new mongoose.Schema({
-    noticinguser : {
+    noticinguser: {
         type: mongoose.Schema.Types.ObjectId,
-        required : true,
-        ref : 'User',
+        ref: 'User',
     },
-    noticieduser : {
+    noticeduser: {
         type: mongoose.Schema.Types.ObjectId,
-        required : true,
-        ref : 'User',
+        required: true,
+        ref: 'User',
     },
-
-    noticetype : {
-        type : String,
-        required :true,
+    noticetype: {
+        type: String,
+        required: true,
     },
-    isRead : {
-        type : Boolean,
-        required :true,
+    isRead: {
+        type: Boolean,
         default: false
     },
-    time : {
-        type : String,
+    time: {
+        type: Date,
     },
-
-    playlist : {
+    playlist: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'Playlist',
+        ref: 'Playlist',
     },
-    playlistcomment : {
+    playlistcomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'PlaylistComment',
+        ref: 'PlaylistComment',
     },
-    playlistrecomment : {
+    playlistrecomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'PlaylistComment',
+        ref: 'PlaylistRecomment',
     },
-    daily : {
+    daily: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'Daily',
+        ref: 'Daily',
     },
-    dailycomment : {
+    dailycomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'DailyComment',
+        ref: 'DailyComment',
     },
-    dailyrecomment : {
+    dailyrecomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'DailyComment',
+        ref: 'DailyRecomment',
     },
-    board : {
+    relay: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'Board',
+        ref: 'RelayPlaylist',
     },
-    boardcontent : {
+    relaycomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'boardContent',
+        ref: 'RelayComment',
     },
-    boardcomment : {
+    relayrecomment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardComment',
+        ref: 'RelayRecomment',
     },
-    boardrecomment : {
+    relaysong: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardReComment',
+        ref: 'RelaySong'
     },
-    boardsong: {
+    storysong: {
         type: mongoose.Schema.Types.ObjectId,
-        ref : 'BoardSong',
+        ref: 'StorySong'
     }
-
 });
 
 mongoose.model('Notice', noticeSchema);

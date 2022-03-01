@@ -6,7 +6,7 @@ const reportSchema = new mongoose.Schema({
         required: true,
     },
     time: {
-        type: String,
+        type: Date,
     },
     reason: {
         type: String,
@@ -18,7 +18,7 @@ const reportSchema = new mongoose.Schema({
         ref: 'User',
     },
     subjectId: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true,
     }
 });

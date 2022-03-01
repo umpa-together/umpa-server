@@ -3,51 +3,6 @@ const Notice = mongoose.model('Notice');
 const User = mongoose.model('User');
 const Announcement = mongoose.model('Announcement');
 
-// time fields string -> Date 변경 / 게시판, 큐레이션 관련된 알림 삭제
-const changeTime = async (req, res) => {
-    try {
-        /*
-        const notice = await Notice.find()
-        await Notice.deleteMany({
-            $or: [
-                { noticetype: 'blike' },
-                { noticetype: 'bcom' },
-                { noticetype: 'bcomlike' },
-                { noticetype: 'brecom' },
-                { noticetype: 'brecomlike' },
-                { noticetype: 'bsonglike' },
-                { noticetype: 'culike' },
-                { noticetype: 'ccom' },
-                { noticetype: 'precom'},
-                { noticetype: 'precomlike'}
-            ]
-        })
-        */
-        await Notice.updateMany({
-
-        }, {
-            $rename: {
-                "noticieduser": "noticeduser"
-            }
-        })
-        /*
-        notice.map(async (item) => {
-            const { _id: id, time } = item
-            await Notice.findOneAndUpdate({
-                _id: id
-            }, {
-                $set: {
-                    time: new Date(time)
-                }
-            })
-        })
-        */
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
 // 알림 데이터 받아오기
 const getNotice = async (req, res) => {
     try {
@@ -198,7 +153,6 @@ const postAnnouncement = async (req, res) => {
 
 
 module.exports = {
-    changeTime,
     getNotice,
     getNextNotice,
     readNotice,

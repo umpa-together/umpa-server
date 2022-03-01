@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { 
-    changeData,
     postAddedSong,
     getAddedSong,
     deleteAddedSong,
@@ -10,7 +9,6 @@ const {
     deleteAddedPlaylist
 } = require('../controllers/added')
 
-router.post('/change', changeData);
 router.post('/', postAddedSong);
 router.get('/', getAddedSong);
 router.delete('/:id', deleteAddedSong);

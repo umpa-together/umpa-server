@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/upload')
 const {
-  addGenreLists,
-  deleteField,
   getMyInformation,
   getOtherInformation,
   editProfile,
@@ -20,8 +18,6 @@ const {
   unblockUser
 } = require('../controllers/user')
 
-router.delete('/field', deleteField);
-router.put('/genre', addGenreLists);
 router.get('/', getMyInformation)
 router.get('/other/:id', getOtherInformation)
 router.post('/editProfile', editProfile)

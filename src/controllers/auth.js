@@ -20,7 +20,6 @@ const AddedPlaylist = mongoose.model('AddedPlaylist');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const request = require('request');
-const bcrypt = require('bcrypt');
 
 const signUp = async (req, res) => {
     const { email, password } = req.body;

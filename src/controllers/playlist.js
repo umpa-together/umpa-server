@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
 const Playlist = mongoose.model('Playlist');
-const Daily = mongoose.model('Daily')
-const User = mongoose.model('User')
 const Comment = mongoose.model('PlaylistComment');
 const Recomment = mongoose.model('PlaylistRecomment');
 const Notice = mongoose.model('Notice');
@@ -11,157 +9,6 @@ const AddedPlaylist = mongoose.model('AddedPlaylist');
 const commentConverter = require('../middlewares/comment');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
-
-// time fields string -> Date 변경
-const changeTime = async (req, res) => {
-    try {
-        await Comment.updateMany({
-        }, {
-            $unset: {
-                recomments: 1,
-                parentcommentId: 1,
-                postUser: 1,
-            },
-        })
-        await Playlist.updateMany({
-        }, {
-            $unset: {
-                nominate: 1,
-                isWeekly: 1,
-                postUser: 1
-            },
-            $set: {
-                youtubeUrl: ""
-            }
-        })
-        await Daily.updateMany({
-
-        }, {
-            $unset: {
-                isWeekly: 1,
-                nominate: 1
-            }
-        })
-        await User.updateMany({
-
-        }, {
-            $unset: {
-                informationagree: 1,
-                nominate: 1,
-            }, 
-            $set: {
-                realName: '',
-                introduction: ''
-            }
-        })
-       /*
-    const playlists = await Playlist.find()
-    const comments = await Comment.find()
-    const hashtags = await Hashtag.find()
-    playlists.map(async (item) => {
-        const { _id: id, time } = item
-        await Playlist.findOneAndUpdate({
-            _id: id
-        }, {
-            $set: {
-                time: new Date(time)
-            }
-        })
-    })
-    comments.map(async (item) => {
-        const { _id: id, time } = item
-        await Comment.findOneAndUpdate({
-            _id: id
-        },  {
-            $set: {
-                time: new Date(time)
-            }
-        })
-    })
-    hashtags.map(async (item) => {
-        const { _id: id, time } = item  
-        await Hashtag.findOneAndUpdate({
-            _id: id
-        }, {
-            $set: {
-                time: new Date(time)
-            }
-        })
-    })
-    */
-    res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
-// likes files string -> ObjectId
-const changeLikes = async (req, res) => {
-    try {
-        const playlists = await Playlist.find()
-        const comments = await Comment.find()
-        playlists.map(async (item) => {
-            const { _id: id, likes } = item
-            await Playlist.findOneAndUpdate({
-                _id: id
-            }, {
-                $set: {
-                    likes: likes
-                }
-            })
-        })
-        comments.map(async (item) => {
-            const { _id: id, likes } = item
-            await Comment.findOneAndUpdate({
-                _id: id
-            },  {
-                $set: {
-                    likes: likes
-                }
-            })
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
-// comment, recomment 데이터 정제하기
-const commentData = async (req, res) => {
-    try {
-        const recomments = await Comment.find({
-            parentcommentId: { 
-                $ne: ""
-            }
-        }, {
-            playlistId: 1, postUserId: 1, text: 1, time: 1, likes: 1, parentcommentId: 1
-        })
-        recomments.forEach(async (recomment) => {
-            const { playlistId, _id: id, postUserId, text, time, likes, parentcommentId } = recomment
-            const newRecomment = await new Recomment({
-                playlistId: playlistId,
-                parentCommentId: parentcommentId,
-                postUserId: postUserId,
-                text: text,
-                time: time,
-                likes: likes
-            }).save()
-            await Playlist.findOneAndUpdate({
-                _id: playlistId
-            }, {
-                $push: { comments: newRecomment._id }
-            })
-        })
-        await Comment.deleteMany({
-            parentcommentId: { 
-                $ne: ""
-            }
-        })
-        res.status(200).send(recomments)
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
 
 // 플리 만들기
 const addPlaylist = async (req, res) => {
@@ -887,9 +734,6 @@ const unlikesrecomment = async (req, res) => {
 }
 
 module.exports = {
-    changeTime,
-    changeLikes,
-    commentData,
     addPlaylist,
     editPlaylist,
     deletePlaylist,

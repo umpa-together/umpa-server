@@ -18,5 +18,6 @@ router.post('/social/google', googleSignIn)
 router.post('/social/apple', appleSignIn)
 router.post('/social/kakao', kakaoSignIn);
 router.post('/social/naver', naverSignIn);
-router.post('/nickName/:name', checkName);
+router.get('/nickName/:name', checkName);
+
 module.exports = router;

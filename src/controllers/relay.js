@@ -306,14 +306,22 @@ const getSelectedRelay = async (req, res) => {
             song.score = likeCount / (likeCount + unlikeCount)
             song.postUser = song.postUserId[0]
         })
-
+        
+        const myChallenge = songs.find((song) =>
+            song.postUser._id.toString() === req.user._id.toString() 
+        )
         songs.sort(function(a, b)  {
             if (a.score > b.score) return -1;
             if (a.score < b.score) return 1;
             return 0;
         });
 
-        const resultSongs = songs.slice(0, 8).map((song) => {
+        const rankingSong = ( myChallenge === undefined ||  
+          songs.slice(0, 8).find((song) => song.postUser._id.toString() === req.user._id.toString())
+        ) ? songs.slice(0, 8) : songs.slice(0, 8).concat(myChallenge)
+
+
+        const resultSongs = rankingSong.map((song) => {
             delete song.likeCount
             delete song.unlikeCount
             delete song.score

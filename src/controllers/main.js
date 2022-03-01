@@ -3,50 +3,6 @@ const Playlist = mongoose.model('Playlist');
 const Daily = mongoose.model('Daily');
 const Theme = mongoose.model('Theme');
 
-const themeLists = [
-    '난 힙합이 너무 좋아, 중2병',
-    '감성 터지는 플리 찾고 계신가요?',
-    '힐링이 필요할때 듣는 노래',
-    '하루를 마무리할 때 듣기 좋은 노래',
-    '외힙 레전드 리스트를 찾습니다',
-    '몸이 먼저 반응하는 레전드 비트',
-    '아티스트 모음집'
-]
-
-// 테마 데이터 등록하기
-const addThemeLists = async (req, res) => {
-    try {
-        themeLists.map(async (theme) => {
-            await new Theme({
-                title: theme
-            }).save();
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);    
-    }
-}
-
-// 데일리 accessedTime 추가
-const accessedTime = async (req, res) => {
-    try {
-        const dailies = await Daily.find();
-        dailies.map(async (item) => {
-            const { _id: id } = item
-            await Daily.findOneAndUpdate({
-                _id: id
-            }, {
-                $set: {
-                    accessedTime: new Date()
-                }
-            })
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
 // 모든 플리 가져오기
 const getAllPlaylists = async (req, res) => {
     try {
@@ -239,8 +195,6 @@ const getMainRecommendPlaylist = async (req, res) => {
 
 
 module.exports = {
-    addThemeLists,
-    accessedTime,
     getAllPlaylists,
     getNextAllPlaylists,
     getAllDailies,

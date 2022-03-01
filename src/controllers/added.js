@@ -1,31 +1,6 @@
 const mongoose = require('mongoose');
-const User = mongoose.model('User');
 const AddedSong = mongoose.model('AddedSong');
 const AddedPlaylist = mongoose.model('AddedPlaylist');
-
-// user.myPlaylists에 있는 데이터 addedSong으로 바꾸기
-const changeData = async (req, res) => {
-    try {
-        const users = await User.find()
-        users.map(async (user) => {
-            const { myPlaylists, _id: id } = user
-            if (myPlaylists) {
-                for(const song of myPlaylists) {
-                    const time = song.time
-                    delete song.time
-                    await new AddedSong({
-                        postUserId: id,
-                        song: song,
-                        time: new Date(time)
-                    }).save();
-                }
-            }
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);   
-    }
-}
 
 // 곡 담기
 const postAddedSong = async (req, res) => {
@@ -126,7 +101,6 @@ const deleteAddedPlaylist = async (req, res) => {
 }
 
 module.exports = {
-    changeData,
     postAddedSong,
     getAddedSong,
     deleteAddedSong,

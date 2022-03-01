@@ -27,9 +27,6 @@ const commentSchema = new mongoose.Schema({
         required: true,
         ref: 'PlaylistRecomment',
     }],
-    recomments: {},
-    parentcommentId: {},
-    postUser: {}
 });
 
 mongoose.model('PlaylistComment', commentSchema);

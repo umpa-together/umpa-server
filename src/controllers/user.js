@@ -10,79 +10,6 @@ const Guide = mongoose.model('Guide');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
 
-const genreLists = [
-    '국내 발라드',
-    '국내 댄스/일렉',
-    '국내 알앤비',
-    '국내 힙합',
-    '국내 인디',
-    '국내 락/메탈',
-    '어쿠스틱',
-    '트로트',
-    '해외 락/메탈',
-    '해외 일렉',
-    '해외 알앤비',
-    '해외 힙합',
-    'OST',
-    'POP',
-    '클래식',
-    '재즈',
-    'J-POP',
-    '국악',
-    '댄스',
-    '아이돌',
-    '뮤지컬',
-    '국내포크',
-    '해외포크',
-    '뉴에이지',
-    '월드뮤직',
-]
-
-// 장르 데이터 등록하기
-const addGenreLists = async (req, res) => {
-    try {
-        genreLists.map(async (genre) => {
-            await new Genre({
-                genre: genre
-            }).save();
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);    
-    }
-}
-
-// 필요 없는 필드 지우기
-const deleteField = async (req, res) => {
-    try {
-        const users = await User.updateMany({
-        },{
-            $unset: {
-                myPlaylists: 1,
-                playlistGuide: 1,
-                curationGuide:1,
-                boardGuide:1,
-                createGuide:1,
-                chats:1,
-                boardBookmark:1,
-                scrabContent:1,
-                songsView:1,
-                playlists:1,
-                curationposts:1,
-                dailys:1,
-                relaysongs:1,
-                todaySong: 1
-            },
-            $set: {
-                block: []
-            }
-        })
-        res.status(200).send(users)
-    } catch (err) {
-        return res.status(422).send(err.message);    
-    }
-}
-
 // 내 정보 가져오기
 const getMyInformation = async (req, res) => {
     try {
@@ -592,8 +519,6 @@ const unblockUser = async (req, res) => {
 }
 
 module.exports = {
-    addGenreLists,
-    deleteField,
     getMyInformation,
     getOtherInformation,
     editProfile,

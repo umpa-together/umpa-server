@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const {
-    changeTime,
     getNotice,
     getNextNotice,
     readNotice,
@@ -13,7 +12,6 @@ const {
 
 router.post('/announcements', postAnnouncement)
 router.get('/announcements', getAnnouncement)
-router.get('/time', changeTime)
 router.get('/', getNotice)
 router.get('/:page', getNextNotice)
 router.put('/:id', readNotice)

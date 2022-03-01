@@ -1,40 +1,5 @@
 const mongoose = require('mongoose');
-const Playlist = mongoose.model('Playlist');
 const Feed = mongoose.model('Feed')
-const Daily = mongoose.model('Daily')
-
-// 플리, 데일리를 피드 데이터로 만들기
-const AddFeeds = async (req, res) => {
-    try {
-        const [playlist, daily] = await Promise.all([
-            Playlist.find({}, { 
-                _id: 1, time: 1, postUserId: 1 
-            }), 
-            Daily.find({}, { 
-                _id: 1, time: 1, postUserId: 1 
-            })
-        ])
-        playlist.map((item) => {
-            Feed.create({
-                playlist: item._id,
-                time: item.time,
-                type: 'playlist',
-                postUserId: item.postUserId
-            })
-        })
-        daily.map((item) => {
-            Feed.create({
-                daily: item._id,
-                time: item.time,
-                type: 'daily',
-                postUserId: item.postUserId
-            })
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
 
 // 피드 데이터(플리, 데일리) 가져오기(모든 사람들)
 const getFeedWithAll = async (req, res) => {
@@ -198,7 +163,6 @@ const getNextFeedWithFollowing = async (req, res) => {
 }
 
 module.exports = {
-    AddFeeds,
     getFeedWithAll,
     getNextFeedWithAll,
     getFeedWithFollowing,

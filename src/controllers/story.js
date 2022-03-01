@@ -5,30 +5,6 @@ const Notice = mongoose.model('Notice');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
 
-// 스토리 데이터 정제
-const storyData = async (req, res) => {
-    try {
-        const users = await User.find()
-        for (const user of users) {
-            const { todaySong, _id: userId } = user
-            if(todaySong !== undefined) {
-                for (const songs of todaySong) {
-                    const { time, song, view } = songs
-                    await new StorySong({
-                        postUserId: userId,
-                        song: song,
-                        time: new Date(time),
-                        view: view
-                    }).save()
-                }
-            }
-        }
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message); 
-    }
-}
-
 // 오늘의 스토리 포스팅
 const postStory = async (req, res) => {
     const { song } = req.body;
@@ -346,7 +322,6 @@ const unlikeStory = async (req, res) => {
 }
 
 module.exports = {
-    storyData,
     postStory,
     deleteStory,
     getMyStory,

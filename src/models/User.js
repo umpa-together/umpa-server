@@ -52,23 +52,7 @@ const userSchema = new mongoose.Schema({
     },
     genre: [{
         type: String
-    }],
-    myPlaylists: {},
-    playlistGuide: {},
-    curationGuide:{},
-    boardGuide:{},
-    createGuide:{},
-    chats:{},
-    boardBookmark:{},
-    scrabContent:{},
-    songsView:{},
-    playlists:{},
-    curationposts:{},
-    dailys:{},
-    relaysongs:{},
-    todaySong: {},
-    informationagree: {},
-    nominate: {},
+    }]
 });
 
 userSchema.pre('save', function(next){

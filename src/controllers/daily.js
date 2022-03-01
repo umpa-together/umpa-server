@@ -8,69 +8,6 @@ const Recomment = mongoose.model('DailyRecomment');
 const commentConverter = require('../middlewares/comment');
 const pushNotification = require('../middlewares/notification');
 const addNotice = require('../middlewares/notice');
-const Curation = mongoose.model('CurationPost');
-
-// time fields string -> Date 변경
-const changeTime = async (req, res) => {
-    try {
-        const daily = await Daily.find()
-        const comment = await Comment.find()
-        daily.map(async (item) => {
-            const { _id: id, time } = item
-            await Daily.findOneAndUpdate({
-                _id: id
-            }, {
-                $set: {
-                    time: new Date(time)
-                }
-            })
-        })
-        comment.map(async (item) => {
-            const { _id: id, time } = item
-            await Comment.findOneAndUpdate({
-                _id: id
-            }, {
-                $set: {
-                    time: new Date(time)
-                }
-            })
-        })
-        res.status(204).send();
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
-
-// 큐레이션 데일리로
-const curationToDaily = async (req, res) => {
-    try {
-        const curation = await Curation.find();
-        Object.values(curation).forEach(async (item) => {
-            const { postUserId, time, textcontent, likes, object, isSong } = item
-            if(isSong) {
-                const daily = await new Daily({
-                    postUserId: postUserId,
-                    textcontent: textcontent,
-                    time: new Date(time),
-                    song: object,
-                    likes: likes,
-                }).save();
-                Object.values(likes).forEach(async (user) => {
-                    await new Notice({
-                        noticinguser: user, 
-                        noticeduser: postUserId, 
-                        noticetype: 'dlike', 
-                        time: new Date(time), 
-                        daily: daily._id 
-                    }).save();
-                })
-            }
-        })
-        res.send(curation);
-    } catch (err) {
-        return res.status(422).send(err.message);
-    }
-}
 
 // 데일리 만들기
 const addDaily = async (req, res) => {
@@ -792,8 +729,6 @@ const unLikeRecomment = async (req, res) => {
 }
 
 module.exports = {
-    changeTime,
-    curationToDaily,
     addDaily,
     editDaily,
     deleteDaily,

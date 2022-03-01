@@ -2,9 +2,6 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/upload')
 const {
-    changeTime,
-    changeLikes,
-    commentData,
     addPlaylist,
     editPlaylist,
     deletePlaylist,
@@ -22,9 +19,6 @@ const {
     unlikesrecomment,
 } = require('../controllers/playlist')
 
-router.get('/time', changeTime)
-router.get('/changelikes', changeLikes)
-router.get('/commentData', commentData);
 router.post('/', addPlaylist)
 router.post('/edit', editPlaylist)
 router.delete('/:id', deletePlaylist)

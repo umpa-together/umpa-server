@@ -28,7 +28,6 @@ require('./models/Report');
 require('./models/Notice');
 require('./models/Announcement');
 require('./models/Guide');
-require('./models/Curationpost');
 
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');

@@ -43,9 +43,6 @@ const playlistSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-    nominate: {},
-    isWeekly: {},
-    postUser: {},
 });
 
 mongoose.model('Playlist', playlistSchema);

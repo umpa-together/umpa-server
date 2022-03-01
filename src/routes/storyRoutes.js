@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const {
-    storyData,
     postStory,
     deleteStory,
     getMyStory,
@@ -14,7 +13,6 @@ const {
     unlikeStory,
 } = require('../controllers/story')
 
-router.post('/data', storyData);
 router.post('/', postStory);
 router.delete('/:storyId', deleteStory);
 router.get('/', getMyStory);

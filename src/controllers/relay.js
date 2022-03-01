@@ -95,15 +95,25 @@ const updateApprovedSong = async (req, res) => {
                         }
                     })
                 ])
+                let participateCount = 0
                 songs.forEach((song) => {
-                    song.score = song.likeCount / (song.likeCount + song.unlikeCount)
+                    const { likeCount, unlikeCount } = song
+                    participateCount += (likeCount + unlikeCount)
+                    song.score = likeCount / (likeCount + unlikeCount)
                 })
-                songs.sort(function(a, b)  {
+                participateCount = Math.floor(participateCount / songs.length)
+                const targetSongs = songs.filter((song) => {
+                    const { likeCount, unlikeCount } = song
+                    if (likeCount + unlikeCount >= participateCount) {
+                        return song
+                    }
+                })
+                targetSongs.sort(function(a, b)  {
                     if (a.score > b.score) return -1;
                     if (a.score < b.score) return 1;
                     return 0;
                 });
-                for (const song of songs) {
+                for (const song of targetSongs.slice(0, 8)) {
                     const { _id: id, postUserId } = song
                     await Promise.all([
                         RelaySong.findOneAndUpdate({ 
@@ -189,6 +199,7 @@ const getCurrentRelay = async (req, res) => {
                     swipeSongs.push(songObject)
                 }
             })
+            swipeSongs.sort(() => Math.random() - 0.5)
             const relayPlaylist = {
                 title, 
                 isBackground,
@@ -300,26 +311,33 @@ const getSelectedRelay = async (req, res) => {
         ])
 
         commentConverter(comments, recomments);
-
+        let participateCount = 0
         songs.forEach((song) => {
             const { likeCount, unlikeCount } = song
+            participateCount += (likeCount + unlikeCount)
             song.score = likeCount / (likeCount + unlikeCount)
             song.postUser = song.postUserId[0]
         })
-        
+        participateCount = Math.floor(participateCount / songs.length)
         const myChallenge = songs.find((song) =>
             song.postUser._id.toString() === req.user._id.toString() 
         )
-        songs.sort(function(a, b)  {
+        const targetSongs = songs.filter((song) => {
+            const { likeCount, unlikeCount } = song
+            if (likeCount + unlikeCount >= participateCount) {
+                return song
+            }
+        })
+        
+        targetSongs.sort(function(a, b)  {
             if (a.score > b.score) return -1;
             if (a.score < b.score) return 1;
             return 0;
         });
 
         const rankingSong = ( myChallenge === undefined ||  
-          songs.slice(0, 8).find((song) => song.postUser._id.toString() === req.user._id.toString())
-        ) ? songs.slice(0, 8) : songs.slice(0, 8).concat(myChallenge)
-
+            targetSongs.slice(0, 8).find((song) => song.postUser._id.toString() === req.user._id.toString())
+        ) ? targetSongs.slice(0, 8) : targetSongs.slice(0, 8).concat(myChallenge)
 
         const resultSongs = rankingSong.map((song) => {
             delete song.likeCount
@@ -384,7 +402,7 @@ const getRelaySong = async (req, res) => {
         }).populate('postUserId', {
             name: 1, profileImage: 1
         })
-        const result = songs.map((item) => {
+        const result = songs.filter((item) => {
             const { like, unlike, _id, song, postUserId, playlistId} = item
             if(!like.includes(req.user._id) && !unlike.includes(req.user._id)) {
                 return {
@@ -395,7 +413,8 @@ const getRelaySong = async (req, res) => {
                 }
             }
         })
-        res.status(200).send(result.filter((item) => item !== undefined))
+        result.sort(() => Math.random() - 0.5)
+        res.status(200).send(result)
     } catch (err) {
         return res.status(422).send(err.message);
     }

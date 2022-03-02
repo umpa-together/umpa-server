@@ -24,9 +24,14 @@ const postStory = async (req, res) => {
 const deleteStory = async (req, res) => {
     try {
         const storyId = req.params.storyId
-        await StorySong.findOneAndDelete({
-            _id: storyId
-        })
+        await Promise.all([
+            StorySong.findOneAndDelete({
+                _id: storyId
+            }),
+            Notice.deleteMany({
+                storysong: storyId
+            })
+        ])
         res.status(204).send();
     } catch (err) {
         return res.status(422).send(err.message); 

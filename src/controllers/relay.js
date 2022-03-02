@@ -430,15 +430,21 @@ const likeRelaySong = async (req, res) => {
             $addToSet: { like: req.user._id }
         }, {
             new: true
+        }).populate('postUserId', {
+            noticetoken: 1, _id: 1
         })
-        await RelayPlaylist.findOneAndUpdate({
+        const relayPlaylist = await RelayPlaylist.findOneAndUpdate({
             _id: relaySong.playlistId
         }, {
             $addToSet: {
                 evaluateUserId: req.user._id
             }
+        }, {
+            title: 1
         })
+        const targetuser = relaySong.postUserId
         res.status(200).send(relaySong);
+        pushNotification(targetuser, req.user._id, `${req.user.name}님이 회원님의 릴레이 곡을 추천했습니다`, relayPlaylist.title.join(' '))
     } catch (err) {
         return res.status(422).send(err.message);
     }

@@ -5,11 +5,12 @@ admin.initializeApp({
     credential : admin.credential.cert(serviceAccount)
 });
 
-const pushNotification = async (targetUser, myId, body) => {
+const pushNotification = async (targetUser, myId, body, title) => {
     const { noticetoken, _id: targetUserId } = targetUser
     if(noticetoken !== null && targetUserId.toString() !== myId.toString()){
         const message = {
             notification : {
+                title: title === undefined ? 'UMPA' : title,
                 body,
             },
             token : noticetoken

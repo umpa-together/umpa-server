@@ -298,10 +298,40 @@ const getRecentKeywords = async (req, res) => {
     }
 }
 
+const deleteRecentKeyword = async (req, res) => {
+    try {
+        const id = req.params.id
+        await RecentKeyword.findOneAndDelete({
+            _id: id
+        });
+        const keywords = await RecentKeyword.find({
+            postUserId: req.user._id
+        }, {
+            keyword: 1
+        }).sort({time: -1});
+        res.status(200).send(keywords);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
+
+const deleteAllRecentKeyword = async (req, res) => {
+    try {
+        await RecentKeyword.deleteMany({
+            postUserId: req.user._id
+        });
+
+        res.status(200).send([]);
+    } catch (err) {
+        return res.status(422).send(err.message);
+    }
+}
 module.exports = {
     getAllContents,
     getNextSongResult,
     getSelectedContents,
     getAllContentsWithHashatg,
-    getRecentKeywords
+    getRecentKeywords,
+    deleteRecentKeyword,
+    deleteAllRecentKeyword,
 }

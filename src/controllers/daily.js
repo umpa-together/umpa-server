@@ -5,9 +5,9 @@ const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const Recomment = mongoose.model('DailyRecomment');
-const commentConverter = require('../middlewares/comment');
-const pushNotification = require('../middlewares/notification');
-const addNotice = require('../middlewares/notice');
+const commentConverter = require('../utils/comment');
+const pushNotification = require('../utils/notification');
+const addNotice = require('../utils/notice');
 
 // 데일리 만들기
 const addDaily = async (req, res) => {
@@ -128,7 +128,7 @@ const editDaily = async (req, res) => {
         }, {
             new: true,
             projection: {
-                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
             }
         }).populate('postUserId', {
             name: 1, profileImage: 1
@@ -187,7 +187,7 @@ const getSelectedDaily = async (req, res) => {
             }, {
                 $set: { accessedTime: new Date() }
             }, {
-                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
             }).populate('postUserId', {
                 name: 1, profileImage: 1
             })
@@ -200,7 +200,7 @@ const getSelectedDaily = async (req, res) => {
             }, { 
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1
@@ -249,7 +249,7 @@ const addComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -325,7 +325,7 @@ const deleteComment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -390,7 +390,7 @@ const addRecomment = async (req, res) => {
             }, { 
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -443,7 +443,7 @@ const deleteRecomment = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1
@@ -472,7 +472,7 @@ const likeDaily = async (req, res) => {
         const daily = await Daily.findOne({
             _id: dailyId
         }, {
-            textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1,
+            textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1,
         }).populate('postUserId', {
             name: 1, profileImage: 1 
         });
@@ -487,7 +487,7 @@ const likeDaily = async (req, res) => {
             }, {
                 new: true,
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1
@@ -519,7 +519,7 @@ const unLikeDaily = async (req, res) => {
             }, {
                 new: true, 
                 projection: {
-                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, isWeekly: 1, time: 1, comments: 1
+                    textcontent: 1, song: 1, hashtag: 1, likes: 1, views: 1, image: 1, time: 1, comments: 1
                 }
             }).populate('postUserId', {
                 name: 1, profileImage: 1, noticetoken: 1

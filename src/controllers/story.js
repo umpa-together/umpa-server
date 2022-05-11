@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 const User = mongoose.model('User');
 const StorySong = mongoose.model('StorySong');
 const Notice = mongoose.model('Notice');
-const pushNotification = require('../middlewares/notification');
-const addNotice = require('../middlewares/notice');
+const pushNotification = require('../utils/notification');
+const addNotice = require('../utils/notice');
+
 
 // 오늘의 스토리 포스팅
 const postStory = async (req, res) => {

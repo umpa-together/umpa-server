@@ -6,9 +6,9 @@ const Notice = mongoose.model('Notice');
 const Hashtag = mongoose.model('Hashtag');
 const Feed = mongoose.model('Feed');
 const AddedPlaylist = mongoose.model('AddedPlaylist');
-const commentConverter = require('../middlewares/comment');
-const pushNotification = require('../middlewares/notification');
-const addNotice = require('../middlewares/notice');
+const commentConverter = require('../utils/comment');
+const pushNotification = require('../utils/notification');
+const addNotice = require('../utils/notice');
 
 // 플리 만들기
 const addPlaylist = async (req, res) => {

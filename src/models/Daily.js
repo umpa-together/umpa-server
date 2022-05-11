@@ -31,14 +31,6 @@ const dailySchema = new mongoose.Schema({
         default :0,
     },
     image: [String],
-    isWeekly: {
-        type: Boolean,
-        default: false
-    },
-    nominate: {
-        type: Number,
-        default: 0
-    },
     accessedTime: {
         type: Date,
     },

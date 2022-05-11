@@ -7,8 +7,8 @@ const Daily = mongoose.model('Daily');
 const RelayPlaylist = mongoose.model('RelayPlaylist');
 const RelaySong = mongoose.model('RelaySong');
 const Guide = mongoose.model('Guide');
-const pushNotification = require('../middlewares/notification');
-const addNotice = require('../middlewares/notice');
+const pushNotification = require('../utils/notification');
+const addNotice = require('../utils/notice');
 
 // 내 정보 가져오기
 const getMyInformation = async (req, res) => {

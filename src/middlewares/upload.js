@@ -8,7 +8,7 @@ const s3 = new aws.S3({
     region: 'ap-northeast-2'
 })
   
-const upload = (destination, dev=true) => {
+const upload = (destination, dev = (process.env.NODE_ENV === 'dev')) => {
     return multer({
         limits: { fieldSize: 25 * 1024 * 1024 },
         storage: multerS3({

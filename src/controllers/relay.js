@@ -4,9 +4,9 @@ const RelaySong = mongoose.model('RelaySong');
 const Comment = mongoose.model('RelayComment')
 const Recomment = mongoose.model('RelayRecomment')
 const Notice = mongoose.model('Notice');
-const commentConverter = require('../middlewares/comment');
-const pushNotification = require('../middlewares/notification');
-const addNotice = require('../middlewares/notice');
+const commentConverter = require('../utils/comment');
+const pushNotification = require('../utils/notification');
+const addNotice = require('../utils/notice');
 
 // 주제곡을 통한 플레이리스트 업로드
 const postRelayPlaylist = async (req, res) => {
@@ -194,12 +194,13 @@ const getCurrentRelay = async (req, res) => {
                         _id: _id,
                         song: song,
                         postUserId: postUserId,
-                        playlistId
+                        playlistId,
+                        scoreCount: like.length + unlike.length,
                     }
                     swipeSongs.push(songObject)
                 }
             })
-            swipeSongs.sort(() => Math.random() - 0.5)
+            swipeSongs.sort((a, b) => a.scoreCount-b.scoreCount)
             const relayPlaylist = {
                 title, 
                 isBackground,
@@ -409,11 +410,11 @@ const getRelaySong = async (req, res) => {
                     _id: _id,
                     song: song,
                     postUserId: postUserId,
-                    playlistId
+                    playlistId,
                 }
             }
         })
-        result.sort(() => Math.random() - 0.5)
+        result.sort((a, b) => (a.like.length+a.unlike.length)-(b.like.length+b.unlike.length))
         res.status(200).send(result)
     } catch (err) {
         return res.status(422).send(err.message);

@@ -64,10 +64,12 @@ db.on('error', (err) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-if(process.env.NODE_ENV === 'product'){
+if (process.env.NODE_ENV === 'product'){
     app.use(helmet())
     app.use(hpp())
-} 
+} else {
+    app.set("etag", false);
+}
 app.use(authRoutes);
 app.use(requireAuth);
 app.use('/searchMusic', applemusicRoutes);
@@ -86,8 +88,6 @@ app.use('/added', addedRoutes);
 app.get('/', (req, res) => {
     res.send('Welcome to umpa');
 });
-
-app.set("etag", false);
 
 server.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);

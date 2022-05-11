@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 require("dotenv").config()
+const helmet = require('helmet')
+const hpp = require('hpp')
 const app = express();
 const server = require('http').createServer(app);
 const PORT = 3000
@@ -44,7 +46,7 @@ const mainRoutes = require('./routes/mainRoutes');
 const addedRoutes = require('./routes/addedRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.NODE_ENV === 'dev' ? process.env.DEV_MONGO_URI : process.env.PRODUCT_MONGO_URI, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -62,6 +64,10 @@ db.on('error', (err) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+if(process.env.NODE_ENV === 'product'){
+    app.use(helmet())
+    app.use(hpp())
+} 
 app.use(authRoutes);
 app.use(requireAuth);
 app.use('/searchMusic', applemusicRoutes);

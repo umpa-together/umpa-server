@@ -106,5 +106,5 @@ module.exports = {
     deleteAddedSong,
     postAddedPlaylist,
     getAddedPlaylist,
-    deleteAddedPlaylist
+    deleteAddedPlaylist,
 }

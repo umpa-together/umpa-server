@@ -5,10 +5,14 @@ const {
     getNextSongResult,
     getSelectedContents,
     getAllContentsWithHashatg,
-    getRecentKeywords
+    getRecentKeywords,
+    deleteRecentKeyword,
+    deleteAllRecentKeyword,
 } = require('../controllers/search')
 
 router.get('/keyword', getRecentKeywords);
+router.delete('/keyword/:id', deleteRecentKeyword);
+router.delete('/keywordAll', deleteAllRecentKeyword);
 router.get('/next/:next', getNextSongResult);
 router.get('/:term', getAllContents);
 router.get('/song/:id', getSelectedContents);

@@ -6,7 +6,7 @@ const {
     deleteAddedSong,
     postAddedPlaylist,
     getAddedPlaylist,
-    deleteAddedPlaylist
+    deleteAddedPlaylist,
 } = require('../controllers/added')
 
 router.post('/', postAddedSong);

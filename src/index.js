@@ -5,7 +5,9 @@ const helmet = require('helmet')
 const hpp = require('hpp')
 const app = express();
 const server = require('http').createServer(app);
+const morgan = require('morgan')
 const PORT = 3000
+const accessLogStream = require('./utils/log')
 
 require('./models/User');
 require('./models/RelayPlaylist');
@@ -67,9 +69,12 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'product'){
     app.use(helmet())
     app.use(hpp())
+    app.use(morgan('[:remote-addr - :remote-user] [:date[web]] :method :url HTTP/:http-version :status :response-time ms', { stream : accessLogStream }));
 } else {
     app.set("etag", false);
+    app.use(morgan('dev'));
 }
+
 app.use(authRoutes);
 app.use(requireAuth);
 app.use('/searchMusic', applemusicRoutes);

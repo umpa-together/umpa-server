@@ -10,3 +10,5 @@ yarn-error.log
 AuthKey_Z5A9D27GU8.p8
 
 .env
+
+src/log/access.log

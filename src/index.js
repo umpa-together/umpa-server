@@ -33,6 +33,8 @@ require('./models/Notice');
 require('./models/Announcement');
 require('./models/Guide');
 
+require('./utils/schedule')
+
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
 const plistRoutes = require('./routes/plistRoutes');

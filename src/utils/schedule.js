@@ -1,10 +1,18 @@
 const {
     updateApprovedSong
 } = require('../controllers/relay')
+const sendTodayData = require('./slackBot')
 const schedule = require('node-schedule')
 
-const job = schedule.scheduleJob('0 5 0 * * *', () => {
+const relayApproveJob = schedule.scheduleJob('0 5 0 * * *', () => {
     updateApprovedSong();
 })
 
-module.exports = job
+const slackJob = schedule.scheduleJob('0 0 0 * * *', () => {
+    sendTodayData()
+})
+
+module.exports = {
+    relayApproveJob,
+    slackJob
+}

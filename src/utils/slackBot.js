@@ -29,7 +29,7 @@ const sendTodayData = async (req, res) => {
             }
         })
         
-        const today = `${currentTime.getFullYear()}년 ${currentTime.getMonth() < 10 ? '0' + currentTime.getMonth() : currentTime.getMonth()}월 ${currentTime.getDate() < 10 ? '0' + currentTime.getDate() : currentTime.getDate()}일`
+        const today = `${currentTime.getFullYear()}년 ${currentTime.getMonth() < 9 ? '0' + (currentTime.getMonth()+1) : currentTime.getMonth()+1}월 ${currentTime.getDate() < 10 ? '0' + currentTime.getDate() : currentTime.getDate()}일`
         const message = `${today}\n누적 가입자 수: ${userCount}명\n누적 플레이리스트 수: ${playlistCount}개\n누적 데일리 수: ${dailyCount}개\n오늘 접속한 유저 수: ${todayAccessedUserCount}명`
         await slackBot.chat.postMessage({
             channel: channel,

@@ -33,8 +33,6 @@ require('./models/Notice');
 require('./models/Announcement');
 require('./models/Guide');
 
-require('./utils/schedule')
-
 const authRoutes = require('./routes/authRoutes');
 const applemusicRoutes = require('./routes/applemusicRoutes');
 const plistRoutes = require('./routes/plistRoutes');
@@ -69,6 +67,7 @@ db.on('error', (err) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'product'){
+    require('./utils/schedule')
     app.use(helmet())
     app.use(hpp())
     app.use(morgan('[:remote-addr - :remote-user] [:date[web]] :method :url HTTP/:http-version :status :response-time ms', { stream : accessLogStream }));

@@ -60,7 +60,7 @@ const postAddedPlaylist = async (req, res) => {
         }).save()
         await newAdded.populate('playlistId', {
             title: 1, songs: 1, image: 1, time : 1
-        }).execPopulate();
+        })
         const result = {
             _id: newAdded._id,
             playlistId: newAdded.playlistId

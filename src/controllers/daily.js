@@ -23,7 +23,7 @@ const addDaily = async (req, res) => {
         }).save()
         await daily.populate('postUserId', {
             name: 1, profileImage: 1
-        }).execPopulate();
+        })
         Feed.create({
             daily: daily._id,
             time,

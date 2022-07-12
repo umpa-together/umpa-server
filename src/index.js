@@ -48,12 +48,7 @@ const mainRoutes = require('./routes/mainRoutes');
 const addedRoutes = require('./routes/addedRoutes');
 const requireAuth = require('./middlewares/requireAuth');
 
-mongoose.connect(process.env.NODE_ENV === 'dev' ? process.env.DEV_MONGO_URI : process.env.PRODUCT_MONGO_URI, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useUnifiedTopology: true,
-    useFindAndModify : false,
-});
+mongoose.connect(process.env.NODE_ENV === 'dev' ? process.env.DEV_MONGO_URI : process.env.PRODUCT_MONGO_URI);
 
 const db = mongoose.connection;
 

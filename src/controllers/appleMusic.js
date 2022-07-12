@@ -3,7 +3,7 @@ const RecentKeyword = mongoose.model('RecentKeyword');
 const request = require('request');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const privateKey = fs.readFileSync("./AuthKey_Z5A9D27GU8.p8");
+const privateKey = fs.readFileSync("./AppleMusic_AuthKey.p8");
 
 const token = jwt.sign({}, privateKey, {
     algorithm: "ES256",

@@ -6,7 +6,7 @@ const Daily = mongoose.model('Daily')
 const RecentKeyword = mongoose.model('RecentKeyword');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
-const privateKey = fs.readFileSync("./AuthKey_Z5A9D27GU8.p8");
+const privateKey = fs.readFileSync("./AppleMusic_AuthKey.p8");
 const request = require('request');
 
 const token = jwt.sign({}, privateKey, {
